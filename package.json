@@ -1,0 +1,10 @@
+{
+  "name": "block-racer",
+  "version": "1.0.0",
+  "description": "A 90-degree arcade racer. Open index.html - there is nothing to build.",
+  "private": true,
+  "scripts": {
+    "check": "node tools/validate-track.js && node tools/simulate.js 5 40",
+    "test": "npm run check"
+  }
+}

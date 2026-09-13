@@ -1,0 +1,322 @@
+/* Block Racer - race loop, rules and HUD. */
+(function (global) {
+  'use strict';
+
+  var C = global.CONFIG;
+  var T = global.TRACK;
+  var Car = global.Car;
+  var AIDriver = global.AIDriver;
+  var Input = global.Input;
+  var Sound = global.Sound;
+  var Renderer = global.Renderer;
+
+  var FIELD = [
+    { name: 'VECTOR', color: '#ff5470' },
+    { name: 'PIXEL',  color: '#ffd166' },
+    { name: 'YOU',    color: '#5ef2ff', player: true },
+    { name: 'GRID',   color: '#b47cff' }
+  ];
+
+  var Game = {
+    state: 'menu',
+    cars: [],
+    drivers: [],
+    player: null,
+    particles: [],
+    time: 0,
+    countdown: 0,
+    laps: C.laps,
+    results: []
+  };
+
+  var el = {};
+
+  function fmt(t) {
+    if (!t && t !== 0) return '--:--.--';
+    var m = Math.floor(t / 60);
+    var s = t - m * 60;
+    return m + ':' + (s < 10 ? '0' : '') + s.toFixed(2);
+  }
+
+  Game.reset = function () {
+    this.cars = [];
+    this.drivers = [];
+    this.particles = [];
+    this.time = 0;
+    this.results = [];
+    this.countdown = C.countdown;
+
+    var aiIndex = 0;
+    for (var i = 0; i < FIELD.length; i++) {
+      var slot = T.START_GRID[i];
+      var spec = FIELD[i];
+      var cfg = spec.player ? null : C.ai[aiIndex++ % C.ai.length];
+      var car = new Car({
+        id: i,
+        name: spec.name,
+        color: spec.color,
+        isPlayer: !!spec.player,
+        speedMul: cfg ? cfg.speedMul : 1,
+        x: slot.x,
+        y: slot.y,
+        dir: { x: 1, y: 0 }
+      });
+      T.seedProgress(car);
+      this.cars.push(car);
+      if (spec.player) this.player = car;
+      else this.drivers.push(new AIDriver(car, cfg, slot.wp));
+    }
+    Input.clear();
+    this.state = 'countdown';
+    this.updateStandings();
+  };
+
+  function spawnSparks(game, at, color) {
+    for (var i = 0; i < 12; i++) {
+      var a = Math.random() * Math.PI * 2;
+      var sp = 1.5 + Math.random() * 4;
+      game.particles.push({
+        x: at.x, y: at.y,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: 0.5 + Math.random() * 0.4,
+        color: Math.random() < 0.5 ? '#ffd166' : color
+      });
+    }
+  }
+
+  function updateCarRace(game, car) {
+    if (T.lapCheck(car)) {
+      car.lap++;
+      car.lastLap = car.lapTime;
+      if (!car.bestLap || car.lapTime < car.bestLap) car.bestLap = car.lapTime;
+      car.lapTime = 0;
+      if (car.lap >= game.laps) {
+        car.finished = true;
+        car.finishTime = game.time;
+        game.results.push(car);
+        if (car.isPlayer) Sound.finish();
+      } else if (car.isPlayer) {
+        Sound.lap();
+      }
+    }
+  }
+
+  Game.updateStandings = function () {
+    var laps = this.laps;
+    this.cars.forEach(function (car) {
+      var p = T.progressAlong(car.x, car.y, car.dir, car.leg, car.arc);
+      car.leg = p.leg;
+      car.arc = p.arc;
+      car.progress = car.finished
+        ? laps + 1000 - car.finishTime / 100000
+        : car.lap + p.arc / T.length;
+    });
+    var order = this.cars.slice().sort(function (a, b) { return b.progress - a.progress; });
+    order.forEach(function (car, i) { car.place = i + 1; });
+    this.order = order;
+  };
+
+  Game.step = function (dt) {
+    if (this.state === 'countdown') {
+      this.countdown -= dt;
+      var n = Math.ceil(this.countdown);
+      if (n !== this._lastBeep) {
+        this._lastBeep = n;
+        if (n > 0) Sound.beep(); else Sound.go();
+      }
+      if (this.countdown <= -0.6) { this.state = 'racing'; Input.clear(); }
+      return;
+    }
+    if (this.state !== 'racing') return;
+
+    this.time += dt;
+
+    // Player controls: a turn is the only input, and it also restarts a car
+    // that is sitting against a wall.
+    var turn;
+    while ((turn = Input.take()) !== 0) {
+      if (!this.player.finished) this.player.turn(turn);
+    }
+
+    for (var i = 0; i < this.drivers.length; i++) this.drivers[i].update(dt);
+
+    for (var j = 0; j < this.cars.length; j++) {
+      var car = this.cars[j];
+      if (!car.finished) car.lapTime += dt;
+      var hit = car.step(dt);
+      if (hit) {
+        spawnSparks(this, hit, car.color);
+        if (car.isPlayer) Sound.crash();
+      }
+    }
+    Car.separate(this.cars, dt);
+    for (var n = 0; n < this.cars.length; n++) updateCarRace(this, this.cars[n]);
+
+    for (var k = this.particles.length - 1; k >= 0; k--) {
+      var p = this.particles[k];
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      p.vx *= 0.90; p.vy *= 0.90;
+      p.life -= dt * 1.6;
+      if (p.life <= 0) this.particles.splice(k, 1);
+    }
+
+    this.updateStandings();
+
+    var allDone = this.cars.every(function (c) { return c.finished; });
+    if (this.player.finished || allDone) {
+      this.state = 'finished';
+      this.showResults();
+    }
+  };
+
+  /* ---- UI ----------------------------------------------------------- */
+
+  Game.buildHud = function () {
+    el.lap = document.getElementById('hud-lap');
+    el.pos = document.getElementById('hud-pos');
+    el.time = document.getElementById('hud-time');
+    el.best = document.getElementById('hud-best');
+    el.last = document.getElementById('hud-last');
+    el.board = document.getElementById('standings');
+    el.msg = document.getElementById('message');
+    el.menu = document.getElementById('menu');
+    el.results = document.getElementById('results');
+    el.resultsBody = document.getElementById('results-body');
+    el.resultsTitle = document.getElementById('results-title');
+    el.pause = document.getElementById('pause');
+    el.lapButtons = document.getElementById('lap-buttons');
+  };
+
+  Game.drawHud = function () {
+    var p = this.player;
+    el.lap.textContent = Math.min(p.lap + 1, this.laps) + ' / ' + this.laps;
+    el.pos.textContent = p.place + ' / ' + this.cars.length;
+    el.time.textContent = fmt(this.time);
+    el.best.textContent = p.bestLap ? fmt(p.bestLap) : '--:--.--';
+    el.last.textContent = p.lastLap ? fmt(p.lastLap) : '--:--.--';
+
+    var rows = '';
+    this.order.forEach(function (car, i) {
+      rows += '<li' + (car.isPlayer ? ' class="me"' : '') + '>' +
+        '<span class="pos">' + (i + 1) + '</span>' +
+        '<span class="chip" style="background:' + car.color + '"></span>' +
+        '<span class="nm">' + car.name + '</span>' +
+        '<span class="lp">' + (car.finished ? 'FIN' : 'L' + Math.min(car.lap + 1, Game.laps)) + '</span>' +
+        '</li>';
+    });
+    el.board.innerHTML = rows;
+
+    if (this.state === 'racing' && p.crashed) {
+      el.msg.textContent = 'CRASHED - press LEFT or RIGHT to turn and go';
+      el.msg.classList.add('show');
+    } else {
+      el.msg.classList.remove('show');
+    }
+  };
+
+  Game.showResults = function () {
+    var finished = this.results.slice();
+    var rest = this.order.filter(function (c) { return !c.finished; });
+    var all = finished.concat(rest);
+    var placeOfPlayer = all.indexOf(this.player) + 1;
+
+    el.resultsTitle.textContent =
+      placeOfPlayer === 1 ? 'YOU WIN' : 'P' + placeOfPlayer + ' OF ' + all.length;
+
+    var rows = '';
+    all.forEach(function (car, i) {
+      rows += '<tr' + (car.isPlayer ? ' class="me"' : '') + '>' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td><span class="chip" style="background:' + car.color + '"></span>' + car.name + '</td>' +
+        '<td>' + (car.finished ? fmt(car.finishTime) : 'L' + (car.lap + 1)) + '</td>' +
+        '<td>' + (car.bestLap ? fmt(car.bestLap) : '-') + '</td>' +
+        '</tr>';
+    });
+    el.resultsBody.innerHTML = rows;
+    el.results.classList.add('show');
+  };
+
+  Game.setLaps = function (n) {
+    this.laps = Math.max(C.minLaps, Math.min(C.maxLaps, n));
+    Array.prototype.forEach.call(el.lapButtons.children, function (b) {
+      b.classList.toggle('on', parseInt(b.dataset.laps, 10) === Game.laps);
+    });
+    document.getElementById('menu-laps').textContent = this.laps;
+  };
+
+  Game.startRace = function () {
+    el.menu.classList.remove('show');
+    el.results.classList.remove('show');
+    el.pause.classList.remove('show');
+    Sound.unlock();
+    this.reset();
+  };
+
+  Game.command = function (name) {
+    if (name === 'start') {
+      if (this.state === 'menu' || this.state === 'finished') this.startRace();
+      else if (this.state === 'paused') this.command('pause');
+    } else if (name === 'restart') {
+      if (this.state !== 'menu') this.startRace();
+    } else if (name === 'pause') {
+      if (this.state === 'racing') {
+        this.state = 'paused';
+        el.pause.classList.add('show');
+      } else if (this.state === 'paused') {
+        this.state = 'racing';
+        el.pause.classList.remove('show');
+        Input.clear();
+      }
+    } else if (name === 'mute') {
+      Sound.muted = !Sound.muted;
+      document.getElementById('mute-state').textContent = Sound.muted ? 'OFF' : 'ON';
+    }
+  };
+
+  /* ---- boot ---------------------------------------------------------- */
+
+  Game.boot = function () {
+    Renderer.init(document.getElementById('game'));
+    this.buildHud();
+    this.setLaps(C.laps);
+    this.reset();
+    this.state = 'menu';
+    el.menu.classList.add('show');
+
+    Input.onCommand = function (n) { Game.command(n); };
+
+    Array.prototype.forEach.call(el.lapButtons.children, function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        Game.setLaps(parseInt(b.dataset.laps, 10));
+      });
+    });
+    document.getElementById('btn-start').addEventListener('click', function (e) {
+      e.stopPropagation();
+      Game.startRace();
+    });
+    document.getElementById('btn-again').addEventListener('click', function (e) {
+      e.stopPropagation();
+      Game.startRace();
+    });
+
+    var acc = 0, last = performance.now();
+    function frame(now) {
+      var delta = Math.min((now - last) / 1000, C.maxFrame);
+      last = now;
+      acc += delta;
+      while (acc >= C.dt) { Game.step(C.dt); acc -= C.dt; }
+      Renderer.draw(Game);
+      Game.drawHud();
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  };
+
+  global.Game = Game;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { Game.boot(); });
+  } else {
+    Game.boot();
+  }
+})(typeof window !== 'undefined' ? window : globalThis);
