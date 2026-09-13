@@ -115,10 +115,31 @@ canvas { display: block; max-width: 100%; height: auto; touch-action: none; }
 .lapline { font-size: 12px; letter-spacing: 2px; color: var(--dim); margin: 0 0 8px; }
 .lapline b { color: var(--accent); }
 
-.laps { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; }
+.laps { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
+.laps + .lapline { margin-top: 4px; }
+
+.grade {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #06121a;
+  background: var(--accent);
+}
+
+.trackblurb {
+  margin: 0 0 16px;
+  font-size: 11px;
+  color: var(--dim);
+  min-height: 2em;
+}
 .laps button {
   flex: 1;
-  padding: 10px 0;
+  padding: 10px 4px;
+  font-size: 12px;
+  white-space: nowrap;
   font: inherit;
   color: var(--text);
   background: #1b2438;

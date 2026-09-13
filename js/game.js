@@ -26,6 +26,7 @@
     time: 0,
     countdown: 0,
     laps: C.laps,
+    trackIndex: C.track,
     results: []
   };
 
@@ -56,7 +57,7 @@
         name: spec.name,
         color: spec.color,
         isPlayer: !!spec.player,
-        speedMul: cfg ? cfg.speedMul : 1,
+        speedMul: cfg ? cfg.speedMul * T.aiPace : 1,
         x: slot.x,
         y: slot.y,
         dir: { x: 1, y: 0 }
@@ -64,7 +65,11 @@
       T.seedProgress(car);
       this.cars.push(car);
       if (spec.player) this.player = car;
-      else this.drivers.push(new AIDriver(car, cfg, slot.wp));
+      else this.drivers.push(new AIDriver(car, {
+        mistake: cfg.mistake,
+        reaction: cfg.reaction,
+        offset: cfg.offset * T.aiOffsetScale
+      }, slot.wp));
     }
     Input.clear();
     this.state = 'countdown';
@@ -109,7 +114,7 @@
       car.arc = p.arc;
       car.progress = car.finished
         ? laps + 1000 - car.finishTime / 100000
-        : car.lap + p.arc / T.length;
+        : car.lap + T.lapFraction(p.arc);
     });
     var order = this.cars.slice().sort(function (a, b) { return b.progress - a.progress; });
     order.forEach(function (car, i) { car.place = i + 1; });
@@ -172,6 +177,7 @@
   /* ---- UI ----------------------------------------------------------- */
 
   Game.buildHud = function () {
+    el.track = document.getElementById('hud-track');
     el.lap = document.getElementById('hud-lap');
     el.pos = document.getElementById('hud-pos');
     el.time = document.getElementById('hud-time');
@@ -185,10 +191,12 @@
     el.resultsTitle = document.getElementById('results-title');
     el.pause = document.getElementById('pause');
     el.lapButtons = document.getElementById('lap-buttons');
+    el.trackButtons = document.getElementById('track-buttons');
   };
 
   Game.drawHud = function () {
     var p = this.player;
+    el.track.textContent = T.name;
     el.lap.textContent = Math.min(p.lap + 1, this.laps) + ' / ' + this.laps;
     el.pos.textContent = p.place + ' / ' + this.cars.length;
     el.time.textContent = fmt(this.time);
@@ -236,6 +244,20 @@
     el.results.classList.add('show');
   };
 
+  Game.setTrack = function (index) {
+    this.trackIndex = index;
+    T.load(index);
+    Renderer.setTrack();
+    Array.prototype.forEach.call(el.trackButtons.children, function (b) {
+      b.classList.toggle('on', parseInt(b.dataset.track, 10) === index);
+    });
+    document.getElementById('menu-track').textContent = T.name;
+    document.getElementById('menu-grade').textContent = T.data.grade;
+    document.getElementById('menu-blurb').textContent = T.data.blurb;
+    this.reset();
+    this.state = 'menu';
+  };
+
   Game.setLaps = function (n) {
     this.laps = Math.max(C.minLaps, Math.min(C.maxLaps, n));
     Array.prototype.forEach.call(el.lapButtons.children, function (b) {
@@ -279,8 +301,7 @@
     Renderer.init(document.getElementById('game'));
     this.buildHud();
     this.setLaps(C.laps);
-    this.reset();
-    this.state = 'menu';
+    this.setTrack(C.track);
     el.menu.classList.add('show');
 
     Input.onCommand = function (n) { Game.command(n); };
@@ -289,6 +310,12 @@
       b.addEventListener('click', function (e) {
         e.stopPropagation();
         Game.setLaps(parseInt(b.dataset.laps, 10));
+      });
+    });
+    Array.prototype.forEach.call(el.trackButtons.children, function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        Game.setTrack(parseInt(b.dataset.track, 10));
       });
     });
     document.getElementById('btn-start').addEventListener('click', function (e) {

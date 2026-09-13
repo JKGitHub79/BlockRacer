@@ -31,6 +31,13 @@
             One speed. No brakes. Every press turns you exactly 90&deg;.<br>
             Hit a wall and you stop dead &ndash; turn to get going again.
           </p>
+          <p class="lapline">TRACK &middot; <b id="menu-track">CROSSOVER</b>
+            <span class="grade" id="menu-grade">BEGINNER</span></p>
+          <div id="track-buttons" class="laps">
+            <button data-track="0">1 &middot; CROSSOVER</button>
+            <button data-track="1">2 &middot; STAIRCASE</button>
+          </div>
+          <p class="trackblurb" id="menu-blurb"></p>
           <p class="lapline">RACE LENGTH &middot; <b id="menu-laps">5</b> LAPS</p>
           <div id="lap-buttons" class="laps">
             <button data-laps="1">1</button>
@@ -39,7 +46,7 @@
             <button data-laps="10">10</button>
           </div>
           <button id="btn-start" class="primary">START RACE</button>
-          <p class="hint">or press ENTER &nbsp;&middot;&nbsp; add <code>?laps=7</code> to the URL</p>
+          <p class="hint">or press ENTER &nbsp;&middot;&nbsp; <code>?track=2&amp;laps=7</code> works too</p>
         </div>
       </div>
 
@@ -61,6 +68,7 @@
     </div>
 
     <aside class="hud">
+      <div class="stat"><span>TRACK</span><b id="hud-track">CROSSOVER</b></div>
       <div class="stat"><span>LAP</span><b id="hud-lap">1 / 5</b></div>
       <div class="stat"><span>POSITION</span><b id="hud-pos">1 / 4</b></div>
       <div class="stat"><span>RACE TIME</span><b id="hud-time">0:00.00</b></div>
@@ -72,6 +80,7 @@
   </div>
 </div>
 
+<script src="js/tracks.js"></script>
 <script src="js/config.js"></script>
 <script src="js/track.js"></script>
 <script src="js/car.js"></script>

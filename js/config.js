@@ -5,15 +5,15 @@
 
   var CONFIG = {
     /* ---- Race rules ------------------------------------------------- */
+    track: 0,             // which entry of js/tracks.js. ?track=N or the menu.
     laps: 5,              // race length. Override with ?laps=N or the menu.
     minLaps: 1,
     maxLaps: 20,
     countdown: 3,         // seconds of 3..2..1..GO before the lights drop
 
     /* ---- World ------------------------------------------------------ */
-    cell: 24,             // pixels per grid cell
-    cols: 40,
-    rows: 25,
+    cell: 24,             // pixels per grid cell. Shared by every track, so
+                          // that a track with wider roads really is wider.
 
     /* ---- Car -------------------------------------------------------- */
     carLength: 1.25,      // in cells, measured along the direction of travel
@@ -36,8 +36,10 @@
       bg:        '#070a11',
       road:      '#10151f',
       roadLine:  '#171f2e',
-      wall:      '#38456a',   // outer barriers and the infield
+      wall:      '#38456a',   // infield islands
       wallTop:   '#6076b0',
+      outer:     '#28314d',   // ground outside the circuit, and the border
+      outerTop:  '#44537f',
       jog:       '#5a4270',   // the blocks that force the staircase
       jogTop:    '#c88a3c',
       startLine: '#f2f5ff',
@@ -47,14 +49,16 @@
     }
   };
 
-  // ?laps=3 wins over the default.
-  var q = /[?&]laps=(\d+)/.exec(global.location ? global.location.search : '');
-  if (q) {
-    CONFIG.laps = Math.max(CONFIG.minLaps, Math.min(CONFIG.maxLaps, parseInt(q[1], 10)));
+  // URL parameters win over the defaults.
+  var search = global.location ? global.location.search : '';
+  var laps = /[?&]laps=(\d+)/.exec(search);
+  if (laps) {
+    CONFIG.laps = Math.max(CONFIG.minLaps, Math.min(CONFIG.maxLaps, parseInt(laps[1], 10)));
   }
-
-  CONFIG.width = CONFIG.cols * CONFIG.cell;
-  CONFIG.height = CONFIG.rows * CONFIG.cell;
+  var track = /[?&]track=(\d+)/.exec(search);
+  if (track) {
+    CONFIG.track = Math.max(0, Math.min(global.TRACKS.length - 1, parseInt(track[1], 10) - 1));
+  }
 
   global.CONFIG = CONFIG;
 })(typeof window !== 'undefined' ? window : globalThis);

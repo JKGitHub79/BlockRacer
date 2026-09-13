@@ -10,13 +10,15 @@ const path = require('path');
 const sandbox = { location: { search: '' }, console, Math, Date };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
-for (const f of ['js/config.js', 'js/track.js', 'js/car.js', 'js/ai.js']) {
+for (const f of ['js/tracks.js', 'js/config.js', 'js/track.js', 'js/car.js', 'js/ai.js']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), sandbox, { filename: f });
 }
-const { CONFIG, TRACK, Car, AIDriver } = sandbox;
+const { CONFIG, TRACKS, TRACK, Car, AIDriver } = sandbox;
 
 const LAPS = parseInt(process.argv[2] || '5', 10);
 const RACES = parseInt(process.argv[3] || '5', 10);
+// third argument picks one track (1-based); without it, every track runs
+const ONLY = process.argv[4] ? parseInt(process.argv[4], 10) - 1 : null;
 
 function race(seed) {
   // deterministic per-race randomness, so a bad race can be reproduced
@@ -31,13 +33,17 @@ function race(seed) {
     const cfg = CONFIG.ai[i % CONFIG.ai.length];
     const car = new Car({
       id: i, name: 'AI' + i, color: '#fff',
-      speedMul: cfg.speedMul, x: slot.x, y: slot.y, dir: { x: 1, y: 0 }
+      speedMul: cfg.speedMul * TRACK.aiPace, x: slot.x, y: slot.y, dir: { x: 1, y: 0 }
     });
     car.crashes = 0;
     car.lapTimes = [];
     TRACK.seedProgress(car);
     cars.push(car);
-    drivers.push(new AIDriver(car, cfg, slot.wp));
+    drivers.push(new AIDriver(car, {
+      mistake: cfg.mistake,
+      reaction: cfg.reaction,
+      offset: cfg.offset * TRACK.aiOffsetScale
+    }, slot.wp));
   });
 
   const dt = CONFIG.dt;
@@ -66,24 +72,30 @@ function race(seed) {
 }
 
 let allOk = true;
-const paces = [];
-for (let r = 0; r < RACES; r++) {
-  const { cars, t } = race(r);
-  const line = cars.map((c) => {
-    const best = c.lapTimes.length ? Math.min(...c.lapTimes).toFixed(2) : '-';
-    const status = c.finished ? c.finishTime.toFixed(1) + 's' : 'DNF(lap ' + (c.lap + 1) + ')';
-    if (!c.finished) allOk = false;
-    c.lapTimes.forEach((x) => paces.push(x));
-    return `${c.name} ${status} best=${best} crashes=${c.crashes}`;
-  }).join('  |  ');
-  console.log(`race ${r + 1}: ${line}`);
+
+for (let ti = 0; ti < TRACKS.length; ti++) {
+  if (ONLY !== null && ti !== ONLY) continue;
+  TRACK.load(ti);
+  console.log(`\nTrack ${ti + 1}: ${TRACK.name} - ${RACES} races of ${LAPS} laps`);
+  const paces = [];
+  for (let r = 0; r < RACES; r++) {
+    const { cars } = race(r);
+    const line = cars.map((c) => {
+      const best = c.lapTimes.length ? Math.min(...c.lapTimes).toFixed(2) : '-';
+      const status = c.finished ? c.finishTime.toFixed(1) + 's' : 'DNF(lap ' + (c.lap + 1) + ')';
+      if (!c.finished) allOk = false;
+      c.lapTimes.forEach((x) => paces.push(x));
+      return `${c.name} ${status} best=${best} crashes=${c.crashes}`;
+    }).join('  |  ');
+    if (RACES <= 10 || !cars.every((c) => c.finished)) console.log(`  race ${r + 1}: ${line}`);
+  }
+  paces.sort((a, b) => a - b);
+  if (paces.length) {
+    console.log(`  ${paces.length} laps: fastest ${paces[0].toFixed(2)}s  ` +
+      `median ${paces[Math.floor(paces.length / 2)].toFixed(2)}s  ` +
+      `slowest ${paces[paces.length - 1].toFixed(2)}s`);
+  }
 }
 
-if (paces.length) {
-  paces.sort((a, b) => a - b);
-  console.log(`\nlap times over ${paces.length} laps: ` +
-    `fastest ${paces[0].toFixed(2)}s  median ${paces[Math.floor(paces.length / 2)].toFixed(2)}s  ` +
-    `slowest ${paces[paces.length - 1].toFixed(2)}s`);
-}
 if (!allOk) { console.error('\nAt least one AI car failed to finish.'); process.exit(1); }
-console.log('\nAll AI cars finished ' + LAPS + ' laps in every race.');
+console.log('\nEvery AI car finished every race on every track.');

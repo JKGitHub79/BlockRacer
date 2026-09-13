@@ -12,19 +12,19 @@
 
   function bakeTrack() {
     var cv = document.createElement('canvas');
-    cv.width = C.width;
-    cv.height = C.height;
+    cv.width = T.width;
+    cv.height = T.height;
     var g = cv.getContext('2d');
 
     g.fillStyle = C.colors.road;
-    g.fillRect(0, 0, C.width, C.height);
+    g.fillRect(0, 0, T.width, T.height);
 
     // faint tile grid on the tarmac so speed reads at a glance
     g.strokeStyle = C.colors.roadLine;
     g.lineWidth = 1;
     g.beginPath();
-    for (var x = 0; x <= C.cols; x++) { g.moveTo(x * S + 0.5, 0); g.lineTo(x * S + 0.5, C.height); }
-    for (var y = 0; y <= C.rows; y++) { g.moveTo(0, y * S + 0.5); g.lineTo(C.width, y * S + 0.5); }
+    for (var x = 0; x <= T.cols; x++) { g.moveTo(x * S + 0.5, 0); g.lineTo(x * S + 0.5, T.height); }
+    for (var y = 0; y <= T.rows; y++) { g.moveTo(0, y * S + 0.5); g.lineTo(T.width, y * S + 0.5); }
     g.stroke();
 
     // racing line: the track is all right angles, so show the staircase
@@ -42,15 +42,17 @@
     g.restore();
 
     // walls
-    for (var cy = 0; cy < C.rows; cy++) {
-      for (var cx = 0; cx < C.cols; cx++) {
+    for (var cy = 0; cy < T.rows; cy++) {
+      for (var cx = 0; cx < T.cols; cx++) {
         if (!T.isWall(cx, cy)) continue;
-        var jog = T.wallKind(cx, cy) === 3;
-        g.fillStyle = jog ? C.colors.jog : C.colors.wall;
+        // Three kinds of solid, each with its own face colour: the islands
+        // inside the circuit, the ground outside it, and the chicane blocks.
+        var kind = T.wallKind(cx, cy);
+        var fill = kind === 3 ? C.colors.jog : kind === 2 ? C.colors.wall : C.colors.outer;
+        var face = kind === 3 ? C.colors.jogTop : kind === 2 ? C.colors.wallTop : C.colors.outerTop;
+        g.fillStyle = fill;
         g.fillRect(cx * S, cy * S, S, S);
-        // Light every face that meets open road, so a block reads as solid
-        // and the chicanes read as a different kind of solid.
-        g.fillStyle = jog ? C.colors.jogTop : C.colors.wallTop;
+        g.fillStyle = face;
         if (!T.isWall(cx, cy - 1)) g.fillRect(cx * S, cy * S, S, 3);
         if (!T.isWall(cx - 1, cy)) g.fillRect(cx * S, cy * S, 3, S);
         if (!T.isWall(cx + 1, cy)) g.fillRect(cx * S + S - 3, cy * S, 3, S);
@@ -77,11 +79,18 @@
 
   Renderer.init = function (canvas) {
     this.canvas = canvas;
+    this.setTrack();
+  };
+
+  /* Resize to the current track and bake its scenery. Called on boot and
+   * whenever the track changes - tracks are not all the same shape. */
+  Renderer.setTrack = function () {
+    var canvas = this.canvas;
     var dpr = Math.min(global.devicePixelRatio || 1, 2);
-    canvas.width = C.width * dpr;
-    canvas.height = C.height * dpr;
-    canvas.style.width = C.width + 'px';
-    canvas.style.height = C.height + 'px';
+    canvas.width = T.width * dpr;
+    canvas.height = T.height * dpr;
+    canvas.style.width = T.width + 'px';
+    canvas.style.height = T.height + 'px';
     this.ctx = canvas.getContext('2d');
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     bakeTrack();
@@ -144,8 +153,8 @@
   Renderer.draw = function (game) {
     var g = this.ctx;
     g.fillStyle = C.colors.bg;
-    g.fillRect(0, 0, C.width, C.height);
-    g.drawImage(trackCanvas, 0, 0, C.width, C.height);
+    g.fillRect(0, 0, T.width, T.height);
+    g.drawImage(trackCanvas, 0, 0, T.width, T.height);
 
     drawCheckpoints(g, game.player);
 
@@ -163,12 +172,12 @@
       var label = n > 0 ? String(n) : 'GO!';
       g.save();
       g.fillStyle = 'rgba(8,11,18,0.55)';
-      g.fillRect(0, 0, C.width, C.height);
+      g.fillRect(0, 0, T.width, T.height);
       g.font = '700 96px ui-monospace, Menlo, Consolas, monospace';
       g.textAlign = 'center';
       g.textBaseline = 'middle';
       g.fillStyle = n > 0 ? '#ffd166' : '#5ef2a0';
-      g.fillText(label, C.width / 2, C.height / 2);
+      g.fillText(label, T.width / 2, T.height / 2);
       g.restore();
     }
   };
