@@ -208,8 +208,9 @@
     el.time = document.getElementById('hud-time');
     el.best = document.getElementById('hud-best');
     el.last = document.getElementById('hud-last');
-    el.board = document.getElementById('standings');
+    el.standings = document.getElementById('standings');
     el.msg = document.getElementById('message');
+    el.board = document.getElementById('board');
     el.menu = document.getElementById('menu');
     el.results = document.getElementById('results');
     el.resultsBody = document.getElementById('results-body');
@@ -241,10 +242,14 @@
         '<span class="lp">' + (car.finished ? 'FIN' : 'L' + Math.min(car.lap + 1, Game.laps)) + '</span>' +
         '</li>';
     });
-    el.board.innerHTML = rows;
+    el.standings.innerHTML = rows;
 
     if (this.state === 'racing' && p.crashed) {
-      el.msg.textContent = 'CRASHED - press LEFT or RIGHT to turn and go';
+      // The long form does not fit across a phone-sized board, and on a phone
+      // you are tapping rather than pressing anything anyway.
+      el.msg.textContent = el.board.clientWidth < 430
+        ? 'CRASHED - TAP LEFT OR RIGHT'
+        : 'CRASHED - press LEFT or RIGHT to turn and go';
       el.msg.classList.add('show');
     } else {
       el.msg.classList.remove('show');

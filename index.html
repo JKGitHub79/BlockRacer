@@ -11,7 +11,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.5.0', built: '2026-09-15' };
+window.BR = { version: '0.6.0', built: '2026-09-15' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -30,6 +30,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 
   <div class="stage">
     <div class="canvas-wrap">
+     <div class="board" id="board">
       <canvas id="game"></canvas>
       <div id="message" class="message"></div>
 
@@ -68,6 +69,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
             <button data-laps="5">5</button>
             <button data-laps="10">10</button>
           </div>
+          <p class="rotate">Turn your phone sideways for a bigger board.</p>
           <button id="btn-start" class="primary">START RACE</button>
           <p class="hint">or press ENTER &nbsp;&middot;&nbsp; <code>?track=2&amp;laps=7</code> works too</p>
         </div>
@@ -88,6 +90,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           <p class="hint">or press R</p>
         </div>
       </div>
+     </div>
     </div>
 
     <aside class="hud">

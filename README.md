@@ -25,6 +25,15 @@ what you pushed.
 
 On a touchscreen, tap the left or right half of the screen.
 
+The board scales to whatever screen it is on, in both dimensions, keeping the
+track's shape - so a phone held sideways gets the whole circuit rather than a
+cropped desktop layout. The canvas is drawn in logical track pixels whatever
+the size; only its transform and backing-store resolution change, so it stays
+sharp and none of the game code has to care. The panel moves below the board on
+narrow screens and thins out on short ones, and the menus size to the viewport
+rather than to the board, which on a phone in portrait is too small to hold
+them.
+
 ## The rules
 
 - The car runs at a single fixed speed. There is no throttle and no brake.

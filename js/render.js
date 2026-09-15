@@ -94,20 +94,68 @@
   Renderer.init = function (canvas) {
     this.canvas = canvas;
     this.setTrack();
+
+    // Refit on anything that can change the space available. Coalesced into
+    // one animation frame because orientation changes fire several at once and
+    // resizing the backing store is not free.
+    var pending = false;
+    var refit = function () {
+      if (pending) return;
+      pending = true;
+      global.requestAnimationFrame(function () {
+        pending = false;
+        Renderer.fit();
+      });
+    };
+    global.addEventListener('resize', refit);
+    global.addEventListener('orientationchange', refit);
+    if (global.visualViewport) global.visualViewport.addEventListener('resize', refit);
   };
 
-  /* Resize to the current track and bake its scenery. Called on boot and
-   * whenever the track changes - tracks are not all the same shape. */
-  Renderer.setTrack = function () {
+  /* Scale the board to whatever box is left over, keeping the track's shape.
+   *
+   * The game is drawn in logical track pixels whatever the screen is; only the
+   * transform changes. The backing store is sized to what is actually shown,
+   * so a phone renders a phone's worth of pixels rather than a desktop's
+   * scaled down, and the drawing stays sharp at any size. */
+  Renderer.fit = function () {
     var canvas = this.canvas;
+    var stage = canvas.parentNode.parentNode.parentNode;   // .board > .canvas-wrap > .stage
+    var hud = stage.querySelector('.hud');
+    var css = global.getComputedStyle(stage);
+    var column = css.flexDirection === 'column';
+    var gap = parseFloat(css.gap) || 0;
+
+    // Measure the stage and subtract the panel, rather than measuring the box
+    // the board sits in. The board's own size must never be an input here or
+    // sizing it changes the space it is being sized to fit.
+    var availW = stage.clientWidth - (column || !hud ? 0 : hud.offsetWidth + gap);
+    var availH = stage.clientHeight - (!column || !hud ? 0 : hud.offsetHeight + gap);
+
+    // 2px for the board's border, so the frame is never clipped
+    var scale = Math.min((availW - 2) / T.width, (availH - 2) / T.height);
+    if (!(scale > 0)) scale = 1;
+
+    var cssW = Math.max(1, Math.floor(T.width * scale));
+    var cssH = Math.max(1, Math.floor(T.height * scale));
     var dpr = Math.min(global.devicePixelRatio || 1, 2);
-    canvas.width = T.width * dpr;
-    canvas.height = T.height * dpr;
-    canvas.style.width = T.width + 'px';
-    canvas.style.height = T.height + 'px';
+
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+
+    // Resizing the backing store clears the context, so the transform that
+    // maps track pixels onto it has to be set again here.
     this.ctx = canvas.getContext('2d');
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.ctx.setTransform(canvas.width / T.width, 0, 0, canvas.height / T.height, 0, 0);
+  };
+
+  /* Bake the current track's scenery and size the board to it. Called on boot
+   * and whenever the track changes - tracks are not all the same shape. */
+  Renderer.setTrack = function () {
     bakeTrack();
+    this.fit();
   };
 
   function drawCheckpoints(g, player) {
