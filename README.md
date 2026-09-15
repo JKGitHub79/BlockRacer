@@ -6,6 +6,12 @@ brakes, and the only control you have is a 90 degree turn.
 **Play it:** open `index.html` in any browser. No build step, no dependencies,
 no server required.
 
+The version is stamped next to the title in the top left. It lives in one place
+- `window.BR` at the top of `index.html` - and is appended to every script and
+stylesheet URL, so a deploy is never served from a stale cache. Bump it when
+you push, and the number on screen tells you whether what you are playing is
+what you pushed.
+
 ## Controls
 
 | Key | Action |

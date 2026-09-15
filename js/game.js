@@ -195,6 +195,11 @@
   /* ---- UI ----------------------------------------------------------- */
 
   Game.buildHud = function () {
+    var stamp = document.getElementById('version');
+    if (stamp && global.BR) {
+      stamp.textContent = 'v' + global.BR.version;
+      stamp.title = 'built ' + global.BR.built;
+    }
     el.track = document.getElementById('hud-track');
     el.speed = document.getElementById('hud-speed');
     el.lap = document.getElementById('hud-lap');

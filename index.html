@@ -4,12 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Block Racer</title>
-<link rel="stylesheet" href="css/style.css">
+<script>
+/* Single source of truth for the version.
+ *
+ * It is stamped into the header AND appended to every script and stylesheet
+ * URL below, so a new deploy can never be served as a cached copy of the old
+ * one - which is the whole reason the number is on screen. Bump it whenever
+ * you push something you want to be able to see has landed. */
+window.BR = { version: '0.4.0', built: '2026-09-15' };
+document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
+</script>
 </head>
 <body>
 <div class="shell">
   <header class="topbar">
-    <h1>BLOCK<span>RACER</span></h1>
+    <h1>BLOCK<span>RACER</span><em id="version">&nbsp;</em></h1>
     <div class="keys">
       <kbd>&larr;</kbd><kbd>A</kbd> turn left
       <kbd>&rarr;</kbd><kbd>D</kbd> turn right
@@ -87,14 +96,13 @@
   </div>
 </div>
 
-<script src="js/tracks.js"></script>
-<script src="js/config.js"></script>
-<script src="js/track.js"></script>
-<script src="js/car.js"></script>
-<script src="js/ai.js"></script>
-<script src="js/input.js"></script>
-<script src="js/audio.js"></script>
-<script src="js/render.js"></script>
-<script src="js/game.js"></script>
+<script>
+/* Loaded through the version so the browser fetches fresh files after a
+ * deploy. document.write keeps them strictly in order, which they need. */
+['tracks', 'config', 'track', 'car', 'ai', 'input', 'audio', 'render', 'game']
+  .forEach(function (name) {
+    document.write('<script src="js/' + name + '.js?v=' + BR.version + '"><\/script>');
+  });
+</script>
 </body>
 </html>
