@@ -23,19 +23,25 @@
     this.mode = 'line';       // 'line' = on the racing line, 'recover' = lost
     this.recoverTimer = cfg.reaction;
     this.overrun = 0;
-    this.watch = { t: 0, x: car.x, y: car.y, strikes: 0, fired: 0 };
+    this.watch = { t: 0, x: car.x, y: car.y, strikes: 0, fired: 0, dist: Infinity };
     this.pending = null;      // heading we are part way through turning to
   }
 
-  /* Traffic can leave a car shuffling on the spot at a corner. If it has not
-   * covered any ground in a while, stop trying to be tidy and go find space. */
+  /* Traffic can leave a car shuffling on the spot at a corner, and scrubbing
+   * along a wall can leave one travelling perfectly well in a direction that
+   * gets it nowhere. Covering ground is therefore not enough: the ground has
+   * to be in the direction of the waypoint it is trying to reach. */
   AIDriver.prototype.watchdog = function (dt) {
     var w = this.watch, car = this.car;
     w.t += dt;
     if (w.t < 0.5) return false;
+    var wp = this.path[this.wpi];
+    var dist = Math.abs(wp.x - car.x) + Math.abs(wp.y - car.y);
     var moved = Math.abs(car.x - w.x) + Math.abs(car.y - w.y);
+    var closer = dist < w.dist - 0.2;
     w.t = 0; w.x = car.x; w.y = car.y;
-    if (moved > 0.25) { w.strikes = 0; w.fired = 0; return false; }
+    if (dist < w.dist) w.dist = dist;
+    if (moved > 0.25 && closer) { w.strikes = 0; w.fired = 0; return false; }
     if (++w.strikes < 2) return false;
     w.strikes = 0;
     this.pending = null;
@@ -145,6 +151,8 @@
 
   AIDriver.prototype.advance = function () {
     this.wpi = (this.wpi + 1) % this.path.length;
+    this.watch.dist = Infinity;      // a new target is not a lack of progress
+    this.watch.strikes = 0;
     this.overrun = 0;
     this.late = Math.random() < this.mistake ? 0.8 + Math.random() * 1.4 : 0;
   };

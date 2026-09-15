@@ -242,15 +242,31 @@
     if (Math.abs(dx) < 1e-9) dx = 0;
     if (Math.abs(dy) < 1e-9) dy = 0;
 
-    var hit = sweepAxis(this, true, dx);
-    if (!hit) hit = sweepAxis(this, false, dy);
-    if (!hit) return null;
+    // Both axes are tried: being stopped on one is not the same as being
+    // stopped altogether.
+    var hitX = sweepAxis(this, true, dx);
+    var hitY = sweepAxis(this, false, dy);
+    if (!hitX && !hitY) return null;
+    var at = hitX || hitY;
+
+    // How much of the car's speed was running along the wall it met rather
+    // than into it. Both axes blocked is a corner, with nowhere to run.
+    var along = (hitX && hitY) ? 0
+              : (hitX ? Math.abs(dy) : Math.abs(dx)) / dist;
+
+    if (along >= C.graze) {
+      // A scrape. The blocked axis made no progress this step and the car
+      // carries on down the wall on the other one, which costs it the speed
+      // the wall just absorbed. It stops properly once it is pointing into
+      // the wall, because then nothing is running along it any more.
+      return { x: at.x, y: at.y, crashed: false };
+    }
 
     this.crashed = true;
     this.crashFlash = 1;
     this.velAngle = this.headingAngle();
     this.lean = 0;
-    return hit;
+    return { x: at.x, y: at.y, crashed: true };
   };
 
   /* Move by `amount` on one axis, but only if it stays out of the walls. */

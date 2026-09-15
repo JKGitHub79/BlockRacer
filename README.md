@@ -44,8 +44,15 @@ them.
 - Its momentum does not turn with it. The car slides through the corner on a
   fixed radius, sitting at 45° to the way it is still travelling, so **you have
   to turn early**. See [Slide](#slide) below.
-- Hitting a wall stops you dead. You stay there until you turn, and then you go
-  again in the new direction.
+- Driving into a wall stops you dead. You stay there until you turn, and then
+  you go again in the new direction.
+- **Clipping** one does not. If most of your speed is running along the wall
+  rather than into it - which is what happens when you graze an edge part way
+  through a slide - the car scrubs along it instead of stopping, losing
+  whatever speed the wall takes. It only stops once it is pointing into the
+  wall, because then nothing is running along it any more. `graze` in
+  `js/config.js` is the fraction of speed that has to be tangential for this;
+  `0` makes every touch a full stop.
 - Four cars start: you and three AI drivers, which have exactly the same
   controls and the same single speed. They turn late and crash sometimes.
 - Cars do not stop each other. They shove each other sideways, so you can barge
@@ -136,6 +143,21 @@ happens as you wind it up, measured:
 
 Nothing breaks at the top of the range - no runaway positions, no cars ending up
 inside walls - it just stops being a game.
+
+Slide and the graze rule are two halves of one thing. Sliding makes a car travel
+diagonally through a corner, so it starts grazing edges it would never have
+touched when turns were instant - and before the graze rule those clips were
+punished exactly as hard as driving head-on into a wall. Measured over 25 races
+a track at slide 0.8, the rule cuts full stops by a third on Crossover, a
+quarter on Caldera and more than half on Staircase, and turns them into scrapes:
+
+| | Crossover | Caldera | Staircase |
+| --- | --- | --- | --- |
+| stops, before | 122 | 236 | 2140 |
+| stops, after | 80 | 168 | 914 |
+
+At slide 0 it changes nothing at all, by construction: a car's velocity is then
+always exactly on an axis, so no contact ever has a tangential component.
 
 It is a distance and not a duration deliberately, so the lead you have to give a
 corner is the same at every game speed. Were it a duration, Hard would widen

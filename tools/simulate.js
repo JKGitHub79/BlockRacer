@@ -40,6 +40,7 @@ function race(seed) {
       x: slot.x, y: slot.y, dir: { x: 1, y: 0 }
     });
     car.crashes = 0;
+    car.scrapes = 0;
     car.lapTimes = [];
     TRACK.seedProgress(car);
     cars.push(car);
@@ -59,7 +60,9 @@ function race(seed) {
     for (const car of cars) {
       if (car.finished) continue;
       car.lapTime += dt;
-      if (car.step(dt)) car.crashes++;
+      var contact = car.step(dt);
+      if (contact && contact.crashed) car.crashes++;
+      else if (contact) car.scrapes++;
     }
     Car.separate(cars, dt);
     for (const car of cars) {
@@ -90,7 +93,7 @@ for (let ti = 0; ti < TRACKS.length; ti++) {
       const status = c.finished ? c.finishTime.toFixed(1) + 's' : 'DNF(lap ' + (c.lap + 1) + ')';
       if (!c.finished) allOk = false;
       c.lapTimes.forEach((x) => paces.push(x));
-      return `${c.name} ${status} best=${best} crashes=${c.crashes}`;
+      return `${c.name} ${status} best=${best} crashes=${c.crashes} scrapes=${c.scrapes}`;
     }).join('  |  ');
     if (RACES <= 10 || !cars.every((c) => c.finished)) console.log(`  race ${r + 1}: ${line}`);
   }

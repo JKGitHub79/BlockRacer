@@ -76,8 +76,8 @@
     this.updateStandings();
   };
 
-  function spawnSparks(game, at, color) {
-    for (var i = 0; i < 12; i++) {
+  function spawnSparks(game, at, color, count) {
+    for (var i = 0; i < (count || 12); i++) {
       var a = Math.random() * Math.PI * 2;
       var sp = 1.5 + Math.random() * 4;
       game.particles.push({
@@ -166,9 +166,13 @@
       var car = this.cars[j];
       if (!car.finished) car.lapTime += dt;
       var hit = car.step(dt);
-      if (hit) {
+      if (hit && hit.crashed) {
         spawnSparks(this, hit, car.color);
         if (car.isPlayer) Sound.crash();
+      } else if (hit && Math.random() < 0.3) {
+        // A scrape throws a few sparks every so often rather than a shower,
+        // otherwise a car running down a wall fountains.
+        spawnSparks(this, hit, car.color, 2);
       }
       layRubber(this, car);
     }

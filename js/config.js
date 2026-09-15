@@ -64,6 +64,21 @@
      * car actually is or what it collides with depends on it. */
     slideSettle: 0.14,
 
+    /* How much of a car's speed has to be running ALONG a wall, rather than
+     * into it, for the contact to count as a scrape rather than a crash.
+     *
+     * A car that drives squarely into a wall still stops dead and still waits
+     * for a turn, as it always has. But sliding through a corner makes a car
+     * travel diagonally, and clipping an edge on the way round used to be
+     * punished exactly as hard as driving head-on into it. Now it scrubs along
+     * the wall instead, losing whatever speed the wall takes off it.
+     *
+     * At slide 0 a car's velocity is always exactly on an axis, so nothing is
+     * ever running along the wall, every contact is head-on, and this changes
+     * nothing whatsoever. Set it to 0 to get the same everywhere; 1 would make
+     * a car unstoppable. */
+    graze: 0.3,
+
     /* ---- Game speed --------------------------------------------------- */
     /* Picked on the start menu. Scales every car, player and AI alike. */
     speedLevel: 0,
@@ -119,6 +134,8 @@
   }
   var slide = /[?&]slide=([\d.]+)/.exec(search);
   if (slide) CONFIG.slide = Math.max(0, Math.min(CONFIG.maxSlide, parseFloat(slide[1])));
+  var graze = /[?&]graze=([\d.]+)/.exec(search);
+  if (graze) CONFIG.graze = Math.max(0, Math.min(1, parseFloat(graze[1])));
 
   CONFIG.speedMul = function () {
     return CONFIG.speedLevels[CONFIG.speedLevel].mul;
