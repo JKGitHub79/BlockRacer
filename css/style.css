@@ -197,6 +197,9 @@ canvas { display: block; touch-action: none; }
   gap: 8px;
 }
 
+.tracks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.tracks button { font-size: 11px; padding: 10px 2px; }
+
 .laps button {
   flex: 1;
   padding: 10px 4px;
@@ -392,6 +395,7 @@ code { color: var(--accent); }
   /* A short screen is a wide one, so the four levels fit across in one row -
    * and the row they save is what keeps START on screen. */
   .speeds { grid-template-columns: repeat(4, 1fr); }
+  .tracks button { font-size: 10px; padding: 7px 1px; }
   .speeds button { font-size: 10px; letter-spacing: 0; padding: 7px 2px; }
   #menu .hint { display: none; }
   button.primary { padding: 9px; }

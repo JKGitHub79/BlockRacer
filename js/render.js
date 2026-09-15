@@ -9,18 +9,87 @@
 
   var Renderer = {};
   var trackCanvas = null;
+  var lavaLayers = null;
+  var lavaCanvas = null, lavaCtx = null;
+  // Lava is soft enough that painting it at a third of the size and stretching
+  // it back up is indistinguishable, and a ninth of the pixels.
+  var LAVA_SCALE = 1 / 3;
+  var LAVA_RIM = 3;
 
+  /* Track palettes override the defaults one entry at a time. */
+  function colorOf(name) {
+    return (T.theme && T.theme[name]) || C.colors[name];
+  }
+
+  /* A seamless tile of soft molten blobs. Drawn nine times over so a blob that
+   * runs off one edge comes back on the other and the tile can scroll forever
+   * without a visible seam. Built once, at load. */
+  function buildLavaTile(size, count, seed, minR, maxR) {
+    var cv = document.createElement('canvas');
+    cv.width = cv.height = size;
+    var g = cv.getContext('2d');
+    var rnd = function () {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed / 0x7fffffff;
+    };
+    var hues = ['255,88,12', '255,150,36', '255,214,110'];
+    for (var i = 0; i < count; i++) {
+      var bx = rnd() * size, by = rnd() * size;
+      var r = size * (minR + rnd() * (maxR - minR));
+      var hue = hues[(rnd() * hues.length) | 0];
+      var a = 0.25 + rnd() * 0.45;
+      for (var ox = -1; ox <= 1; ox++) {
+        for (var oy = -1; oy <= 1; oy++) {
+          var cx = bx + ox * size, cy = by + oy * size;
+          if (cx + r < 0 || cx - r > size || cy + r < 0 || cy - r > size) continue;
+          var grad = g.createRadialGradient(cx, cy, 0, cx, cy, r);
+          grad.addColorStop(0, 'rgba(' + hue + ',' + a.toFixed(3) + ')');
+          grad.addColorStop(0.5, 'rgba(' + hue + ',' + (a * 0.32).toFixed(3) + ')');
+          grad.addColorStop(1, 'rgba(' + hue + ',0)');
+          g.fillStyle = grad;
+          g.fillRect(cx - r, cy - r, r * 2, r * 2);
+        }
+      }
+    }
+    return cv;
+  }
+
+  /* Two sheets of glow crossing each other at different speeds. One sheet
+   * scrolling on its own reads as a moving picture; two at an angle read as
+   * something churning. */
+  function buildLavaLayers(g) {
+    return [
+      { size: 64, tile: buildLavaTile(64, 24, 1337, 0.07, 0.20),
+        vx: 1.9, vy: -1.0, alpha: 0.62, pulse: 1.6, phase: 0 },
+      { size: 48, tile: buildLavaTile(48, 18, 90210, 0.11, 0.30),
+        vx: -1.2, vy: 1.6, alpha: 0.46, pulse: 1.05, phase: 1.9 }
+    ].map(function (L) { L.pattern = g.createPattern(L.tile, 'repeat'); return L; });
+  }
+
+  function ensureLavaCanvas() {
+    var w = Math.ceil(T.width * LAVA_SCALE), h = Math.ceil(T.height * LAVA_SCALE);
+    if (!lavaCanvas) lavaCanvas = document.createElement('canvas');
+    if (lavaCanvas.width !== w || lavaCanvas.height !== h) {
+      lavaCanvas.width = w;
+      lavaCanvas.height = h;
+      lavaCtx = lavaCanvas.getContext('2d');
+      lavaLayers = null;          // patterns belong to the context that made them
+    }
+  }
+
+  /* Molten rock, drawn live over the baked crust. Only the rectangles the
+   * track marked as lava, which on every other track is none of them. */
   function bakeTrack() {
     var cv = document.createElement('canvas');
     cv.width = T.width;
     cv.height = T.height;
     var g = cv.getContext('2d');
 
-    g.fillStyle = C.colors.road;
+    g.fillStyle = colorOf('road');
     g.fillRect(0, 0, T.width, T.height);
 
     // faint tile grid on the tarmac so speed reads at a glance
-    g.strokeStyle = C.colors.roadLine;
+    g.strokeStyle = colorOf('roadLine');
     g.lineWidth = 1;
     g.beginPath();
     for (var x = 0; x <= T.cols; x++) { g.moveTo(x * S + 0.5, 0); g.lineTo(x * S + 0.5, T.height); }
@@ -29,7 +98,7 @@
 
     // racing line: the track is all right angles, so show the staircase
     g.save();
-    g.strokeStyle = C.colors.racingLine;
+    g.strokeStyle = colorOf('racingLine');
     g.lineWidth = 2;
     g.setLineDash([6, 10]);
     g.beginPath();
@@ -59,11 +128,14 @@
     for (var cy = 0; cy < T.rows; cy++) {
       for (var cx = 0; cx < T.cols; cx++) {
         if (!T.isWall(cx, cy)) continue;
-        // Three kinds of solid, each with its own face colour: the islands
-        // inside the circuit, the ground outside it, and the chicane blocks.
+        // Four kinds of solid: the islands inside the circuit, the ground
+        // outside it, the chicane blocks, and lava - whose cooled crust is
+        // baked here and whose molten middle is painted over it every frame.
         var kind = T.wallKind(cx, cy);
-        var fill = kind === 3 ? C.colors.jog : kind === 2 ? C.colors.wall : C.colors.outer;
-        var face = kind === 3 ? C.colors.jogTop : kind === 2 ? C.colors.wallTop : C.colors.outerTop;
+        var fill = kind === 3 ? colorOf('jog')
+                 : (kind === 2 || kind === 4) ? colorOf('wall') : colorOf('outer');
+        var face = kind === 3 ? colorOf('jogTop')
+                 : (kind === 2 || kind === 4) ? colorOf('wallTop') : colorOf('outerTop');
         g.fillStyle = fill;
         g.fillRect(cx * S, cy * S, S, S);
         g.fillStyle = face;
@@ -84,12 +156,59 @@
     g.fillRect(fx, f.y0 * S, fw, (f.y1 - f.y0) * S);
     for (var r = f.y0; r < f.y1; r += 0.4) {
       for (var col = 0; col < 2; col++) {
-        g.fillStyle = (((r / 0.4) | 0) + col) % 2 ? C.colors.startLine : '#1b2131';
+        g.fillStyle = (((r / 0.4) | 0) + col) % 2 ? colorOf('startLine') : '#1b2131';
         g.fillRect(fx + col * fw / 2, r * S, fw / 2, 0.4 * S);
       }
     }
     trackCanvas = cv;
   }
+
+  Renderer.drawLava = function (g, t) {
+    var rects = T.lavaRects;
+    if (!rects || !rects.length) return;
+    ensureLavaCanvas();
+    var lg = lavaCtx;
+    if (!lavaLayers) lavaLayers = buildLavaLayers(lg);
+
+    // Paint the whole molten sheet once, small: cooled crust, then the glow
+    // sheets crossing over it.
+    lg.globalCompositeOperation = 'source-over';
+    lg.globalAlpha = 1;
+    lg.fillStyle = colorOf('wall');
+    lg.fillRect(0, 0, lavaCanvas.width, lavaCanvas.height);
+    lg.globalCompositeOperation = 'lighter';
+    lavaLayers.forEach(function (L) {
+      var ox = (t * L.vx % L.size + L.size) % L.size;
+      var oy = (t * L.vy % L.size + L.size) % L.size;
+      lg.globalAlpha = L.alpha * (0.82 + 0.18 * Math.sin(t * L.pulse + L.phase));
+      lg.fillStyle = L.pattern;
+      // The pattern is anchored to the origin, so shifting the origin and
+      // drawing back the same amount scrolls the sheet under a fixed rectangle.
+      lg.translate(ox, oy);
+      lg.fillRect(-ox, -oy, lavaCanvas.width, lavaCanvas.height);
+      lg.translate(-ox, -oy);
+    });
+    lg.globalCompositeOperation = 'source-over';
+    lg.globalAlpha = 1;
+
+    // Stamp each molten rectangle out of it, sampling the same place it is
+    // being drawn so the flows line up with the lake they run out of. Inset so
+    // the baked crust rim survives as a cooled edge. Smoothing off: the
+    // interpolation is what costs at this size, and on a game built out of
+    // squares the coarser molten pixels are no loss at all.
+    var smooth = g.imageSmoothingEnabled;
+    g.imageSmoothingEnabled = false;
+    rects.forEach(function (r) {
+      var x = r.x0 * S + LAVA_RIM, y = r.y0 * S + LAVA_RIM;
+      var w = (r.x1 - r.x0 + 1) * S - LAVA_RIM * 2;
+      var h = (r.y1 - r.y0 + 1) * S - LAVA_RIM * 2;
+      if (w <= 0 || h <= 0) return;
+      g.drawImage(lavaCanvas,
+        x * LAVA_SCALE, y * LAVA_SCALE, w * LAVA_SCALE, h * LAVA_SCALE,
+        x, y, w, h);
+    });
+    g.imageSmoothingEnabled = smooth;
+  };
 
   Renderer.init = function (canvas) {
     this.canvas = canvas;
@@ -161,7 +280,7 @@
   function drawCheckpoints(g, player) {
     T.CHECKPOINTS.forEach(function (z, i) {
       var next = player && !player.finished && player.nextCp === i;
-      g.fillStyle = next ? C.colors.checkNext : C.colors.check;
+      g.fillStyle = next ? colorOf('checkNext') : colorOf('check');
       g.fillRect(z.x0 * S, z.y0 * S, (z.x1 - z.x0) * S, (z.y1 - z.y0) * S);
     });
   }
@@ -208,10 +327,11 @@
 
   Renderer.draw = function (game) {
     var g = this.ctx;
-    g.fillStyle = C.colors.bg;
+    g.fillStyle = colorOf('bg');
     g.fillRect(0, 0, T.width, T.height);
     g.drawImage(trackCanvas, 0, 0, T.width, T.height);
 
+    Renderer.drawLava(g, (global.performance ? performance.now() : Date.now()) / 1000);
     drawCheckpoints(g, game.player);
 
     // tyre marks first so they sit under the sparks and the cars

@@ -44,7 +44,7 @@ function race(seed) {
     TRACK.seedProgress(car);
     cars.push(car);
     drivers.push(new AIDriver(car, {
-      mistake: cfg.mistake,
+      mistake: cfg.mistake * TRACK.aiMistakeScale,
       reaction: cfg.reaction,
       offset: cfg.offset * TRACK.aiOffsetScale
     }, slot.wp));

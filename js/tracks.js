@@ -15,12 +15,13 @@
 (function (global) {
   'use strict';
 
-  function border(cols, rows) {
+  function border(cols, rows, kind) {
+    kind = kind || 'edge';
     return [
-      { x0: 0, y0: 0, x1: cols - 1, y1: 0, kind: 'edge' },
-      { x0: 0, y0: rows - 1, x1: cols - 1, y1: rows - 1, kind: 'edge' },
-      { x0: 0, y0: 0, x1: 0, y1: rows - 1, kind: 'edge' },
-      { x0: cols - 1, y0: 0, x1: cols - 1, y1: rows - 1, kind: 'edge' }
+      { x0: 0, y0: 0, x1: cols - 1, y1: 0, kind: kind },
+      { x0: 0, y0: rows - 1, x1: cols - 1, y1: rows - 1, kind: kind },
+      { x0: 0, y0: 0, x1: 0, y1: rows - 1, kind: kind },
+      { x0: cols - 1, y0: 0, x1: cols - 1, y1: rows - 1, kind: kind }
     ];
   }
 
@@ -84,7 +85,88 @@
   };
 
   /* ------------------------------------------------------------------ *
-   * 2. STAIRCASE
+   * 2. CALDERA - moderate
+   *
+   * A ring road around a lava lake, six cells wide like Crossover, with one
+   * lava flow across each of the long straights. Eight turns a lap against
+   * Crossover's six, and the flows leave a three-cell gap rather than
+   * Staircase's two - half again the room, and two of them instead of eight.
+   *
+   *          1   7          13      20   24    31   33  39
+   *      0 +---+------------+=======+----+=====+-----+---+
+   *      1 |   |            | flow  |    |     |     |   |  rows 1-6   top road
+   *      4 |   |            +-------+    +=====+     |   |  (flow blocks a half)
+   *      7 |   +-------------------------------------+   |
+   *        |   |           lava lake                 |   |  rows 7-20 infield
+   *     21 |   +-------------------------------------+   |
+   *     24 |   |    +=====+       +=======+          |   |  rows 21-26 bottom
+   *     27 +---+----+-----+-------+-------+----------+---+
+   *
+   * Every solid on this track is molten, so a mistake is always the same
+   * mistake. cols 1-6 and 33-38 are the side roads.
+   * ------------------------------------------------------------------ */
+  var CALDERA = {
+    id: 'caldera',
+    name: 'CALDERA',
+    blurb: 'Ring road round a lava lake. Two flows to thread.',
+    grade: 'MODERATE',
+    cols: 40,
+    rows: 28,
+    aiPace: 0.97,
+    aiOffsetScale: 1.5,   // the gaps through the flows are three cells, not six
+    /* A step across a flow is a three-cell leg with a wall just beyond it, so
+     * a driver who turns in late here pays for it in a way Crossover's long
+     * open legs never charge. Dialled back so the field is not constantly
+     * picking itself out of the lava. */
+    aiMistakeScale: 0.5,
+    theme: {
+      bg:         '#0a0705',
+      road:       '#17120f',
+      roadLine:   '#241b16',
+      wall:       '#2c1410',   // cooled crust; the glow is drawn over it live
+      wallTop:    '#8a3a18',
+      outer:      '#210f0b',
+      outerTop:   '#632611',
+      racingLine: 'rgba(255,196,130,0.22)',
+      check:      'rgba(255,170,80,0.07)',
+      checkNext:  'rgba(255,170,80,0.26)',
+      startLine:  '#ffeada'
+    },
+    walls: border(40, 28, 'lava').concat([
+      { x0: 7,  y0: 7,  x1: 32, y1: 20, kind: 'lava' },   // the lake
+      { x0: 13, y0: 1,  x1: 19, y1: 3,  kind: 'lava' },   // top straight flows
+      { x0: 24, y0: 4,  x1: 30, y1: 6,  kind: 'lava' },
+      { x0: 20, y0: 21, x1: 26, y1: 23, kind: 'lava' },   // bottom straight flows
+      { x0: 10, y0: 24, x1: 16, y1: 26, kind: 'lava' }
+    ]),
+    route: [
+      { x: 4,    y: 5.5  },   // 0  out of the left road onto the inside line
+      { x: 21.5, y: 5.5  },   // 1  step outward, round the first flow
+      { x: 21.5, y: 2.5  },   // 2
+      { x: 36,   y: 2.5  },   // 3  turn down the right road
+      { x: 36,   y: 25.5 },   // 4  turn along the bottom, on the outside
+      { x: 18.5, y: 25.5 },   // 5  step inward, round the second flow
+      { x: 18.5, y: 22.5 },   // 6
+      { x: 4,    y: 22.5 }    // 7  turn up the left road, back to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 31.5, y0: 1,  x1: 32.5, y1: 4  },   // end of the top straight
+      { x0: 33,   y0: 13, x1: 39,   y1: 14 },   // right road
+      { x0: 8,    y0: 21, x1: 9,    y1: 24 },   // bottom straight
+      { x0: 1,    y0: 12, x1: 7,    y1: 13 }    // left road
+    ],
+    finish: { x0: 8.6, y0: 4, x1: 9.4, y1: 7, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 6.9, y: 4.8, wp: 1 },
+      { x: 6.9, y: 6.2, wp: 1 },
+      { x: 5.0, y: 4.8, wp: 1 },
+      { x: 5.0, y: 6.2, wp: 1 }
+    ]
+  };
+
+  /* ------------------------------------------------------------------ *
+   * 3. STAIRCASE
    *
    * A four-cell corridor around a solid infield. Every straight carries two
    * blocks on alternating halves of the road, so no straight can be taken in
@@ -149,5 +231,5 @@
     ]
   };
 
-  global.TRACKS = [CROSSOVER, STAIRCASE];
+  global.TRACKS = [CROSSOVER, CALDERA, STAIRCASE];
 })(typeof window !== 'undefined' ? window : globalThis);

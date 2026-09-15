@@ -56,9 +56,13 @@ them.
 
 ## The tracks
 
-Pick one from the start menu. On both, the faint dashed line is the racing line
-the AI drives, the light blocks are islands inside the circuit, and the darker
-blue is outside it.
+Pick one from the start menu, listed in order of difficulty. On all of them the
+faint dashed line is the racing line the AI drives, and solid blocks are walls:
+hitting one stops you dead wherever it is.
+
+A track can carry a `theme`, which overrides any of the palette entries in
+`js/config.js` for that track alone - that is what makes Caldera black rock and
+orange rather than the usual blue.
 
 ### 1 · Crossover — beginner
 
@@ -74,7 +78,25 @@ A figure of eight has to *cross* itself, which is why the two rectangles share a
 corner rather than an edge. Sharing an edge would give two loops joined along a
 shared straight - a theta, not an eight.
 
-### 2 · Staircase — hard
+### 2 · Caldera — moderate
+
+A ring road around a lava lake, 40 x 28 cells. The roads are six cells wide,
+same as Crossover, and a flow of lava crosses each of the long straights -
+blocking one half, so you have to step across to the other and back. Eight
+turns a lap against Crossover's six, and the flows leave a three-cell gap where
+Staircase's chicanes leave two, two of them rather than eight.
+
+Measured over 25 simulated races: the field crashes 236 times here against 122
+on Crossover and 2140 on Staircase. A little harder than the first, a long way
+short of the third.
+
+Every solid on this track is molten - the rim, the lake and the flows - so a
+mistake is always the same mistake, and it stops you the same way a wall does.
+The lava is animated: two sheets of glow scroll across each other under a
+cooled crust, painted at a third resolution and stretched back up, which is a
+ninth of the pixels and indistinguishable on something this soft.
+
+### 3 · Staircase — hard
 
 A four-cell corridor around a solid infield, 40 x 25 cells. Each of the four
 straights carries two blocks on **alternating halves** of the corridor, so no
@@ -145,6 +167,12 @@ Add an entry to `TRACKS` in `js/tracks.js`: a grid size, the solid rectangles,
 a racing line whose consecutive waypoints are axis aligned, checkpoints, a
 finish line and a starting grid. Add a button for it in `index.html`. Then run
 `npm run check`, which will tell you whether a car can actually drive it.
+
+Optional per-track settings: `theme` for the palette, `aiPace` for how hard the
+opposition tries, `aiOffsetScale` for how far they spread across the road, and
+`aiMistakeScale` for how often they turn in late - worth turning down on a track
+whose legs are short enough that a late turn means a wall rather than a wide
+line. Marking a wall rectangle `kind: 'lava'` makes it molten and animated.
 
 ## Layout
 

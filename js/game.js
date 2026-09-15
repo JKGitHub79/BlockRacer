@@ -66,7 +66,7 @@
       this.cars.push(car);
       if (spec.player) this.player = car;
       else this.drivers.push(new AIDriver(car, {
-        mistake: cfg.mistake,
+        mistake: cfg.mistake * T.aiMistakeScale,
         reaction: cfg.reaction,
         offset: cfg.offset * T.aiOffsetScale
       }, slot.wp));

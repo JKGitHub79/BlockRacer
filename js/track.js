@@ -9,7 +9,7 @@
   'use strict';
 
   var C = global.CONFIG;
-  var KIND_ID = { edge: 1, infield: 2, jog: 3 };
+  var KIND_ID = { edge: 1, infield: 2, jog: 3, lava: 4 };
 
   var T = {};
 
@@ -181,6 +181,9 @@
 
     T.index = index;
     T.data = data;
+    T.theme = data.theme || null;
+    // Rectangles the renderer animates. Empty on a track with no lava.
+    T.lavaRects = data.walls.filter(function (r) { return r.kind === 'lava'; });
     T.name = data.name;
     T.cols = cols;
     T.rows = rows;
@@ -188,6 +191,7 @@
     T.height = rows * C.cell;
     T.aiPace = data.aiPace === undefined ? 1 : data.aiPace;
     T.aiOffsetScale = data.aiOffsetScale === undefined ? 1 : data.aiOffsetScale;
+    T.aiMistakeScale = data.aiMistakeScale === undefined ? 1 : data.aiMistakeScale;
     T.ROUTE = ROUTE;
     T.LEG_DIR = LEG_DIR;
     T.LEG_LEN = LEG_LEN;
