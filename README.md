@@ -81,21 +81,25 @@ While the velocity is catching up the body is drawn leading it by 45° - the car
 is pointing into the corner and still travelling the old way, which is what
 oversteer looks like - and it lays rubber until it hooks up.
 
-`slide` in `js/config.js` is the **turn radius in cells**. `0` switches the whole
-thing off and the game behaves exactly as it did before: instant turns, no arc,
-no lean. The default is one car width (`0.8`), so the car slides its own width
-across before it is pointing the new way.
+`slide` is the **turn radius in cells**, and it is a slider on the start menu
+because it is the number worth prototyping with. `[` and `]` nudge it by 0.05
+mid-race, so you can feel the difference without restarting. It reaches every
+car, player and AI alike, the moment it changes. `0` switches the whole thing
+off and the game behaves exactly as it did before: instant turns, no arc, no
+lean. It starts at one car width (`0.8`); `js/config.js` sets that default and
+`maxSlide` the top of the slider, and `?slide=1.2` sets it from the URL.
 
 It is a distance and not a duration deliberately, so the lead you have to give a
 corner is the same at every game speed. Were it a duration, Hard would widen
 every arc by 40% and Staircase's two-cell chicane legs would stop fitting.
 
-Staircase's chicanes only clear up to `0.47`, so at the default radius the arc
+Staircase's chicanes only clear up to `0.47`, so at anything above that the arc
 cuts those corners far enough to clip the block it is stepping around, on the
 slightly off-centre lines the AI cars drive - cars will trade paint with the
 chicanes on track 2. Crossover, with its six-cell roads, is happy at `2.0`.
-`npm run check` drives every corner of every track at the configured radius with
-the real physics and names the corners that do not fit.
+`node tools/validate-track.js 1.2` drives every corner of every track at a given
+radius with the real physics and names the corners that do not fit, which is the
+quick way to find out what a prototype value costs.
 
 `slideOversteer` sets how far the body leads its direction of travel (`0.5` is
 the 45° pose). `slideSettle` is how long the body takes to straighten up again;

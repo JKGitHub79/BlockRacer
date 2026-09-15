@@ -29,6 +29,10 @@
       if (Input.onCommand) Input.onCommand('restart');
     } else if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
       if (Input.onCommand) Input.onCommand('pause');
+    } else if (e.key === '[') {
+      if (Input.onCommand) Input.onCommand('slide-');
+    } else if (e.key === ']') {
+      if (Input.onCommand) Input.onCommand('slide+');
     } else if (e.key === 'm' || e.key === 'M') {
       if (Input.onCommand) Input.onCommand('mute');
     } else if (e.key === 'Enter' || e.key === ' ') {

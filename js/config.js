@@ -35,15 +35,18 @@
      * Staircase has two-cell legs between its chicanes and a radius that grew
      * with speed would stop fitting through them.
      *
-     * Set to one car width, so the car slides its own width across before it
-     * is pointing the new way.
+     * This is the starting value only - it is a slider on the start menu and
+     * [ and ] adjust it mid-race, because it is the number worth prototyping
+     * with. Every car reads it live, player and AI alike.
      *
-     * Note this is past the 0.47 that Staircase's chicanes clear: there the
-     * arc cuts the corner far enough to clip the block it is stepping around,
-     * on the lines the AI cars drive slightly off-centre. Crossover has room
-     * for 2.0. `npm run check` drives every corner of every track at the
-     * configured radius and says which ones stop fitting. */
+     * The default is one car width. Note that is past the 0.47 that
+     * Staircase's chicanes clear: there the arc cuts the corner far enough to
+     * clip the block it is stepping around, on the lines the AI cars drive
+     * slightly off-centre. Crossover has room for 2.0. `npm run check` drives
+     * every corner of every track at a given radius and says which ones stop
+     * fitting: `node tools/validate-track.js 1.2`. */
     slide: CAR_WIDTH,
+    maxSlide: 2,
 
     /* How far the body leads its own direction of travel while sliding.
      * 0.5 points it exactly half way, so a car that has just flicked into a
@@ -110,7 +113,7 @@
     CONFIG.speedLevel = Math.max(0, Math.min(CONFIG.speedLevels.length - 1, parseInt(speed[1], 10) - 1));
   }
   var slide = /[?&]slide=([\d.]+)/.exec(search);
-  if (slide) CONFIG.slide = Math.max(0, Math.min(2, parseFloat(slide[1])));
+  if (slide) CONFIG.slide = Math.max(0, Math.min(CONFIG.maxSlide, parseFloat(slide[1])));
 
   CONFIG.speedMul = function () {
     return CONFIG.speedLevels[CONFIG.speedLevel].mul;

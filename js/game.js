@@ -202,6 +202,7 @@
     }
     el.track = document.getElementById('hud-track');
     el.speed = document.getElementById('hud-speed');
+    el.slide = document.getElementById('hud-slide');
     el.lap = document.getElementById('hud-lap');
     el.pos = document.getElementById('hud-pos');
     el.time = document.getElementById('hud-time');
@@ -217,12 +218,14 @@
     el.lapButtons = document.getElementById('lap-buttons');
     el.trackButtons = document.getElementById('track-buttons');
     el.speedButtons = document.getElementById('speed-buttons');
+    el.slideRange = document.getElementById('slide-range');
   };
 
   Game.drawHud = function () {
     var p = this.player;
     el.track.textContent = T.name;
     el.speed.textContent = C.speedName();
+    el.slide.textContent = C.slide.toFixed(2);
     el.lap.textContent = Math.min(p.lap + 1, this.laps) + ' / ' + this.laps;
     el.pos.textContent = p.place + ' / ' + this.cars.length;
     el.time.textContent = fmt(this.time);
@@ -284,8 +287,28 @@
     this.state = 'menu';
   };
 
+  /* The turn radius, live. Every car reads CONFIG.slide each step - player and
+   * AI alike - so this takes effect immediately, mid-race included. The only
+   * thing that needs redoing is the baked scenery, because the racing line is
+   * drawn with the corners rounded off by exactly this radius. */
+  Game.setSlide = function (cells) {
+    var v = Math.max(0, Math.min(C.maxSlide, cells));
+    C.slide = v;
+
+    document.getElementById('menu-slide').textContent = v.toFixed(2);
+    document.getElementById('menu-slide-cw').textContent =
+      v === 0 ? '(instant turns)' : '(' + (v / C.carWidth).toFixed(2) + ' car widths)';
+    if (parseFloat(el.slideRange.value) !== v) el.slideRange.value = v;
+
+    Renderer.setTrack();
+  };
+
   Game.setSpeed = function (level) {
     C.speedLevel = level;
+    el.slideRange.addEventListener('input', function (e) {
+      e.stopPropagation();
+      Game.setSlide(parseFloat(el.slideRange.value));
+    });
     Array.prototype.forEach.call(el.speedButtons.children, function (b) {
       b.classList.toggle('on', parseInt(b.dataset.speed, 10) === level);
     });
@@ -325,6 +348,8 @@
         el.pause.classList.remove('show');
         Input.clear();
       }
+    } else if (name === 'slide+' || name === 'slide-') {
+      this.setSlide(C.slide + (name === 'slide+' ? 0.05 : -0.05));
     } else if (name === 'mute') {
       Sound.muted = !Sound.muted;
       document.getElementById('mute-state').textContent = Sound.muted ? 'OFF' : 'ON';
@@ -337,6 +362,7 @@
     Renderer.init(document.getElementById('game'));
     this.buildHud();
     this.setLaps(C.laps);
+    this.setSlide(C.slide);
     this.setSpeed(C.speedLevel);
     this.setTrack(C.track);
     el.menu.classList.add('show');
@@ -354,6 +380,10 @@
         e.stopPropagation();
         Game.setTrack(parseInt(b.dataset.track, 10));
       });
+    });
+    el.slideRange.addEventListener('input', function (e) {
+      e.stopPropagation();
+      Game.setSlide(parseFloat(el.slideRange.value));
     });
     Array.prototype.forEach.call(el.speedButtons.children, function (b) {
       b.addEventListener('click', function (e) {
