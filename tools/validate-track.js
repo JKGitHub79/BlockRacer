@@ -67,10 +67,19 @@ for (let ti = 0; ti < TRACKS.length; ti++) {
   report();
 
   console.log('  start grid:');
-  for (const s of TRACK.START_GRID) {
-    if (!clear(s.x, s.y, right)) fail(`start slot (${s.x}, ${s.y}) is inside a wall`);
-    if (TRACK.inZone(TRACK.FINISH, s.x, s.y)) fail(`start slot (${s.x}, ${s.y}) is on the finish line`);
-    if (s.x > TRACK.FINISH.x0) fail(`start slot (${s.x}, ${s.y}) is past the finish line`);
+  {
+    // "Behind the line" depends on which way the line is crossed - a circuit
+    // finishing westward grids up to the east of it.
+    const fd = TRACK.FINISH.dir;
+    const nearEdge = fd.x > 0 ? fd.x * TRACK.FINISH.x0
+                   : fd.x < 0 ? fd.x * TRACK.FINISH.x1
+                   : fd.y > 0 ? fd.y * TRACK.FINISH.y0
+                   : fd.y * TRACK.FINISH.y1;
+    for (const s of TRACK.START_GRID) {
+      if (!clear(s.x, s.y, TRACK.startDir)) fail(`start slot (${s.x}, ${s.y}) is inside a wall`);
+      if (TRACK.inZone(TRACK.FINISH, s.x, s.y)) fail(`start slot (${s.x}, ${s.y}) is on the finish line`);
+      if (fd.x * s.x + fd.y * s.y > nearEdge) fail(`start slot (${s.x}, ${s.y}) is past the finish line`);
+    }
   }
   report();
 

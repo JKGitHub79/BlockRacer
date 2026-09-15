@@ -37,7 +37,7 @@ function race(seed) {
     const car = new Car({
       id: i, name: 'AI' + i, color: '#fff',
       speedMul: cfg.speedMul * TRACK.aiPace * CONFIG.speedMul(),
-      x: slot.x, y: slot.y, dir: { x: 1, y: 0 }
+      x: slot.x, y: slot.y, dir: { x: TRACK.startDir.x, y: TRACK.startDir.y }
     });
     car.crashes = 0;
     car.scrapes = 0;

@@ -60,7 +60,7 @@
         speedMul: (cfg ? cfg.speedMul * T.aiPace : 1) * C.speedMul(),
         x: slot.x,
         y: slot.y,
-        dir: { x: 1, y: 0 }
+        dir: { x: T.startDir.x, y: T.startDir.y }
       });
       T.seedProgress(car);
       this.cars.push(car);

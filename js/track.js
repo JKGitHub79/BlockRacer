@@ -182,6 +182,7 @@
     T.index = index;
     T.data = data;
     T.theme = data.theme || null;
+    T.snow = !!data.snow;
     // Rectangles the renderer animates. Empty on a track with no lava.
     T.lavaRects = data.walls.filter(function (r) { return r.kind === 'lava'; });
     T.name = data.name;
@@ -200,6 +201,9 @@
     T.CHECKPOINTS = CHECKPOINTS;
     T.FINISH = FINISH;
     T.START_GRID = data.startGrid;
+    // Which way the grid faces, taken from the leg it sits on rather than
+    // stated separately, so the two can never disagree.
+    T.startDir = LEG_DIR[START_LEG];
     return T;
   };
 

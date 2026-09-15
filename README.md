@@ -85,7 +85,21 @@ A figure of eight has to *cross* itself, which is why the two rectangles share a
 corner rather than an edge. Sharing an edge would give two loops joined along a
 shared straight - a theta, not an eight.
 
-### 2 · Caldera — moderate
+### 2 · Snowdrift — beginner
+
+Crossover's roads on a completely different plan: six cells wide, long open
+legs, six turns a lap, 40 x 28 cells. The circuit is an **L** - the top right of
+the map is off the map - so half way round the lap the road steps down and back
+out again in an S instead of running straight on. No crossing, no chicanes; the
+corner sequence is the whole of it. The island in the middle is an L as well.
+
+It races like Crossover: 58 crashes across 25 simulated races against
+Crossover's 80, and a median lap of 10.8s against 11.2s.
+
+The snow falls live, and the drifts banked up round the circuit are the walls -
+they stop you like any other wall does.
+
+### 3 · Caldera — moderate
 
 A ring road around a lava lake, 40 x 28 cells. The roads are six cells wide,
 same as Crossover, and a flow of lava crosses each of the long straights -
@@ -103,7 +117,7 @@ The lava is animated: two sheets of glow scroll across each other under a
 cooled crust, painted at a third resolution and stretched back up, which is a
 ninth of the pixels and indistinguishable on something this soft.
 
-### 3 · Staircase — hard
+### 4 · Staircase — hard
 
 A four-cell corridor around a solid infield, 40 x 25 cells. Each of the four
 straights carries two blocks on **alternating halves** of the corridor, so no
@@ -210,7 +224,12 @@ Optional per-track settings: `theme` for the palette, `aiPace` for how hard the
 opposition tries, `aiOffsetScale` for how far they spread across the road, and
 `aiMistakeScale` for how often they turn in late - worth turning down on a track
 whose legs are short enough that a late turn means a wall rather than a wide
-line. Marking a wall rectangle `kind: 'lava'` makes it molten and animated.
+line. Marking a wall rectangle `kind: 'lava'` makes it molten and animated, and
+`snow: true` makes it snow.
+
+The grid faces whichever way the leg it sits on runs, worked out from
+`startLeg`, so a circuit finishing westward grids up east of its line without
+having to say so.
 
 ## Layout
 

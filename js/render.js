@@ -15,6 +15,7 @@
   // it back up is indistinguishable, and a ninth of the pixels.
   var LAVA_SCALE = 1 / 3;
   var LAVA_RIM = 3;
+  var flakes = null;
 
   /* Track palettes override the defaults one entry at a time. */
   function colorOf(name) {
@@ -79,6 +80,42 @@
 
   /* Molten rock, drawn live over the baked crust. Only the rectangles the
    * track marked as lava, which on every other track is none of them. */
+  /* Snowfall, for a track that asks for it. Each flake wraps round the board
+   * in both directions, so a few dozen of them fall forever without anything
+   * needing to be spawned or retired. */
+  function ensureFlakes() {
+    if (flakes && flakes.w === T.width && flakes.h === T.height) return;
+    var list = [];
+    var n = Math.round(T.width * T.height / 4200);
+    for (var i = 0; i < n; i++) {
+      list.push({
+        x: Math.random() * T.width,
+        y: Math.random() * T.height,
+        r: 0.8 + Math.random() * 1.6,
+        vy: 16 + Math.random() * 30,
+        vx: -5 - Math.random() * 16,
+        sway: Math.random() * Math.PI * 2,
+        alpha: 0.3 + Math.random() * 0.55
+      });
+    }
+    flakes = { w: T.width, h: T.height, list: list };
+  }
+
+  Renderer.drawSnow = function (g, t) {
+    if (!T.snow) return;
+    ensureFlakes();
+    g.save();
+    g.fillStyle = '#eef5ff';
+    flakes.list.forEach(function (f) {
+      var y = (f.y + t * f.vy) % T.height;
+      var x = (f.x + t * f.vx + Math.sin(t * 0.7 + f.sway) * 7) % T.width;
+      if (x < 0) x += T.width;
+      g.globalAlpha = f.alpha;
+      g.fillRect(x - f.r, y - f.r, f.r * 2, f.r * 2);
+    });
+    g.restore();
+  };
+
   function bakeTrack() {
     var cv = document.createElement('canvas');
     cv.width = T.width;
@@ -350,6 +387,7 @@
     g.globalAlpha = 1;
 
     game.cars.forEach(function (car) { drawCar(g, car); });
+    Renderer.drawSnow(g, (global.performance ? performance.now() : Date.now()) / 1000);
 
     if (game.state === 'countdown') {
       var n = Math.ceil(game.countdown);

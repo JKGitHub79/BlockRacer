@@ -85,7 +85,80 @@
   };
 
   /* ------------------------------------------------------------------ *
-   * 2. CALDERA - moderate
+   * 2. SNOWDRIFT - beginner
+   *
+   * Crossover's roads - six cells wide, long open legs, six turns - on a
+   * completely different plan. The circuit is an L: the top right corner of
+   * the map is out of bounds, so half way round the lap the road steps down
+   * and back out again in an S rather than running straight on. No crossing,
+   * no chicanes; the corner sequence is the whole of it.
+   *
+   *          1   7    15  21           33  39
+   *      0 +---+------+---+=============+---+
+   *      1 |   |      |   |   off the   |   |   rows 1-6   top road
+   *      7 |   +------+   |    map      |   |   cols 15-20 the step down
+   *     11 |   |      |   +---+---------+---+   rows 11-16 the road east
+   *     17 |   |      +-------------+   |   |   rows 17-20 lower infield
+   *     21 |   +------------------------+   |   rows 21-26 bottom road
+   *     27 +--------------------------------+
+   *
+   * cols 1-6 is the left road, 33-38 the right. The two infield blocks meet
+   * along row 17, so the island in the middle is an L as well.
+   * ------------------------------------------------------------------ */
+  var SNOWDRIFT = {
+    id: 'snowdrift',
+    name: 'SNOWDRIFT',
+    blurb: 'An L-shaped circuit. Wide open, with an S-bend half way round.',
+    grade: 'BEGINNER',
+    cols: 40,
+    rows: 28,
+    aiPace: 0.95,
+    aiOffsetScale: 3,
+    snow: true,
+    theme: {
+      bg:         '#070b12',
+      road:       '#1a2433',   // ploughed, packed down, faintly blue
+      roadLine:   '#243143',
+      wall:       '#dfe9f5',   // the drifts banked up round the circuit
+      wallTop:    '#ffffff',
+      outer:      '#b7c7dc',   // deeper snow, off the map
+      outerTop:   '#e4edf8',
+      racingLine: 'rgba(176,216,255,0.30)',
+      check:      'rgba(150,220,255,0.08)',
+      checkNext:  'rgba(150,220,255,0.30)',
+      startLine:  '#f2f8ff'
+    },
+    walls: border(40, 28).concat([
+      { x0: 21, y0: 1,  x1: 38, y1: 10, kind: 'edge' },     // off the map
+      { x0: 7,  y0: 7,  x1: 14, y1: 20, kind: 'infield' },  // the island, upper half
+      { x0: 15, y0: 17, x1: 32, y1: 20, kind: 'infield' }   // and its lower arm
+    ]),
+    route: [
+      { x: 4,  y: 4  },   // 0  out of the left road, heading east
+      { x: 18, y: 4  },   // 1  the map runs out; step down
+      { x: 18, y: 14 },   // 2  and back out east
+      { x: 36, y: 14 },   // 3  turn down the right road
+      { x: 36, y: 24 },   // 4  turn along the bottom
+      { x: 4,  y: 24 }    // 5  turn up the left road, back to 0
+    ],
+    startLeg: 4,
+    checkpoints: [
+      { x0: 1,  y0: 16, x1: 7,    y1: 17 },   // left road
+      { x0: 10, y0: 1,  x1: 11,   y1: 7  },   // top road
+      { x0: 27, y0: 11, x1: 28,   y1: 17 },   // the road east, after the step
+      { x0: 33, y0: 19, x1: 39,   y1: 20 }    // right road
+    ],
+    finish: { x0: 27.6, y0: 21, x1: 28.4, y1: 27, dir: { x: -1, y: 0 } },
+    startGrid: [
+      { x: 30.5, y: 22.8, wp: 5 },
+      { x: 30.5, y: 25.2, wp: 5 },
+      { x: 32.4, y: 22.8, wp: 5 },
+      { x: 32.4, y: 25.2, wp: 5 }
+    ]
+  };
+
+  /* ------------------------------------------------------------------ *
+   * 3. CALDERA - moderate
    *
    * A ring road around a lava lake, six cells wide like Crossover, with one
    * lava flow across each of the long straights. Eight turns a lap against
@@ -166,7 +239,7 @@
   };
 
   /* ------------------------------------------------------------------ *
-   * 3. STAIRCASE
+   * 4. STAIRCASE
    *
    * A four-cell corridor around a solid infield. Every straight carries two
    * blocks on alternating halves of the road, so no straight can be taken in
@@ -231,5 +304,5 @@
     ]
   };
 
-  global.TRACKS = [CROSSOVER, CALDERA, STAIRCASE];
+  global.TRACKS = [CROSSOVER, SNOWDRIFT, CALDERA, STAIRCASE];
 })(typeof window !== 'undefined' ? window : globalThis);
