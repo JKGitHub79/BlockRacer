@@ -189,6 +189,14 @@ canvas { display: block; touch-action: none; }
   color: var(--dim);
   min-height: 2em;
 }
+/* Four levels with words as long as INTERMEDIATE will not sit in one row at
+ * any readable size, so they go two by two. */
+.speeds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .laps button {
   flex: 1;
   padding: 10px 4px;
@@ -216,6 +224,22 @@ button.primary {
   cursor: pointer;
 }
 button.primary:hover { filter: brightness(1.1); }
+
+.row { display: flex; gap: 8px; }
+.row .primary { flex: 2; }
+
+button.secondary {
+  flex: 1;
+  padding: 13px;
+  font: inherit;
+  letter-spacing: 2px;
+  color: var(--text);
+  background: #1b2438;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+button.secondary:hover { border-color: var(--accent); }
 
 .hint { color: var(--dim); font-size: 11px; margin: 12px 0 0; }
 
@@ -365,6 +389,11 @@ code { color: var(--accent); }
   .blurb, .slide-hint { display: none; }
   .laps { margin-bottom: 8px; }
   .laps button { padding: 7px 4px; }
+  /* A short screen is a wide one, so the four levels fit across in one row -
+   * and the row they save is what keeps START on screen. */
+  .speeds { grid-template-columns: repeat(4, 1fr); }
+  .speeds button { font-size: 10px; letter-spacing: 0; padding: 7px 2px; }
+  #menu .hint { display: none; }
   button.primary { padding: 9px; }
   .lapline { margin-bottom: 4px; }
   .trackblurb { display: none; }
@@ -376,9 +405,12 @@ code { color: var(--accent); }
  * screen. */
 @media (max-width: 820px) and (max-height: 560px) {
   .stage { flex-direction: row; }
-  .hud { flex: 0 0 116px; flex-direction: column; flex-wrap: nowrap; }
+  /* Wide enough for the longest readout - INTERMEDIATE - at this text size.
+   * The board is limited by height here, so the width costs it nothing. */
+  .hud { flex: 0 0 140px; flex-direction: column; flex-wrap: nowrap; }
   #standings { flex-direction: column; gap: 0; }
   .stat span { font-size: 9px; }
+  .stat b { font-size: 11px; }
 }
 
 .slider { touch-action: none; }

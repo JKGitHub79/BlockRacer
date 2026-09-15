@@ -19,7 +19,8 @@ what you pushed.
 | `←` / `A` | rotate 90° left |
 | `→` / `D` | rotate 90° right |
 | `R` | restart the race |
-| `P` / `Esc` | pause |
+| `Esc` | back to the settings menu |
+| `P` | pause |
 | `M` | mute |
 | `Enter` / `Space` | start |
 
@@ -128,9 +129,10 @@ Game speed scales every car, player and AI alike:
 
 | Level | Speed | Crossover lap |
 | --- | --- | --- |
-| Easy | as it has always been | ~11.2s |
-| Medium | +20% | ~9.4s |
-| Hard | +40% | ~8.0s |
+| Beginner | the base speed | ~11.2s |
+| Intermediate | +20% | ~9.3s |
+| Expert | +40% | ~8.0s |
+| Sweat | double | ~5.6s |
 
 `js/config.js` also holds base car speed, car size, the countdown, the palette,
 and the per-driver AI settings (pace, how often they turn too late, how quickly

@@ -330,6 +330,18 @@
     document.getElementById('menu-laps').textContent = this.laps;
   };
 
+  /* Back to the start menu. Without this the only way out of the results
+   * screen is another race at the same settings, so changing track, speed or
+   * race length meant reloading the page. */
+  Game.openMenu = function () {
+    el.results.classList.remove('show');
+    el.pause.classList.remove('show');
+    this.reset();
+    this.state = 'menu';
+    el.menu.classList.add('show');
+    Input.clear();
+  };
+
   Game.startRace = function () {
     el.menu.classList.remove('show');
     el.results.classList.remove('show');
@@ -344,6 +356,8 @@
       else if (this.state === 'paused') this.command('pause');
     } else if (name === 'restart') {
       if (this.state !== 'menu') this.startRace();
+    } else if (name === 'menu') {
+      if (this.state !== 'menu') this.openMenu();
     } else if (name === 'pause') {
       if (this.state === 'racing') {
         this.state = 'paused';
@@ -403,6 +417,10 @@
     document.getElementById('btn-again').addEventListener('click', function (e) {
       e.stopPropagation();
       Game.startRace();
+    });
+    document.getElementById('btn-menu').addEventListener('click', function (e) {
+      e.stopPropagation();
+      Game.openMenu();
     });
 
     var acc = 0, last = performance.now();

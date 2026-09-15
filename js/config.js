@@ -64,9 +64,10 @@
     /* Picked on the start menu. Scales every car, player and AI alike. */
     speedLevel: 0,
     speedLevels: [
-      { name: 'EASY',   mul: 1.0 },
-      { name: 'MEDIUM', mul: 1.2 },
-      { name: 'HARD',   mul: 1.4 }
+      { name: 'BEGINNER',     mul: 1.0 },
+      { name: 'INTERMEDIATE', mul: 1.2 },
+      { name: 'EXPERT',       mul: 1.4 },
+      { name: 'SWEAT',        mul: 2.0 }
     ],
 
     /* ---- AI (one entry per opponent) -------------------------------- */

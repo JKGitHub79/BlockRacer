@@ -11,7 +11,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.6.0', built: '2026-09-15' };
+window.BR = { version: '0.7.0', built: '2026-09-15' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -56,11 +56,12 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
             chicanes above 0.47, Crossover is clear to 2.0. <code>[</code> and
             <code>]</code> adjust it mid-race.</p>
 
-          <p class="lapline">GAME SPEED &middot; <b id="menu-speed">EASY</b></p>
-          <div id="speed-buttons" class="laps">
-            <button data-speed="0">EASY</button>
-            <button data-speed="1">MEDIUM</button>
-            <button data-speed="2">HARD</button>
+          <p class="lapline">GAME SPEED &middot; <b id="menu-speed">BEGINNER</b></p>
+          <div id="speed-buttons" class="laps speeds">
+            <button data-speed="0">BEGINNER</button>
+            <button data-speed="1">INTERMEDIATE</button>
+            <button data-speed="2">EXPERT</button>
+            <button data-speed="3">SWEAT</button>
           </div>
           <p class="lapline">RACE LENGTH &middot; <b id="menu-laps">5</b> LAPS</p>
           <div id="lap-buttons" class="laps">
@@ -86,8 +87,11 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
             <thead><tr><th>#</th><th>Driver</th><th>Time</th><th>Best lap</th></tr></thead>
             <tbody id="results-body"></tbody>
           </table>
-          <button id="btn-again" class="primary">RACE AGAIN</button>
-          <p class="hint">or press R</p>
+          <div class="row">
+            <button id="btn-menu" class="secondary">SETTINGS</button>
+            <button id="btn-again" class="primary">RACE AGAIN</button>
+          </div>
+          <p class="hint">R races again &middot; ESC for settings</p>
         </div>
       </div>
      </div>
@@ -95,7 +99,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 
     <aside class="hud">
       <div class="stat"><span>TRACK</span><b id="hud-track">CROSSOVER</b></div>
-      <div class="stat"><span>SPEED</span><b id="hud-speed">EASY</b></div>
+      <div class="stat"><span>SPEED</span><b id="hud-speed">BEGINNER</b></div>
       <div class="stat"><span>SLIDE</span><b id="hud-slide">0.80</b></div>
       <div class="stat"><span>LAP</span><b id="hud-lap">1 / 5</b></div>
       <div class="stat"><span>POSITION</span><b id="hud-pos">1 / 4</b></div>

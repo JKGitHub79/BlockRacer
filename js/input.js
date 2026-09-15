@@ -27,7 +27,9 @@
       e.preventDefault();
     } else if (e.key === 'r' || e.key === 'R') {
       if (Input.onCommand) Input.onCommand('restart');
-    } else if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+    } else if (e.key === 'Escape') {
+      if (Input.onCommand) Input.onCommand('menu');
+    } else if (e.key === 'p' || e.key === 'P') {
       if (Input.onCommand) Input.onCommand('pause');
     } else if (e.key === '[') {
       if (Input.onCommand) Input.onCommand('slide-');
