@@ -182,7 +182,7 @@
     T.index = index;
     T.data = data;
     T.theme = data.theme || null;
-    T.snow = !!data.snow;
+    T.weather = data.weather || null;
     // Rectangles the renderer animates. Empty on a track with no lava.
     T.lavaRects = data.walls.filter(function (r) { return r.kind === 'lava'; });
     T.name = data.name;

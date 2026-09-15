@@ -114,7 +114,7 @@
     rows: 28,
     aiPace: 0.95,
     aiOffsetScale: 3,
-    snow: true,
+    weather: 'snow',
     theme: {
       bg:         '#070b12',
       road:       '#1a2433',   // ploughed, packed down, faintly blue
@@ -158,7 +158,83 @@
   };
 
   /* ------------------------------------------------------------------ *
-   * 3. CALDERA - moderate
+   * 3. MESA - beginner
+   *
+   * Six-cell roads like Snowdrift, laid out as a Z. Two corners of the map
+   * are off it - the north east and the south west - so the circuit runs
+   * diagonally across the board, stepping down once on the way out and up
+   * once on the way back. Eight turns, all of them wide open, and the shape
+   * is the same either way up: the second half of the lap is the first half
+   * rotated half a turn.
+   *
+   *          1   7      13 19 21 27      33  39
+   *      0 +---+---------+--+--+=========+---+
+   *      1 |   |  mesa   |  |  | off the |   |  rows 1-6   top road
+   *      7 |   +---------+  |  |   map   |   |  cols 21-26 the step down
+   *      9 |   |         |  |  +---------+---+  rows 9-14  the road east
+   *     15 |   |   +--------+            |   |  cols 33-38 right road
+   *     19 +===+---+        +------------+   |  rows 13-18 the road west
+   *     21 |off the map     |            |   |  cols 13-18 the step up
+   *     27 +----------------+------------+---+  rows 21-26 bottom road
+   * ------------------------------------------------------------------ */
+  var MESA = {
+    id: 'mesa',
+    name: 'MESA',
+    blurb: 'A Z across the desert. Eight wide turns, two step-overs.',
+    grade: 'BEGINNER',
+    cols: 40,
+    rows: 28,
+    aiPace: 0.96,
+    aiOffsetScale: 3,
+    weather: 'dust',
+    theme: {
+      bg:         '#0d0903',
+      road:       '#2b2015',   // shaded canyon floor, packed hard
+      roadLine:   '#3b2d1e',
+      wall:       '#9c5a32',   // the mesa in the middle
+      wallTop:    '#d98b52',
+      outer:      '#c9a86e',   // open dune, off the map
+      outerTop:   '#e7cd99',
+      racingLine: 'rgba(255,214,150,0.28)',
+      check:      'rgba(255,200,120,0.08)',
+      checkNext:  'rgba(255,200,120,0.30)',
+      startLine:  '#fff3e0'
+    },
+    walls: border(40, 28).concat([
+      { x0: 27, y0: 1,  x1: 38, y1: 8,  kind: 'edge' },     // off the map, north east
+      { x0: 1,  y0: 19, x1: 12, y1: 26, kind: 'edge' },     // off the map, south west
+      { x0: 7,  y0: 7,  x1: 20, y1: 12, kind: 'infield' },  // the mesa, three steps
+      { x0: 19, y0: 13, x1: 20, y1: 14, kind: 'infield' },
+      { x0: 19, y0: 15, x1: 32, y1: 20, kind: 'infield' }
+    ]),
+    route: [
+      { x: 4,  y: 4  },   // 0  along the top
+      { x: 24, y: 4  },   // 1  step down past the north east corner
+      { x: 24, y: 12 },   // 2
+      { x: 36, y: 12 },   // 3  turn down the right road
+      { x: 36, y: 24 },   // 4  turn back along the bottom
+      { x: 16, y: 24 },   // 5  step up past the south west corner
+      { x: 16, y: 16 },   // 6
+      { x: 4,  y: 16 }    // 7  turn up the left road, back to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 21, y0: 7,  x1: 27, y1: 8  },   // the step down
+      { x0: 33, y0: 17, x1: 39, y1: 18 },   // right road
+      { x0: 25, y0: 21, x1: 26, y1: 27 },   // bottom road
+      { x0: 8,  y0: 13, x1: 9,  y1: 19 }    // the road west
+    ],
+    finish: { x0: 9.6, y0: 1, x1: 10.4, y1: 7, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 8.0, y: 2.8, wp: 1 },
+      { x: 8.0, y: 5.2, wp: 1 },
+      { x: 6.1, y: 2.8, wp: 1 },
+      { x: 6.1, y: 5.2, wp: 1 }
+    ]
+  };
+
+  /* ------------------------------------------------------------------ *
+   * 4. CALDERA - moderate
    *
    * A ring road around a lava lake, six cells wide like Crossover, with one
    * lava flow across each of the long straights. Eight turns a lap against
@@ -239,7 +315,7 @@
   };
 
   /* ------------------------------------------------------------------ *
-   * 4. STAIRCASE
+   * 5. STAIRCASE
    *
    * A four-cell corridor around a solid infield. Every straight carries two
    * blocks on alternating halves of the road, so no straight can be taken in
@@ -304,5 +380,5 @@
     ]
   };
 
-  global.TRACKS = [CROSSOVER, SNOWDRIFT, CALDERA, STAIRCASE];
+  global.TRACKS = [CROSSOVER, SNOWDRIFT, MESA, CALDERA, STAIRCASE];
 })(typeof window !== 'undefined' ? window : globalThis);

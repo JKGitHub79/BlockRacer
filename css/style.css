@@ -197,7 +197,9 @@ canvas { display: block; touch-action: none; }
   gap: 8px;
 }
 
-.tracks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+/* Three across keeps five tracks to two rows; two across made three, which
+   pushed START off the bottom of a 720-tall laptop. */
+.tracks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .tracks button { font-size: 11px; padding: 10px 2px; }
 
 .laps button {
@@ -365,6 +367,14 @@ code { color: var(--accent); }
   #standings li { padding: 0; }
   #standings .lp { display: none; }
   .keys { display: none; }
+}
+
+/* The menu has grown a row of controls at a time, and on a laptop-height
+ * screen it had outgrown the window - START was off the bottom. The intro
+ * paragraph is the first thing to go; the controls are the point. */
+@media (max-height: 840px) {
+  .blurb { display: none; }
+  .trackblurb { min-height: 0; }
 }
 
 /* Narrow enough that prose wraps into many lines and pushes the controls off

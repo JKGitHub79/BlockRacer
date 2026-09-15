@@ -80,38 +80,50 @@
 
   /* Molten rock, drawn live over the baked crust. Only the rectangles the
    * track marked as lava, which on every other track is none of them. */
-  /* Snowfall, for a track that asks for it. Each flake wraps round the board
-   * in both directions, so a few dozen of them fall forever without anything
-   * needing to be spawned or retired. */
-  function ensureFlakes() {
-    if (flakes && flakes.w === T.width && flakes.h === T.height) return;
+  /* Weather, for a track that asks for it. Each mote wraps round the board in
+   * both directions, so a few dozen of them blow forever without anything
+   * needing to be spawned or retired.
+   *
+   * Snow drifts down and sideways in fat soft flakes; dust tears across almost
+   * flat, thin and faint, and is drawn smeared along its own direction of
+   * travel because at that speed that is what it would look like. */
+  var WEATHER = {
+    snow: { per: 4200, color: '#eef5ff', r: [0.8, 2.4], vx: [-5, -21],
+            vy: [16, 46], sway: 7, swayRate: 0.7, alpha: [0.30, 0.85], smear: 1 },
+    dust: { per: 2600, color: '#e8cfa0', r: [0.5, 1.5], vx: [-60, -130],
+            vy: [-4, 7], sway: 3, swayRate: 1.6, alpha: [0.10, 0.34], smear: 5 }
+  };
+
+  function ensureMotes() {
+    if (flakes && flakes.w === T.width && flakes.h === T.height &&
+        flakes.kind === T.weather) return;
+    var spec = WEATHER[T.weather];
+    var pick = function (r) { return r[0] + Math.random() * (r[1] - r[0]); };
     var list = [];
-    var n = Math.round(T.width * T.height / 4200);
+    var n = Math.round(T.width * T.height / spec.per);
     for (var i = 0; i < n; i++) {
       list.push({
-        x: Math.random() * T.width,
-        y: Math.random() * T.height,
-        r: 0.8 + Math.random() * 1.6,
-        vy: 16 + Math.random() * 30,
-        vx: -5 - Math.random() * 16,
-        sway: Math.random() * Math.PI * 2,
-        alpha: 0.3 + Math.random() * 0.55
+        x: Math.random() * T.width, y: Math.random() * T.height,
+        r: pick(spec.r), vx: pick(spec.vx), vy: pick(spec.vy),
+        sway: Math.random() * Math.PI * 2, alpha: pick(spec.alpha)
       });
     }
-    flakes = { w: T.width, h: T.height, list: list };
+    flakes = { w: T.width, h: T.height, kind: T.weather, spec: spec, list: list };
   }
 
-  Renderer.drawSnow = function (g, t) {
-    if (!T.snow) return;
-    ensureFlakes();
+  Renderer.drawWeather = function (g, t) {
+    if (!T.weather || !WEATHER[T.weather]) return;
+    ensureMotes();
+    var spec = flakes.spec;
     g.save();
-    g.fillStyle = '#eef5ff';
+    g.fillStyle = spec.color;
     flakes.list.forEach(function (f) {
       var y = (f.y + t * f.vy) % T.height;
-      var x = (f.x + t * f.vx + Math.sin(t * 0.7 + f.sway) * 7) % T.width;
+      if (y < 0) y += T.height;
+      var x = (f.x + t * f.vx + Math.sin(t * spec.swayRate + f.sway) * spec.sway) % T.width;
       if (x < 0) x += T.width;
       g.globalAlpha = f.alpha;
-      g.fillRect(x - f.r, y - f.r, f.r * 2, f.r * 2);
+      g.fillRect(x - f.r * spec.smear, y - f.r, f.r * 2 * spec.smear, f.r * 2);
     });
     g.restore();
   };
@@ -387,7 +399,7 @@
     g.globalAlpha = 1;
 
     game.cars.forEach(function (car) { drawCar(g, car); });
-    Renderer.drawSnow(g, (global.performance ? performance.now() : Date.now()) / 1000);
+    Renderer.drawWeather(g, (global.performance ? performance.now() : Date.now()) / 1000);
 
     if (game.state === 'countdown') {
       var n = Math.ceil(game.countdown);

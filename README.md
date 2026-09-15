@@ -99,7 +99,20 @@ Crossover's 80, and a median lap of 10.8s against 11.2s.
 The snow falls live, and the drifts banked up round the circuit are the walls -
 they stop you like any other wall does.
 
-### 3 · Caldera — moderate
+### 3 · Mesa — beginner
+
+Snowdrift's roads laid out as a **Z**, 40 x 28 cells. Two corners of the map
+are off it - the north east and the south west - so the circuit runs diagonally
+across the board, stepping down once on the way out and up once on the way
+back. Eight turns, all of them wide open. The shape is the same either way up:
+the second half of the lap is the first half rotated half a turn.
+
+It sits with Crossover at the easy end - 81 crashes over 25 simulated races
+against Crossover's 80 - with a slightly quicker lap at 10.9s.
+
+The dust blows live, and the mesa in the middle is the wall.
+
+### 4 · Caldera — moderate
 
 A ring road around a lava lake, 40 x 28 cells. The roads are six cells wide,
 same as Crossover, and a flow of lava crosses each of the long straights -
@@ -117,7 +130,7 @@ The lava is animated: two sheets of glow scroll across each other under a
 cooled crust, painted at a third resolution and stretched back up, which is a
 ninth of the pixels and indistinguishable on something this soft.
 
-### 4 · Staircase — hard
+### 5 · Staircase — hard
 
 A four-cell corridor around a solid infield, 40 x 25 cells. Each of the four
 straights carries two blocks on **alternating halves** of the corridor, so no
@@ -225,7 +238,10 @@ opposition tries, `aiOffsetScale` for how far they spread across the road, and
 `aiMistakeScale` for how often they turn in late - worth turning down on a track
 whose legs are short enough that a late turn means a wall rather than a wide
 line. Marking a wall rectangle `kind: 'lava'` makes it molten and animated, and
-`snow: true` makes it snow.
+`weather: 'snow'` or `'dust'` blows weather across the board - flakes that fall
+soft and fat, or grit that tears across almost flat and is smeared along its own
+direction of travel. Both wrap round the board in both directions, so nothing is
+ever spawned or retired.
 
 The grid faces whichever way the leg it sits on runs, worked out from
 `startLeg`, so a circuit finishing westward grids up east of its line without
