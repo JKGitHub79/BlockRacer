@@ -46,7 +46,11 @@
      * every corner of every track at a given radius and says which ones stop
      * fitting: `node tools/validate-track.js 1.2`. */
     slide: CAR_WIDTH,
-    maxSlide: 2,
+    /* Top of the slider. Far past anything drivable - a radius wider than the
+     * road means the car cannot get round a corner without meeting a wall -
+     * but this is a prototyping control, and seeing where it stops working is
+     * the point of having the range. */
+    maxSlide: 20,
 
     /* How far the body leads its own direction of travel while sliding.
      * 0.5 points it exactly half way, so a car that has just flicked into a

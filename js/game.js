@@ -220,6 +220,7 @@
     el.trackButtons = document.getElementById('track-buttons');
     el.speedButtons = document.getElementById('speed-buttons');
     el.slideRange = document.getElementById('slide-range');
+    el.slideRange.max = C.maxSlide;   // one place decides how far it goes
   };
 
   Game.drawHud = function () {

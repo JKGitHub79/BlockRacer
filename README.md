@@ -115,11 +115,27 @@ oversteer looks like - and it lays rubber until it hooks up.
 
 `slide` is the **turn radius in cells**, and it is a slider on the start menu
 because it is the number worth prototyping with. `[` and `]` nudge it by 0.05
-mid-race, so you can feel the difference without restarting. It reaches every
-car, player and AI alike, the moment it changes. `0` switches the whole thing
-off and the game behaves exactly as it did before: instant turns, no arc, no
-lean. It starts at one car width (`0.8`); `js/config.js` sets that default and
-`maxSlide` the top of the slider, and `?slide=1.2` sets it from the URL.
+mid-race, so you can feel the difference without restarting - and they are the
+way to hit an exact value, since the slider now spans a range far wider than
+the useful part of it. It reaches every car, player and AI alike, the moment it
+changes. `0` switches the whole thing off and the game behaves exactly as it did
+before: instant turns, no arc, no lean. It starts at one car width (`0.8`);
+`js/config.js` sets that default and `maxSlide` the top of the slider, and
+`?slide=1.2` sets it from the URL.
+
+The slider runs to `20`, which is deliberately far past anything drivable - the
+point of a prototyping range is to be able to see where it stops working. What
+happens as you wind it up, measured:
+
+| Radius | What the field does |
+| --- | --- |
+| up to ~2 | races normally on all three tracks |
+| ~3 | still fine on Crossover and Caldera; Staircase is a mess |
+| ~6 | Crossover still completes laps, visibly scrappy |
+| 20 | nobody can get round a corner at all; cars shuffle at the start |
+
+Nothing breaks at the top of the range - no runaway positions, no cars ending up
+inside walls - it just stops being a game.
 
 It is a distance and not a duration deliberately, so the lead you have to give a
 corner is the same at every game speed. Were it a duration, Hard would widen
