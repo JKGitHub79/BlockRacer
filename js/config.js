@@ -3,6 +3,10 @@
 (function (global) {
   'use strict';
 
+  // One car width across the back axle. Named here so `slide` can be stated in
+  // terms of it rather than repeating the number.
+  var CAR_WIDTH = 0.8;
+
   var CONFIG = {
     /* ---- Race rules ------------------------------------------------- */
     track: 0,             // which entry of js/tracks.js. ?track=N or the menu.
@@ -17,7 +21,7 @@
 
     /* ---- Car -------------------------------------------------------- */
     carLength: 1.25,      // in cells, measured along the direction of travel
-    carWidth: 0.8,
+    carWidth: CAR_WIDTH,
     speed: 10.4,          // cells / second. One speed, no acceleration.
 
     /* Slide. The car still only ever does 90 degree turns, but its momentum
@@ -31,13 +35,15 @@
      * Staircase has two-cell legs between its chicanes and a radius that grew
      * with speed would stop fitting through them.
      *
-     * 0.4 is deliberately modest. Staircase caps out at 0.47: above that the
-     * arc cuts the corner far enough to clip the chicane block it is stepping
-     * around, on the lines the AI cars drive slightly off-centre. Crossover
-     * has room for 2.0. Change it and run `npm run check`, which drives every
-     * corner of every track at the configured radius and will say which one
-     * stops fitting. */
-    slide: 0.4,
+     * Set to one car width, so the car slides its own width across before it
+     * is pointing the new way.
+     *
+     * Note this is past the 0.47 that Staircase's chicanes clear: there the
+     * arc cuts the corner far enough to clip the block it is stepping around,
+     * on the lines the AI cars drive slightly off-centre. Crossover has room
+     * for 2.0. `npm run check` drives every corner of every track at the
+     * configured radius and says which ones stop fitting. */
+    slide: CAR_WIDTH,
 
     /* How far the body leads its own direction of travel while sliding.
      * 0.5 points it exactly half way, so a car that has just flicked into a

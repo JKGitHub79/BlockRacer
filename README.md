@@ -77,18 +77,19 @@ oversteer looks like - and it lays rubber until it hooks up.
 
 `slide` in `js/config.js` is the **turn radius in cells**. `0` switches the whole
 thing off and the game behaves exactly as it did before: instant turns, no arc,
-no lean. The default is `0.4`, which is about 10px of lead.
+no lean. The default is one car width (`0.8`), so the car slides its own width
+across before it is pointing the new way.
 
 It is a distance and not a duration deliberately, so the lead you have to give a
 corner is the same at every game speed. Were it a duration, Hard would widen
 every arc by 40% and Staircase's two-cell chicane legs would stop fitting.
 
-The ceiling is set by Staircase: above `0.47` the arc cuts the corner far enough
-to clip the chicane block it is stepping around, on the slightly off-centre
-lines the AI cars drive. Crossover, with its six-cell roads, is happy at `2.0`.
+Staircase's chicanes only clear up to `0.47`, so at the default radius the arc
+cuts those corners far enough to clip the block it is stepping around, on the
+slightly off-centre lines the AI cars drive - cars will trade paint with the
+chicanes on track 2. Crossover, with its six-cell roads, is happy at `2.0`.
 `npm run check` drives every corner of every track at the configured radius with
-the real physics and will name the corner that stops fitting, so raise it and
-find out rather than guessing.
+the real physics and names the corners that do not fit.
 
 `slideOversteer` sets how far the body leads its direction of travel (`0.5` is
 the 45° pose). `slideSettle` is how long the body takes to straighten up again;
