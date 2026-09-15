@@ -57,7 +57,7 @@
         name: spec.name,
         color: spec.color,
         isPlayer: !!spec.player,
-        speedMul: cfg ? cfg.speedMul * T.aiPace : 1,
+        speedMul: (cfg ? cfg.speedMul * T.aiPace : 1) * C.speedMul(),
         x: slot.x,
         y: slot.y,
         dir: { x: 1, y: 0 }
@@ -85,6 +85,23 @@
         vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
         life: 0.5 + Math.random() * 0.4,
         color: Math.random() < 0.5 ? '#ffd166' : color
+      });
+    }
+  }
+
+  /* Tyre marks under a sliding car, dropped at its back corners and left on
+   * the road to fade. They are what makes the slide readable at a glance. */
+  function layRubber(game, car) {
+    if (!car.sliding() || car.crashed || Math.random() > 0.3) return;
+    var a = car.bodyAngle();
+    var cos = Math.cos(a), sin = Math.sin(a);
+    var back = -C.carLength * 0.45;
+    for (var side = -1; side <= 1; side += 2) {
+      var off = side * C.carWidth * 0.4;
+      game.particles.push({
+        x: car.x + back * cos - off * sin,
+        y: car.y + back * sin + off * cos,
+        vx: 0, vy: 0, life: 0.8, color: '#000', mark: true
       });
     }
   }
@@ -153,6 +170,7 @@
         spawnSparks(this, hit, car.color);
         if (car.isPlayer) Sound.crash();
       }
+      layRubber(this, car);
     }
     Car.separate(this.cars, dt);
     for (var n = 0; n < this.cars.length; n++) updateCarRace(this, this.cars[n]);
@@ -178,6 +196,7 @@
 
   Game.buildHud = function () {
     el.track = document.getElementById('hud-track');
+    el.speed = document.getElementById('hud-speed');
     el.lap = document.getElementById('hud-lap');
     el.pos = document.getElementById('hud-pos');
     el.time = document.getElementById('hud-time');
@@ -192,11 +211,13 @@
     el.pause = document.getElementById('pause');
     el.lapButtons = document.getElementById('lap-buttons');
     el.trackButtons = document.getElementById('track-buttons');
+    el.speedButtons = document.getElementById('speed-buttons');
   };
 
   Game.drawHud = function () {
     var p = this.player;
     el.track.textContent = T.name;
+    el.speed.textContent = C.speedName();
     el.lap.textContent = Math.min(p.lap + 1, this.laps) + ' / ' + this.laps;
     el.pos.textContent = p.place + ' / ' + this.cars.length;
     el.time.textContent = fmt(this.time);
@@ -258,6 +279,16 @@
     this.state = 'menu';
   };
 
+  Game.setSpeed = function (level) {
+    C.speedLevel = level;
+    Array.prototype.forEach.call(el.speedButtons.children, function (b) {
+      b.classList.toggle('on', parseInt(b.dataset.speed, 10) === level);
+    });
+    document.getElementById('menu-speed').textContent = C.speedName();
+    this.reset();
+    this.state = 'menu';
+  };
+
   Game.setLaps = function (n) {
     this.laps = Math.max(C.minLaps, Math.min(C.maxLaps, n));
     Array.prototype.forEach.call(el.lapButtons.children, function (b) {
@@ -301,6 +332,7 @@
     Renderer.init(document.getElementById('game'));
     this.buildHud();
     this.setLaps(C.laps);
+    this.setSpeed(C.speedLevel);
     this.setTrack(C.track);
     el.menu.classList.add('show');
 
@@ -316,6 +348,12 @@
       b.addEventListener('click', function (e) {
         e.stopPropagation();
         Game.setTrack(parseInt(b.dataset.track, 10));
+      });
+    });
+    Array.prototype.forEach.call(el.speedButtons.children, function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        Game.setSpeed(parseInt(b.dataset.speed, 10));
       });
     });
     document.getElementById('btn-start').addEventListener('click', function (e) {

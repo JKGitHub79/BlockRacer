@@ -20,6 +20,46 @@
     carWidth: 0.8,
     speed: 10.4,          // cells / second. One speed, no acceleration.
 
+    /* Slide. The car still only ever does 90 degree turns, but its momentum
+     * no longer turns with it instantly: the velocity swings round to the new
+     * heading at a fixed rate, so the car arcs through the corner and you have
+     * to turn this far EARLY to come out on line.
+     *
+     * The number is the turn radius in cells. 0 turns slide off completely and
+     * the game behaves exactly as it did before. It is a distance rather than
+     * a time so that the lead you need stays the same at every game speed -
+     * Staircase has two-cell legs between its chicanes and a radius that grew
+     * with speed would stop fitting through them.
+     *
+     * 0.4 is deliberately modest. Staircase caps out at 0.47: above that the
+     * arc cuts the corner far enough to clip the chicane block it is stepping
+     * around, on the lines the AI cars drive slightly off-centre. Crossover
+     * has room for 2.0. Change it and run `npm run check`, which drives every
+     * corner of every track at the configured radius and will say which one
+     * stops fitting. */
+    slide: 0.4,
+
+    /* How far the body leads its own direction of travel while sliding.
+     * 0.5 points it exactly half way, so a car that has just flicked into a
+     * corner sits at 45 degrees to the way it is actually going. */
+    slideOversteer: 0.5,
+
+    /* Seconds for the body to straighten up again out of full lean. Purely
+     * cosmetic: the car flicks to its 45 degrees instantly and then unwinds no
+     * faster than this, so the drift stays on screen long enough to read at a
+     * radius small enough for Staircase's chicanes. Nothing about where the
+     * car actually is or what it collides with depends on it. */
+    slideSettle: 0.14,
+
+    /* ---- Game speed --------------------------------------------------- */
+    /* Picked on the start menu. Scales every car, player and AI alike. */
+    speedLevel: 0,
+    speedLevels: [
+      { name: 'EASY',   mul: 1.0 },
+      { name: 'MEDIUM', mul: 1.2 },
+      { name: 'HARD',   mul: 1.4 }
+    ],
+
     /* ---- AI (one entry per opponent) -------------------------------- */
     ai: [
       { speedMul: 0.985, mistake: 0.05, reaction: 0.18, offset:  0.00 },
@@ -59,6 +99,19 @@
   if (track) {
     CONFIG.track = Math.max(0, Math.min(global.TRACKS.length - 1, parseInt(track[1], 10) - 1));
   }
+  var speed = /[?&]speed=(\d+)/.exec(search);
+  if (speed) {
+    CONFIG.speedLevel = Math.max(0, Math.min(CONFIG.speedLevels.length - 1, parseInt(speed[1], 10) - 1));
+  }
+  var slide = /[?&]slide=([\d.]+)/.exec(search);
+  if (slide) CONFIG.slide = Math.max(0, Math.min(2, parseFloat(slide[1])));
+
+  CONFIG.speedMul = function () {
+    return CONFIG.speedLevels[CONFIG.speedLevel].mul;
+  };
+  CONFIG.speedName = function () {
+    return CONFIG.speedLevels[CONFIG.speedLevel].name;
+  };
 
   global.CONFIG = CONFIG;
 })(typeof window !== 'undefined' ? window : globalThis);

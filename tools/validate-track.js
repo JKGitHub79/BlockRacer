@@ -12,10 +12,13 @@ const path = require('path');
 const sandbox = { window: {}, location: { search: '' }, console };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
-for (const f of ['js/tracks.js', 'js/config.js', 'js/track.js']) {
+for (const f of ['js/tracks.js', 'js/config.js', 'js/track.js', 'js/car.js']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), sandbox, { filename: f });
 }
-const { CONFIG, TRACKS, TRACK } = sandbox;
+const { CONFIG, TRACKS, TRACK, Car } = sandbox;
+
+// the slide radius to prove the corners against; the CLI can override it
+if (process.argv[2]) CONFIG.slide = parseFloat(process.argv[2]);
 
 const L = CONFIG.carLength / 2, W = CONFIG.carWidth / 2;
 let errors = 0;
@@ -68,6 +71,46 @@ for (let ti = 0; ti < TRACKS.length; ti++) {
     if (!clear(s.x, s.y, right)) fail(`start slot (${s.x}, ${s.y}) is inside a wall`);
     if (TRACK.inZone(TRACK.FINISH, s.x, s.y)) fail(`start slot (${s.x}, ${s.y}) is on the finish line`);
     if (s.x > TRACK.FINISH.x0) fail(`start slot (${s.x}, ${s.y}) is past the finish line`);
+  }
+  report();
+
+  console.log('  cornering at slide ' + CONFIG.slide + ':');
+  for (const off of OFFSETS) {
+    const route = TRACK.offsetRoute(off);
+    for (let i = 0; i < route.length; i++) {
+      const dIn = TRACK.LEG_DIR[(i - 1 + route.length) % route.length];
+      const dOut = TRACK.LEG_DIR[i];
+      if (dIn.x === dOut.x && dIn.y === dOut.y) continue;   // not a corner
+      // start where a driver would throw it in, and let the real physics drive
+      const lead = CONFIG.slide <= 0 ? 0 : Math.min(
+        CONFIG.slide,
+        TRACK.LEG_LEN[(i - 1 + route.length) % route.length] * 0.45,
+        TRACK.LEG_LEN[i] * 0.45);
+      const car = new Car({
+        id: 0, name: 'probe', color: '#fff',
+        x: route[i].x - dIn.x * lead, y: route[i].y - dIn.y * lead,
+        dir: { x: dIn.x, y: dIn.y }
+      });
+      car.turn((-dIn.y === dOut.x && dIn.x === dOut.y) ? 1 : -1);
+      if (car.dir.x !== dOut.x || car.dir.y !== dOut.y) {
+        fail(`waypoint ${i} at offset ${off} is not a 90 degree turn`);
+        continue;
+      }
+      let guard = 0;
+      while (car.sliding() && guard++ < 2000) {
+        if (car.step(CONFIG.dt)) {
+          fail(`offset ${off} crashes mid-corner at waypoint ${i} ` +
+               `(${car.x.toFixed(2)}, ${car.y.toFixed(2)})`);
+          break;
+        }
+      }
+      // and it must come out of the corner sitting on the next leg
+      const err = Math.abs((car.x - route[i].x) * dOut.y) +
+                  Math.abs((car.y - route[i].y) * dOut.x);
+      if (err > 0.1) {
+        fail(`offset ${off} leaves waypoint ${i} ${err.toFixed(2)} cells off line`);
+      }
+    }
   }
   report();
 

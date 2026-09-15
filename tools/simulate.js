@@ -19,6 +19,9 @@ const LAPS = parseInt(process.argv[2] || '5', 10);
 const RACES = parseInt(process.argv[3] || '5', 10);
 // third argument picks one track (1-based); without it, every track runs
 const ONLY = process.argv[4] ? parseInt(process.argv[4], 10) - 1 : null;
+// fourth and fifth override the game speed level (1-3) and the slide radius
+if (process.argv[5]) CONFIG.speedLevel = parseInt(process.argv[5], 10) - 1;
+if (process.argv[6]) CONFIG.slide = parseFloat(process.argv[6]);
 
 function race(seed) {
   // deterministic per-race randomness, so a bad race can be reproduced
@@ -33,7 +36,8 @@ function race(seed) {
     const cfg = CONFIG.ai[i % CONFIG.ai.length];
     const car = new Car({
       id: i, name: 'AI' + i, color: '#fff',
-      speedMul: cfg.speedMul * TRACK.aiPace, x: slot.x, y: slot.y, dir: { x: 1, y: 0 }
+      speedMul: cfg.speedMul * TRACK.aiPace * CONFIG.speedMul(),
+      x: slot.x, y: slot.y, dir: { x: 1, y: 0 }
     });
     car.crashes = 0;
     car.lapTimes = [];
@@ -76,7 +80,8 @@ let allOk = true;
 for (let ti = 0; ti < TRACKS.length; ti++) {
   if (ONLY !== null && ti !== ONLY) continue;
   TRACK.load(ti);
-  console.log(`\nTrack ${ti + 1}: ${TRACK.name} - ${RACES} races of ${LAPS} laps`);
+  console.log(`\nTrack ${ti + 1}: ${TRACK.name} - ${RACES} races of ${LAPS} laps, ` +
+    `speed ${CONFIG.speedName()}, slide ${CONFIG.slide}`);
   const paces = [];
   for (let r = 0; r < RACES; r++) {
     const { cars } = race(r);

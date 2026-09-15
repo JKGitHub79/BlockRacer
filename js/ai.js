@@ -8,6 +8,7 @@
 (function (global) {
   'use strict';
 
+  var C = global.CONFIG;
   var T = global.TRACK;
 
   function sameDir(a, b) { return a.x === b.x && a.y === b.y; }
@@ -97,13 +98,26 @@
     return false;
   };
 
+  /* How far before the corner to start turning. A sliding car arcs through
+   * the corner on a circle of radius CONFIG.slide, so turning exactly that far
+   * early lands it on the next leg dead on line. Clamped to the legs either
+   * side of the corner: on Staircase's two-cell chicane legs there is not room
+   * for a full radius at both ends. */
+  AIDriver.prototype.turnLead = function () {
+    if (C.slide <= 0) return 0;
+    var into = T.LEG_LEN[(this.wpi - 1 + this.path.length) % this.path.length];
+    var away = T.LEG_LEN[this.wpi];
+    return Math.min(C.slide, into * 0.45, away * 0.45);
+  };
+
   AIDriver.prototype.followLine = function () {
     var car = this.car;
     var wp = this.path[this.wpi];
     var horizontal = car.dir.x !== 0;
     var s = horizontal ? car.dir.x : car.dir.y;
     var pos = horizontal ? car.x : car.y;
-    var goal = (horizontal ? wp.x : wp.y) + this.late * s;
+    var lead = this.turnLead();
+    var goal = (horizontal ? wp.x : wp.y) - s * lead + this.late * s;
 
     if (s * (pos - goal) < 0) return;           // not there yet
 
@@ -115,12 +129,13 @@
       return;
     }
 
-    // Clean apex: sit exactly on the line and take the corner.
+    // Clean apex: sit exactly on the line, a turn radius short of the corner,
+    // and throw it in. The arc does the rest.
     if (horizontal) {
-      car.x = wp.x;
+      car.x = wp.x - s * lead;
       if (Math.abs(car.y - wp.y) < 0.35) car.y = wp.y;
     } else {
-      car.y = wp.y;
+      car.y = wp.y - s * lead;
       if (Math.abs(car.x - wp.x) < 0.35) car.x = wp.x;
     }
     this.turnToward(T.LEG_DIR[this.wpi]);
@@ -140,11 +155,17 @@
    * until that axis is done. Turning costs nothing here, so a driver that
    * re-decides every frame will sit on the spot flipping between two headings
    * forever whenever the remaining error is roughly diagonal. */
-  var TOL = 0.15;
+  /* Close enough. Has to clear one step's travel, or a fast car steps over
+   * the band and never registers as having arrived, and has to clear the turn
+   * radius, or a sliding car arcs round the waypoint instead of reaching it. */
+  function tolFor(car) {
+    return Math.max(0.15, car.speed * C.dt * 2, C.slide * 0.6);
+  }
 
   AIDriver.prototype.navigate = function () {
     var car = this.car;
     var wp = this.path[this.wpi];
+    var TOL = tolFor(car);
     var dx = wp.x - car.x, dy = wp.y - car.y;
     var needX = Math.abs(dx) > TOL, needY = Math.abs(dy) > TOL;
 
@@ -174,6 +195,7 @@
   /* Pick the heading that closes the biggest remaining gap and has road in it. */
   AIDriver.prototype.steerToward = function (wp) {
     var car = this.car;
+    var TOL = tolFor(car);
     var dx = wp.x - car.x, dy = wp.y - car.y;
 
     var options = [];

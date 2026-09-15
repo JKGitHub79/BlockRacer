@@ -1,11 +1,17 @@
 /* Block Racer - the car.
  *
- * A car is always axis aligned (headings are multiples of 90 degrees), so its
- * bounding box is exact and collision is a swept box against the wall grid.
- * Length always runs along the direction of travel.
+ * A car's heading is always a multiple of 90 degrees, so its bounding box is
+ * axis aligned and collision is an exact swept box against the wall grid.
  *
- * There is no acceleration: a car is either doing full speed or it is stopped
- * against something. Hitting a wall stops it dead; turning sets it off again.
+ * Its momentum is not. `velAngle` is the direction the car is actually
+ * travelling, and it swings round to the heading at a fixed rate rather than
+ * snapping - so at CONFIG.slide > 0 a turn arcs through the corner at constant
+ * speed, and you have to turn early. With slide at 0 the velocity snaps and
+ * the car behaves exactly as it did before.
+ *
+ * There is still no acceleration: a car is either doing full speed or it is
+ * stopped against something. Hitting a wall stops it dead; turning sets it off
+ * again - from a standstill there is no momentum, so no slide.
  */
 (function (global) {
   'use strict';
@@ -24,6 +30,8 @@
     this.x = opts.x;
     this.y = opts.y;
     this.dir = { x: opts.dir ? opts.dir.x : 1, y: opts.dir ? opts.dir.y : 0 };
+    this.velAngle = Math.atan2(this.dir.y, this.dir.x);
+    this.lean = 0;            // cosmetic body lean, see updatePose
 
     this.crashed = false;     // stopped by a wall, waiting for a turn
     this.crashFlash = 0;
@@ -42,6 +50,46 @@
     this.place = opts.id + 1;
   }
 
+  function wrapPi(a) {
+    while (a > Math.PI) a -= Math.PI * 2;
+    while (a < -Math.PI) a += Math.PI * 2;
+    return a;
+  }
+
+  Car.prototype.headingAngle = function () {
+    return Math.atan2(this.dir.y, this.dir.x);
+  };
+
+  /* Angle between where the car points and where it is going. Zero unless it
+   * is mid-slide; up to a quarter turn just after a corner is thrown in. */
+  Car.prototype.slip = function () {
+    return wrapPi(this.headingAngle() - this.velAngle);
+  };
+
+  Car.prototype.sliding = function () {
+    return Math.abs(this.slip()) > 0.02 || Math.abs(this.lean) > 0.02;
+  };
+
+  /* Body lean, which is what makes a slide read as oversteer rather than as a
+   * car simply pointing the wrong way. It flicks out to meet the slip at once
+   * and then unwinds no faster than CONFIG.slideSettle, so the car is drawn
+   * catching the slide rather than snapping straight. Cosmetic only - the lean
+   * never feeds back into position, collision or the racing line. */
+  Car.prototype.updatePose = function (dt) {
+    var target = this.slip() * C.slideOversteer;
+    if (Math.abs(target) >= Math.abs(this.lean) && target * this.lean >= 0) {
+      this.lean = target;
+      return;
+    }
+    var step = C.slideSettle > 0 ? (Math.PI / 4) / C.slideSettle * dt : Infinity;
+    var d = target - this.lean;
+    this.lean += Math.abs(d) <= step ? d : (d > 0 ? step : -step);
+  };
+
+  Car.prototype.bodyAngle = function () {
+    return this.velAngle + this.lean;
+  };
+
   Car.prototype.halfX = function () {
     return this.dir.x !== 0 ? C.carLength / 2 : C.carWidth / 2;
   };
@@ -58,7 +106,18 @@
   /* Right turn is clockwise on screen: (x,y) -> (-y,x). */
   Car.prototype.turn = function (sign) {
     var d = this.dir;
+    var standing = this.crashed;
     this.dir = sign > 0 ? { x: -d.y, y: d.x } : { x: d.y, y: -d.x };
+    // A car pulling away from a wall has no momentum to fight, so it just goes
+    // the new way. A moving car keeps its velocity and slides into line, and
+    // its body flicks straight to the full oversteer pose - half of a right
+    // angle, so it is drawn at 45 degrees to the way it is still travelling.
+    if (standing || C.slide <= 0) {
+      this.velAngle = this.headingAngle();
+      this.lean = 0;
+    } else {
+      this.lean = sign * (Math.PI / 2) * C.slideOversteer;
+    }
     // Rotating about the centre can poke the corners into a wall when the car
     // is hugging one; shove it back onto the tarmac rather than refusing.
     this.unstick();
@@ -107,26 +166,23 @@
     return !T.boxHitsWall(x0, y0, x1, y1);
   };
 
-  /* One physics step. Returns a crash point when it hits a wall this step.
-   * Only walls stop a car - other cars are dealt with by the separation pass
-   * below, so the pack shoves instead of gridlocking. */
-  Car.prototype.step = function (dt) {
-    this.crashFlash = Math.max(0, this.crashFlash - dt * 4);
-    if (this.crashed || this.finished) return null;
+  /* Slide one axis by `delta`, stopping flush against the first wall in the
+   * way. Motion is no longer confined to one axis per step, so this runs once
+   * per axis; the box it sweeps is whatever the car's heading makes it. */
+  function sweepAxis(car, horizontal, delta) {
+    if (delta === 0) return null;
 
-    var horizontal = this.dir.x !== 0;
-    var sign = horizontal ? this.dir.x : this.dir.y;
-    var along = this.speed * dt;
-
-    var halfAlong = C.carLength / 2;
-    var halfPerp = C.carWidth / 2;
-    var pos = horizontal ? this.x : this.y;
-    var perp = horizontal ? this.y : this.x;
+    var b = car.box();
+    var halfAlong = (horizontal ? b.x1 - b.x0 : b.y1 - b.y0) / 2;
+    var halfPerp = (horizontal ? b.y1 - b.y0 : b.x1 - b.x0) / 2;
+    var sign = delta > 0 ? 1 : -1;
+    var pos = horizontal ? car.x : car.y;
+    var perp = horizontal ? car.y : car.x;
 
     var lead = pos + sign * halfAlong;
-    var target = lead + sign * along;
+    var target = lead + delta;
 
-    // Cells the car spans across the corridor.
+    // Cells the car spans across the direction of travel.
     var p0 = Math.floor(perp - halfPerp + EPS);
     var p1 = Math.ceil(perp + halfPerp - EPS) - 1;
 
@@ -136,28 +192,65 @@
 
     for (var c = from; sign > 0 ? c <= to : c >= to; c += sign) {
       for (var p = p0; p <= p1; p++) {
-        var wall = horizontal ? T.isWall(c, p) : T.isWall(p, c);
-        if (wall) { hitCell = c; break; }
+        if (horizontal ? T.isWall(c, p) : T.isWall(p, c)) { hitCell = c; break; }
       }
       if (hitCell !== null) break;
     }
 
     if (hitCell === null) {
-      if (horizontal) this.x = pos + sign * along; else this.y = pos + sign * along;
+      if (horizontal) car.x = pos + delta; else car.y = pos + delta;
       return null;
     }
 
     var newPos = (sign > 0 ? hitCell : hitCell + 1) - sign * (halfAlong + EPS);
     // Never let a wall shove us backwards when we are already flush with it.
     if (sign > 0 ? newPos < pos : newPos > pos) newPos = pos;
-    if (horizontal) this.x = newPos; else this.y = newPos;
+    if (horizontal) car.x = newPos; else car.y = newPos;
+
+    return {
+      x: car.x + (horizontal ? sign * halfAlong : 0),
+      y: car.y + (horizontal ? 0 : sign * halfAlong)
+    };
+  }
+
+  /* One physics step. Returns a crash point when it hits a wall this step.
+   * Only walls stop a car - other cars are dealt with by the separation pass
+   * below, so the pack shoves instead of gridlocking. */
+  Car.prototype.step = function (dt) {
+    this.crashFlash = Math.max(0, this.crashFlash - dt * 4);
+    this.updatePose(dt);
+    if (this.crashed || this.finished) return null;
+
+    // Swing the velocity round towards the heading. Constant speed at a
+    // constant angular rate is a circular arc, and speed / radius is the rate
+    // that gives the radius asked for.
+    var slip = this.slip();
+    if (slip !== 0) {
+      if (C.slide <= 0) {
+        this.velAngle = this.headingAngle();
+      } else {
+        var swing = (this.speed / C.slide) * dt;
+        this.velAngle = wrapPi(this.velAngle +
+          (Math.abs(slip) <= swing ? slip : (slip > 0 ? swing : -swing)));
+      }
+    }
+
+    var dist = this.speed * dt;
+    var dx = Math.cos(this.velAngle) * dist;
+    var dy = Math.sin(this.velAngle) * dist;
+    // Trigonometric dust: a car going due north must not creep sideways.
+    if (Math.abs(dx) < 1e-9) dx = 0;
+    if (Math.abs(dy) < 1e-9) dy = 0;
+
+    var hit = sweepAxis(this, true, dx);
+    if (!hit) hit = sweepAxis(this, false, dy);
+    if (!hit) return null;
 
     this.crashed = true;
     this.crashFlash = 1;
-    return {
-      x: this.x + this.dir.x * halfAlong,
-      y: this.y + this.dir.y * halfAlong
-    };
+    this.velAngle = this.headingAngle();
+    this.lean = 0;
+    return hit;
   };
 
   /* Move by `amount` on one axis, but only if it stays out of the walls. */

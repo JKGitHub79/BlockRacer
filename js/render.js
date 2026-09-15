@@ -33,10 +33,24 @@
     g.lineWidth = 2;
     g.setLineDash([6, 10]);
     g.beginPath();
-    T.ROUTE.forEach(function (p, i) {
-      var px = p.x * S, py = p.y * S;
-      if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
-    });
+    var pts = T.ROUTE, n = pts.length;
+    var midOf = function (a, b) { return { x: (a.x + b.x) / 2 * S, y: (a.y + b.y) / 2 * S }; };
+    if (C.slide > 0) {
+      // Round the corners by the turn radius: this is the line a sliding car
+      // actually takes, and it shows where you have to throw it in.
+      var r = C.slide * S;
+      var start = midOf(pts[n - 1], pts[0]);
+      g.moveTo(start.x, start.y);
+      for (var i = 0; i < n; i++) {
+        var m = midOf(pts[i], pts[(i + 1) % n]);
+        g.arcTo(pts[i].x * S, pts[i].y * S, m.x, m.y, r);
+        g.lineTo(m.x, m.y);
+      }
+    } else {
+      pts.forEach(function (p, i) {
+        if (i === 0) g.moveTo(p.x * S, p.y * S); else g.lineTo(p.x * S, p.y * S);
+      });
+    }
     g.closePath();
     g.stroke();
     g.restore();
@@ -105,49 +119,43 @@
   }
 
   function drawCar(g, car) {
-    var hx = car.halfX() * S, hy = car.halfY() * S;
-    var x = car.x * S, y = car.y * S;
+    var L = C.carLength * S, W = C.carWidth * S;
+    var a = car.bodyAngle();
+    var cos = Math.cos(a), sin = Math.sin(a);
 
     g.save();
-    g.translate(x, y);
+    g.translate(car.x * S, car.y * S);
+    g.rotate(a);
 
-    // shadow
+    // shadow, offset down-right in world space whatever way the car points
     g.fillStyle = 'rgba(0,0,0,0.45)';
-    g.fillRect(-hx + 2, -hy + 3, hx * 2, hy * 2);
+    g.fillRect(-L / 2 + (2 * cos + 3 * sin), -W / 2 + (3 * cos - 2 * sin), L, W);
 
-    // body
     g.fillStyle = car.crashFlash > 0.05
       ? 'rgba(255,255,255,' + (0.35 + 0.65 * car.crashFlash) + ')'
       : car.color;
-    g.fillRect(-hx, -hy, hx * 2, hy * 2);
+    g.fillRect(-L / 2, -W / 2, L, W);
 
-    // cabin, offset toward the back so the nose is obvious
-    var d = car.dir;
+    // cabin, set back from the nose so the front end is obvious
     g.fillStyle = 'rgba(10,14,22,0.55)';
-    var cw = hx * (d.x !== 0 ? 0.42 : 0.6);
-    var ch = hy * (d.x !== 0 ? 0.6 : 0.42);
-    g.fillRect(-cw - d.x * hx * 0.18, -ch - d.y * hy * 0.18, cw * 2, ch * 2);
+    g.fillRect(-L * 0.34, -W * 0.3, L * 0.4, W * 0.6);
 
     // nose stripe
     g.fillStyle = 'rgba(255,255,255,0.85)';
-    if (d.x !== 0) g.fillRect(d.x > 0 ? hx - 3 : -hx, -hy, 3, hy * 2);
-    else g.fillRect(-hx, d.y > 0 ? hy - 3 : -hy, hx * 2, 3);
+    g.fillRect(L / 2 - 3, -W / 2, 3, W);
 
     if (car.isPlayer) {
       g.strokeStyle = 'rgba(255,255,255,0.9)';
       g.lineWidth = 1.5;
-      g.strokeRect(-hx - 1.5, -hy - 1.5, hx * 2 + 3, hy * 2 + 3);
+      g.strokeRect(-L / 2 - 1.5, -W / 2 - 1.5, L + 3, W + 3);
+      if (car.crashed) {
+        g.globalAlpha = 0.55 + 0.45 * Math.sin(Date.now() / 90);
+        g.strokeStyle = '#ff5470';
+        g.lineWidth = 2;
+        g.strokeRect(-L / 2 - 5, -W / 2 - 5, L + 10, W + 10);
+      }
     }
     g.restore();
-
-    if (car.isPlayer && car.crashed) {
-      g.save();
-      g.globalAlpha = 0.55 + 0.45 * Math.sin(Date.now() / 90);
-      g.strokeStyle = '#ff5470';
-      g.lineWidth = 2;
-      g.strokeRect(x - hx - 5, y - hy - 5, hx * 2 + 10, hy * 2 + 10);
-      g.restore();
-    }
   }
 
   Renderer.draw = function (game) {
@@ -158,7 +166,15 @@
 
     drawCheckpoints(g, game.player);
 
+    // tyre marks first so they sit under the sparks and the cars
     game.particles.forEach(function (p) {
+      if (!p.mark) return;
+      g.globalAlpha = Math.max(0, p.life) * 0.5;
+      g.fillStyle = p.color;
+      g.fillRect(p.x * S - 1.5, p.y * S - 1.5, 3, 3);
+    });
+    game.particles.forEach(function (p) {
+      if (p.mark) return;
       g.globalAlpha = Math.max(0, p.life);
       g.fillStyle = p.color;
       g.fillRect(p.x * S - 2, p.y * S - 2, 4, 4);

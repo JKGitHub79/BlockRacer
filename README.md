@@ -23,8 +23,11 @@ On a touchscreen, tap the left or right half of the screen.
 
 - The car runs at a single fixed speed. There is no throttle and no brake.
 - A press rotates the car exactly 90°, instantly, about its own centre. It does
-  **not** snap to a lane - the car keeps the exact position it had and sets off
-  perpendicular to where it was going. *Where* you turn is the whole game.
+  **not** snap to a lane - the car keeps the exact position it had. *Where* you
+  turn is the whole game.
+- Its momentum does not turn with it. The car slides through the corner on a
+  fixed radius, sitting at 45° to the way it is still travelling, so **you have
+  to turn early**. See [Slide](#slide) below.
 - Hitting a wall stops you dead. You stay there until you turn, and then you go
   again in the new direction.
 - Four cars start: you and three AI drivers, which have exactly the same
@@ -63,17 +66,55 @@ straight can be driven in a single lane - you have to staircase your way round
 with 90° turns. The amber-edged blocks are the ones that will stop you if you
 miss a turn.
 
-## Race length and track
+## Slide
 
-Five laps on Crossover by default. Both are configurable three ways:
+Turning swings the car's heading round instantly, but its *velocity* only
+catches up at a fixed rate. At a constant speed that traces a quarter circle, so
+a corner is an arc rather than a right angle and you have to commit to it early.
+While the velocity is catching up the body is drawn leading it by 45° - the car
+is pointing into the corner and still travelling the old way, which is what
+oversteer looks like - and it lays rubber until it hooks up.
+
+`slide` in `js/config.js` is the **turn radius in cells**. `0` switches the whole
+thing off and the game behaves exactly as it did before: instant turns, no arc,
+no lean. The default is `0.4`, which is about 10px of lead.
+
+It is a distance and not a duration deliberately, so the lead you have to give a
+corner is the same at every game speed. Were it a duration, Hard would widen
+every arc by 40% and Staircase's two-cell chicane legs would stop fitting.
+
+The ceiling is set by Staircase: above `0.47` the arc cuts the corner far enough
+to clip the chicane block it is stepping around, on the slightly off-centre
+lines the AI cars drive. Crossover, with its six-cell roads, is happy at `2.0`.
+`npm run check` drives every corner of every track at the configured radius with
+the real physics and will name the corner that stops fitting, so raise it and
+find out rather than guessing.
+
+`slideOversteer` sets how far the body leads its direction of travel (`0.5` is
+the 45° pose). `slideSettle` is how long the body takes to straighten up again;
+it is cosmetic only, and exists because a radius small enough for Staircase
+would otherwise put the drift on screen for about three frames.
+
+## Race length, track and speed
+
+Five laps on Crossover at Easy by default. All three are set the same way:
 
 1. the buttons on the start menu,
-2. URL parameters - `index.html?track=2&laps=7` (tracks are 1-based, laps 1-20),
-3. `track` and `laps` in `js/config.js`, which set the defaults.
+2. URL parameters - `index.html?track=2&laps=7&speed=3&slide=0.4`
+   (tracks and speeds are 1-based, laps 1-20),
+3. `track`, `laps`, `speedLevel` and `slide` in `js/config.js`.
 
-`js/config.js` also holds car speed, car size, the countdown, the palette, and
-the per-driver AI settings (pace, how often they turn too late, how quickly they
-recover). Per-track overrides - grid size, how much the AI spreads across the
+Game speed scales every car, player and AI alike:
+
+| Level | Speed | Crossover lap |
+| --- | --- | --- |
+| Easy | as it has always been | ~11.2s |
+| Medium | +20% | ~9.4s |
+| Hard | +40% | ~8.0s |
+
+`js/config.js` also holds base car speed, car size, the countdown, the palette,
+and the per-driver AI settings (pace, how often they turn too late, how quickly
+they recover). Per-track overrides - grid size, how much the AI spreads across the
 road, how hard it tries - live with the track in `js/tracks.js`.
 
 ## Adding a track
@@ -109,12 +150,15 @@ npm run check                    # both of the below, on every track
 node tools/validate-track.js     # geometry: can a car actually drive the line?
 node tools/simulate.js 5 40      # 40 full races of real physics and real AI
 node tools/simulate.js 5 40 1    # ...on track 1 only
+node tools/simulate.js 5 40 "" 3 0.4   # ...at Hard, slide 0.4
 ```
 
 `validate-track.js` sweeps a car along each track's racing line at every lateral
 offset the AI uses, and fails if it ever touches a wall or cannot rotate at a
 corner - so a track cannot be edited into something undriveable without
-noticing. `simulate.js` runs complete races with the real car, AI and lap code
+noticing. It then *drives* every corner with the real car physics at the
+configured slide radius, and fails if the arc clips anything or comes out off
+line. Pass a radius to try one out: `node tools/validate-track.js 0.6`. `simulate.js` runs complete races with the real car, AI and lap code
 and fails if any car does not finish; it is how the AI's deadlocks and dithering
 loops were found. Both are worth running after touching `config.js` or
 `tracks.js`.
