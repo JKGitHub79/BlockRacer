@@ -257,9 +257,9 @@ would otherwise put the drift on screen for about three frames.
 Five laps on Crossover at Easy by default. All three are set the same way:
 
 1. the buttons on the start menu,
-2. URL parameters - `index.html?track=2&laps=7&speed=3&slide=0.4`
-   (tracks and speeds are 1-based, laps 1-20),
-3. `track`, `laps`, `speedLevel` and `slide` in `js/config.js`.
+2. URL parameters - `index.html?track=2&laps=7&speed=3&slide=0.4&road=3`
+   (tracks and speeds are 1-based, laps 1-20, road 0-5),
+3. `track`, `laps`, `speedLevel`, `slide` and `roadTint` in `js/config.js`.
 
 Game speed scales every car, player and AI alike:
 
@@ -274,6 +274,28 @@ Game speed scales every car, player and AI alike:
 and the per-driver AI settings (pace, how often they turn too late, how quickly
 they recover). Per-track overrides - grid size, how much the AI spreads across the
 road, how hard it tries - live with the track in `js/tracks.js`.
+
+## Road colour
+
+Six swatches on the start menu, next to the slide slider, for trying a colour
+scheme against a real track: **black, dark grey, light grey, white, light brown
+and brown**. `?road=0` to `?road=5` sets it from the URL, or `roadTint` in
+`js/config.js`.
+
+It is a look and nothing else. Nothing in the physics, the AI or the collision
+grid reads it; the only work it causes is rebaking the scenery, because the road
+and its grid are painted into that. Black overrides nothing at all, so each
+track keeps the near-black tarmac its own theme asks for - Snowdrift's faintly
+blue, Mesa's canyon brown - and the other five replace both the road and the
+grid on top of it outright. Walls, weather and emblems are left alone, so a
+track still looks like itself on grey.
+
+The three light tarmacs carry their own dark set of markings. The racing line
+and the checkpoint tints are pale by default, which is invisible on white, so
+those two flip to dark ink; the same numbers in reverse. The cars are read
+against the road rather than the background, and yellow on white is the weakest
+of the twenty-four combinations - still legible thanks to the dark outline
+every car carries, but it is the one to look at first if the palette changes.
 
 ## Adding a track
 

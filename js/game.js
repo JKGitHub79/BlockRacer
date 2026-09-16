@@ -223,6 +223,7 @@
     el.lapButtons = document.getElementById('lap-buttons');
     el.trackButtons = document.getElementById('track-buttons');
     el.speedButtons = document.getElementById('speed-buttons');
+    el.roadButtons = document.getElementById('road-buttons');
     el.slideRange = document.getElementById('slide-range');
     el.slideRange.max = C.maxSlide;   // one place decides how far it goes
   };
@@ -315,16 +316,24 @@
 
   Game.setSpeed = function (level) {
     C.speedLevel = level;
-    el.slideRange.addEventListener('input', function (e) {
-      e.stopPropagation();
-      Game.setSlide(parseFloat(el.slideRange.value));
-    });
     Array.prototype.forEach.call(el.speedButtons.children, function (b) {
       b.classList.toggle('on', parseInt(b.dataset.speed, 10) === level);
     });
     document.getElementById('menu-speed').textContent = C.speedName();
     this.reset();
     this.state = 'menu';
+  };
+
+  /* Cosmetic only - nothing here is read by the physics, the AI or the
+   * collision grid. The baked scenery has to be redone because the road and
+   * its grid are painted into it, and that is the whole of the work. */
+  Game.setRoad = function (index) {
+    C.roadTint = Math.max(0, Math.min(C.roadTints.length - 1, index));
+    Array.prototype.forEach.call(el.roadButtons.children, function (b) {
+      b.classList.toggle('on', parseInt(b.dataset.road, 10) === C.roadTint);
+    });
+    document.getElementById('menu-road').textContent = C.roadName();
+    Renderer.setTrack();
   };
 
   Game.setLaps = function (n) {
@@ -388,6 +397,7 @@
     this.setLaps(C.laps);
     this.setSlide(C.slide);
     this.setSpeed(C.speedLevel);
+    this.setRoad(C.roadTint);
     this.setTrack(C.track);
     el.menu.classList.add('show');
 
@@ -413,6 +423,12 @@
       b.addEventListener('click', function (e) {
         e.stopPropagation();
         Game.setSpeed(parseInt(b.dataset.speed, 10));
+      });
+    });
+    Array.prototype.forEach.call(el.roadButtons.children, function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        Game.setRoad(parseInt(b.dataset.road, 10));
       });
     });
     document.getElementById('btn-start').addEventListener('click', function (e) {

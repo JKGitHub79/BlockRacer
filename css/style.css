@@ -217,6 +217,25 @@ canvas { display: block; touch-action: none; }
 .laps button:hover { border-color: var(--accent); }
 .laps button.on { background: var(--accent); color: #06121a; border-color: var(--accent); }
 
+/* The road colour is a look, not a setting that changes the racing, so it gets
+ * one line rather than a block: the label on the left, six swatches showing
+ * the actual tarmac on the right. A row of named buttons would have cost the
+ * menu another fifty pixels, which is more than a 720-tall laptop has spare. */
+.roadrow { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+.roadrow .lapline { margin: 0; white-space: nowrap; }
+.swatches { display: flex; gap: 5px; margin-left: auto; }
+.swatches button {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: var(--sw);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.swatches button:hover { border-color: var(--accent); }
+.swatches button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+
 button.primary {
   width: 100%;
   padding: 13px;
@@ -377,6 +396,13 @@ code { color: var(--accent); }
   .trackblurb { min-height: 0; }
 }
 
+/* Lower again and the slide hint - three lines of it - is what stands between
+ * the title and the top of the window. The slider still says what it is set
+ * to; the caveats are in the README. */
+@media (max-height: 760px) {
+  .slide-hint { display: none; }
+}
+
 /* Narrow enough that prose wraps into many lines and pushes the controls off
  * the bottom. The explanatory copy goes; the controls are the point. */
 @media (max-width: 430px) {
@@ -398,17 +424,23 @@ code { color: var(--accent); }
   .keys { display: none; }
   .hud { padding: 8px 10px; font-size: 12px; }
   .stat b { font-size: 13px; }
-  .panel { padding: 14px; width: min(380px, 100%); }
-  .panel h2 { font-size: 17px; margin-bottom: 6px; letter-spacing: 3px; }
+  .overlay { padding: 4px; }
+  .panel { padding: 12px; width: min(380px, 100%); }
+  .panel h2 { font-size: 16px; margin-bottom: 4px; letter-spacing: 3px; }
   .blurb, .slide-hint { display: none; }
-  .laps { margin-bottom: 8px; }
-  .laps button { padding: 7px 4px; }
+  .lapline { margin-bottom: 3px; }
+  .laps { margin-bottom: 6px; }
+  /* Every other row of buttons drops to 10px here; the lap row had been left
+   * at 12, which cost a dozen pixels for nothing. */
+  .laps button { font-size: 10px; padding: 6px 2px; }
+  .roadrow { margin: 6px 0; }
+  .swatches button { width: 16px; height: 16px; }
   /* A short screen is a wide one, so the four levels fit across in one row -
    * and the row they save is what keeps START on screen. */
   .speeds { grid-template-columns: repeat(4, 1fr); }
-  .tracks { grid-template-columns: repeat(4, 1fr); }
-  .tracks button { font-size: 10px; padding: 7px 1px; }
-  .speeds button { font-size: 10px; letter-spacing: 0; padding: 7px 2px; }
+  .tracks { grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .tracks button { font-size: 10px; padding: 5px 1px; }
+  .speeds button { font-size: 10px; letter-spacing: 0; padding: 5px 2px; }
   #menu .hint { display: none; }
   button.primary { padding: 9px; }
   .lapline { margin-bottom: 4px; }

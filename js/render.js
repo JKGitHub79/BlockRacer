@@ -17,9 +17,13 @@
   var LAVA_RIM = 3;
   var flakes = null;
 
-  /* Track palettes override the defaults one entry at a time. */
+  /* Three layers, most specific first: the road tint picked on the start menu
+   * beats the track's own palette, which beats the defaults in config.js. The
+   * tint only ever carries road entries, so a track keeps its walls and its
+   * weather whichever tarmac it is laid on. */
   function colorOf(name) {
-    return (T.theme && T.theme[name]) || C.colors[name];
+    var tint = C.roadColors();
+    return (tint && tint[name]) || (T.theme && T.theme[name]) || C.colors[name];
   }
 
   /* A seamless tile of soft molten blobs. Drawn nine times over so a blob that

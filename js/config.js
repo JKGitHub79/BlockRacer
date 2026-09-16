@@ -89,6 +89,37 @@
       { name: 'SWEAT',        mul: 2.0 }
     ],
 
+    /* ---- Road colour -------------------------------------------------
+     * Purely a look. Picked on the start menu so colour schemes can be tried
+     * against a real track without editing anything, and it changes nothing
+     * about where a wall is or how a car drives.
+     *
+     * Entry 0 overrides nothing, so each track keeps the near-black tarmac its
+     * own theme asks for. The rest replace the road and its grid outright. The
+     * light ones also have to flip the markings painted ON the road - the
+     * racing line and the checkpoint tints are pale by default and vanish on
+     * anything lighter than they are - so they carry their own dark set. */
+    roadTint: 0,
+    roadTints: [
+      { name: 'BLACK' },
+      { name: 'DARK GREY', colors: {
+        road: '#2b2e34', roadLine: '#363a42' } },
+      { name: 'LIGHT GREY', colors: {
+        road: '#b6bac1', roadLine: '#a4a9b2',
+        racingLine: 'rgba(28,38,58,0.30)',
+        check: 'rgba(20,60,95,0.08)', checkNext: 'rgba(20,60,95,0.24)' } },
+      { name: 'WHITE', colors: {
+        road: '#eceef2', roadLine: '#d6d9df',
+        racingLine: 'rgba(28,38,58,0.30)',
+        check: 'rgba(20,60,95,0.08)', checkNext: 'rgba(20,60,95,0.24)' } },
+      { name: 'LIGHT BROWN', colors: {
+        road: '#c0a079', roadLine: '#ae8f6a',
+        racingLine: 'rgba(44,28,12,0.32)',
+        check: 'rgba(70,40,10,0.09)', checkNext: 'rgba(70,40,10,0.26)' } },
+      { name: 'BROWN', colors: {
+        road: '#6a4d33', roadLine: '#5a402a' } }
+    ],
+
     /* ---- AI (one entry per opponent) -------------------------------- */
     ai: [
       { speedMul: 0.985, mistake: 0.05, reaction: 0.18, offset:  0.00 },
@@ -128,6 +159,11 @@
   if (track) {
     CONFIG.track = Math.max(0, Math.min(global.TRACKS.length - 1, parseInt(track[1], 10) - 1));
   }
+  var road = /[?&]road=(\d+)/.exec(search);
+  if (road) {
+    CONFIG.roadTint = Math.max(0,
+      Math.min(CONFIG.roadTints.length - 1, parseInt(road[1], 10)));
+  }
   var speed = /[?&]speed=(\d+)/.exec(search);
   if (speed) {
     CONFIG.speedLevel = Math.max(0, Math.min(CONFIG.speedLevels.length - 1, parseInt(speed[1], 10) - 1));
@@ -139,6 +175,12 @@
 
   CONFIG.speedMul = function () {
     return CONFIG.speedLevels[CONFIG.speedLevel].mul;
+  };
+  CONFIG.roadColors = function () {
+    return CONFIG.roadTints[CONFIG.roadTint].colors || null;
+  };
+  CONFIG.roadName = function () {
+    return CONFIG.roadTints[CONFIG.roadTint].name;
   };
   CONFIG.speedName = function () {
     return CONFIG.speedLevels[CONFIG.speedLevel].name;

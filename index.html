@@ -11,7 +11,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.14.0', built: '2026-09-16' };
+window.BR = { version: '0.15.0', built: '2026-09-16' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -61,6 +61,18 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
             its chicanes above 0.47; much past 3 the arc is wider than the road
             on any track. <code>[</code> and <code>]</code> step it by 0.05,
             mid-race included.</p>
+
+          <div class="roadrow">
+            <p class="lapline">ROAD &middot; <b id="menu-road">BLACK</b></p>
+            <div id="road-buttons" class="swatches">
+              <button data-road="0" style="--sw:#12161f" title="Black"></button>
+              <button data-road="1" style="--sw:#2b2e34" title="Dark grey"></button>
+              <button data-road="2" style="--sw:#b6bac1" title="Light grey"></button>
+              <button data-road="3" style="--sw:#eceef2" title="White"></button>
+              <button data-road="4" style="--sw:#c0a079" title="Light brown"></button>
+              <button data-road="5" style="--sw:#6a4d33" title="Brown"></button>
+            </div>
+          </div>
 
           <p class="lapline">GAME SPEED &middot; <b id="menu-speed">BEGINNER</b></p>
           <div id="speed-buttons" class="laps speeds">
