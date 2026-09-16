@@ -197,9 +197,9 @@ canvas { display: block; touch-action: none; }
   gap: 8px;
 }
 
-/* Three across keeps five tracks to two rows; two across made three, which
-   pushed START off the bottom of a 720-tall laptop. */
-.tracks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+/* Four across keeps seven tracks to two rows; three across made three rows,
+   which pushed START off the bottom of a 720-tall laptop. */
+.tracks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .tracks button { font-size: 11px; padding: 10px 2px; }
 
 .laps button {
@@ -386,10 +386,11 @@ code { color: var(--accent); }
   .panel h2 { font-size: 19px; letter-spacing: 3px; }
 }
 
-/* Short, which on a phone means landscape. Every bit of vertical space here is
- * board, so the chrome shrinks and the start menu scrolls rather than
- * overflowing off the bottom. */
-@media (max-height: 560px) {
+/* Short - a phone in landscape, or a small desktop window. Every bit of
+ * vertical space here is board, so the chrome shrinks and the start menu
+ * scrolls rather than overflowing off the bottom. The cutoff has to clear
+ * 600, or a 4:3 window loses START below the fold. */
+@media (max-height: 640px) {
   body { padding: 6px 8px; }
   .topbar { margin-bottom: 6px; }
   .topbar h1 { font-size: 15px; letter-spacing: 2px; }

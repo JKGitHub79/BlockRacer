@@ -130,6 +130,84 @@
     g.restore();
   };
 
+  function eachWall(fn) {
+    for (var cy = 0; cy < T.rows; cy++) {
+      for (var cx = 0; cx < T.cols; cx++) {
+        if (T.isWall(cx, cy)) fn(cx, cy, T.wallKind(cx, cy));
+      }
+    }
+  }
+
+  /* Emblems are flat livery painted onto the solids - club stripes, a flag,
+   * a scatter of mosaic tiles. They are clipped to the cells that are
+   * actually wall, so a rect declared loosely can never bleed onto tarmac,
+   * and they are baked, so they cost nothing per frame. */
+  function drawEmblems(g) {
+    var list = T.emblems;
+    if (!list || !list.length) return;
+
+    var bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
+    list.forEach(function (e) {
+      bx0 = Math.min(bx0, Math.floor(e.x0)); by0 = Math.min(by0, Math.floor(e.y0));
+      bx1 = Math.max(bx1, Math.ceil(e.x1));  by1 = Math.max(by1, Math.ceil(e.y1));
+    });
+
+    g.save();
+    g.beginPath();
+    var any = false;
+    for (var cy = by0; cy < by1; cy++) {
+      for (var cx = bx0; cx < bx1; cx++) {
+        if (!T.isWall(cx, cy)) continue;
+        g.rect(cx * S, cy * S, S, S);
+        any = true;
+      }
+    }
+    if (!any) { g.restore(); return; }
+    g.clip();
+    list.forEach(function (e) { EMBLEM[e.kind] && EMBLEM[e.kind](g, e); });
+    g.restore();
+  }
+
+  var EMBLEM = {
+    /* Parallel bands marching along one axis, colours cycling. axis 'x' gives
+     * vertical stripes, axis 'y' horizontal ones. */
+    stripes: function (g, e) {
+      var alongX = e.axis === 'x';
+      var a0 = alongX ? e.x0 : e.y0;
+      var a1 = alongX ? e.x1 : e.y1;
+      var band = e.band || 1;
+      g.globalAlpha = e.alpha === undefined ? 1 : e.alpha;
+      for (var a = a0, i = 0; a < a1 - 1e-6; a += band, i++) {
+        var w = Math.min(band, a1 - a);
+        g.fillStyle = e.colors[i % e.colors.length];
+        if (alongX) g.fillRect(a * S, e.y0 * S, w * S, (e.y1 - e.y0) * S);
+        else        g.fillRect(e.x0 * S, a * S, (e.x1 - e.x0) * S, w * S);
+      }
+      g.globalAlpha = 1;
+    },
+
+    /* Trencadis: a sparse seeded scatter of small square tiles, so the flat
+     * livery gets a little grain without anything glowing. */
+    mosaic: function (g, e) {
+      var seed = e.seed || 1;
+      var rnd = function () {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        return seed / 0x7fffffff;
+      };
+      var tile = e.tile || 0.5;
+      var gap = tile * 0.12;
+      for (var y = e.y0; y < e.y1 - 1e-6; y += tile) {
+        for (var x = e.x0; x < e.x1 - 1e-6; x += tile) {
+          if (rnd() > e.density) continue;
+          g.fillStyle = e.colors[(rnd() * e.colors.length) | 0];
+          g.globalAlpha = (e.alpha === undefined ? 1 : e.alpha) * (0.35 + rnd() * 0.65);
+          g.fillRect((x + gap) * S, (y + gap) * S, (tile - gap * 2) * S, (tile - gap * 2) * S);
+        }
+      }
+      g.globalAlpha = 1;
+    }
+  };
+
   function bakeTrack() {
     var cv = document.createElement('canvas');
     cv.width = T.width;
@@ -175,30 +253,31 @@
     g.stroke();
     g.restore();
 
-    // walls
-    for (var cy = 0; cy < T.rows; cy++) {
-      for (var cx = 0; cx < T.cols; cx++) {
-        if (!T.isWall(cx, cy)) continue;
-        // Four kinds of solid: the islands inside the circuit, the ground
-        // outside it, the chicane blocks, and lava - whose cooled crust is
-        // baked here and whose molten middle is painted over it every frame.
-        var kind = T.wallKind(cx, cy);
-        var fill = kind === 3 ? colorOf('jog')
-                 : (kind === 2 || kind === 4) ? colorOf('wall') : colorOf('outer');
-        var face = kind === 3 ? colorOf('jogTop')
-                 : (kind === 2 || kind === 4) ? colorOf('wallTop') : colorOf('outerTop');
-        g.fillStyle = fill;
-        g.fillRect(cx * S, cy * S, S, S);
-        g.fillStyle = face;
-        if (!T.isWall(cx, cy - 1)) g.fillRect(cx * S, cy * S, S, 3);
-        if (!T.isWall(cx - 1, cy)) g.fillRect(cx * S, cy * S, 3, S);
-        if (!T.isWall(cx + 1, cy)) g.fillRect(cx * S + S - 3, cy * S, 3, S);
-        if (!T.isWall(cx, cy + 1)) {
-          g.fillStyle = 'rgba(0,0,0,0.45)';
-          g.fillRect(cx * S, cy * S + S - 3, S, 3);
-        }
+    // Walls, in two passes: every solid is filled flat first, then the
+    // emblems are painted over the flat fill, then the lit edges go on top -
+    // so the faces that make the blocks read as raised survive the livery.
+    eachWall(function (cx, cy, kind) {
+      // Four kinds of solid: the islands inside the circuit, the ground
+      // outside it, the chicane blocks, and lava - whose cooled crust is
+      // baked here and whose molten middle is painted over it every frame.
+      g.fillStyle = kind === 3 ? colorOf('jog')
+                  : (kind === 2 || kind === 4) ? colorOf('wall') : colorOf('outer');
+      g.fillRect(cx * S, cy * S, S, S);
+    });
+
+    drawEmblems(g);
+
+    eachWall(function (cx, cy, kind) {
+      g.fillStyle = kind === 3 ? colorOf('jogTop')
+                  : (kind === 2 || kind === 4) ? colorOf('wallTop') : colorOf('outerTop');
+      if (!T.isWall(cx, cy - 1)) g.fillRect(cx * S, cy * S, S, 3);
+      if (!T.isWall(cx - 1, cy)) g.fillRect(cx * S, cy * S, 3, S);
+      if (!T.isWall(cx + 1, cy)) g.fillRect(cx * S + S - 3, cy * S, 3, S);
+      if (!T.isWall(cx, cy + 1)) {
+        g.fillStyle = 'rgba(0,0,0,0.45)';
+        g.fillRect(cx * S, cy * S + S - 3, S, 3);
       }
-    }
+    });
 
     // start / finish chequer
     var f = T.FINISH;

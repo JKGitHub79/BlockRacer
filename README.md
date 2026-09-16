@@ -131,7 +131,37 @@ belongs.
 
 Leaves fall as you drive.
 
-### 5 · Caldera — moderate
+### 5 · Catalunya — moderate
+
+Blaugrana. A 28-cell main straight along the bottom, then two corner complexes
+with a breather between them: a four-turn chicane up the right-hand road, and a
+four-turn sequence back along the top. **Eight-cell roads, the widest on any
+track**, because the corners here are meant to be taken quickly rather than
+threaded.
+
+It reads 5 linked corners, the same count as Wildwood, but in two bursts rather
+than one run: 2.4, 3.4, 2.4 and 2.9 cells of straight through the right-hand
+chicane, then 2.4, 3.4, 2.4 along the top. A car is still unwinding out of one
+arc as the next one arrives, twice a lap, with the long straight to reset in
+between.
+
+The first version put every gate between the chicane blocks at three cells with
+the racing line down the middle. At the default slide that leaves 0.3 cells of
+margin once the arc and the car's own width are paid for, and it showed: 188
+crashes over 25 races, 324 of them in the single cell under the first block
+after the main straight - harder than Caldera, which is not what a track this
+wide should be. Widening every gate to four cells took it to 170, and biasing
+the line half a cell toward the entry side - the overshoot is always late, never
+early, so the runoff wants to be past the apex rather than before it - took it
+to 159. Between Wildwood's 152 and Caldera's 168, which is where it belongs.
+
+The infield carries the livery: blaugrana stripes, a senyera band across the
+middle and a scatter of trencadis tiles over the top, all of it painted a
+couple of stops under the tarmac. The cars have to stay the brightest things on
+screen, and a big flat panel in the middle of the board is exactly where that
+is easiest to lose.
+
+### 6 · Caldera — moderate
 
 A ring road around a lava lake, 40 x 28 cells. The roads are six cells wide,
 same as Crossover, and a flow of lava crosses each of the long straights -
@@ -149,7 +179,7 @@ The lava is animated: two sheets of glow scroll across each other under a
 cooled crust, painted at a third resolution and stretched back up, which is a
 ninth of the pixels and indistinguishable on something this soft.
 
-### 6 · Staircase — hard
+### 7 · Staircase — hard
 
 A four-cell corridor around a solid infield, 40 x 25 cells. Each of the four
 straights carries two blocks on **alternating halves** of the corridor, so no
@@ -261,6 +291,15 @@ line. Marking a wall rectangle `kind: 'lava'` makes it molten and animated, and
 soft and fat, or grit that tears across almost flat and is smeared along its own
 direction of travel. Both wrap round the board in both directions, so nothing is
 ever spawned or retired.
+
+`emblems` paints flat livery onto the solids. Each entry is a rectangle in cell
+coordinates plus a kind: `stripes` takes an `axis`, a `band` width in cells and
+a list of `colors` to cycle, and `mosaic` takes a `tile` size, a `density`, a
+`seed` and a palette to scatter from. Both take an `alpha`. They are clipped to
+the cells that are actually wall, so a rectangle declared loosely can never
+bleed onto the tarmac, and they are drawn between the flat wall fill and the lit
+edges, so the faces that make a block read as raised survive the livery. All of
+it is baked into the track canvas once, so it costs nothing per frame.
 
 The grid faces whichever way the leg it sits on runs, worked out from
 `startLeg`, so a circuit finishing westward grids up east of its line without

@@ -321,7 +321,101 @@
   };
 
   /* ------------------------------------------------------------------ *
-   * 5. CALDERA - moderate
+   * 5. CATALUNYA - moderate
+   *
+   * Eight-cell roads the whole way round - the widest of the lot - and two
+   * flowing complexes rather than one. A long main straight down the bottom
+   * to arrive from, then a quick chicane up the right, then a longer sequence
+   * along the top. Both are spaced four cells apart, which at the default
+   * slide leaves 2.4 cells of straight between arcs: six linked corners, in
+   * two bursts, with a thirty-cell straight and two long sweeps to breathe in
+   * between.
+   *
+   *          1     9              31    39
+   *      1 |       |    #    #    |      |  rows 1-4  top outer lane
+   *      5 |       |  #     #     |      |  rows 5-8  top inner lane
+   *      9 |       +--------------+   #  |  rows 9-18 the infield
+   *     19 |                      |      |  rows 19-26 main straight
+   *     27 +-----------------------------+
+   * ------------------------------------------------------------------ */
+  var CATALUNYA = {
+    id: 'catalunya',
+    name: 'CATALUNYA',
+    blurb: 'Two flowing complexes off a long main straight. Blaugrana.',
+    grade: 'MODERATE',
+    cols: 40,
+    rows: 28,
+    aiPace: 0.96,
+    aiOffsetScale: 2,
+    aiMistakeScale: 0.6,
+    theme: {
+      bg:         '#070810',
+      road:       '#1b1d23',   // asphalt, kept dark
+      roadLine:   '#25282f',
+      wall:       '#122540',   // blue half of the shirt, well down in tone
+      wallTop:    '#24405f',
+      jog:        '#4a1022',   // garnet, for the blocks out on the road
+      jogTop:     '#77203c',
+      outer:      '#0d1523',
+      outerTop:   '#1b2c46',
+      racingLine: 'rgba(186,160,96,0.20)',
+      check:      'rgba(186,160,96,0.06)',
+      checkNext:  'rgba(186,160,96,0.20)',
+      startLine:  '#d8d2c2'
+    },
+    /* Painted onto the infield at bake time - no per-frame cost. The cars have
+     * to stay the brightest things on screen, so the livery is kept a couple of
+     * stops under the tarmac it sits next to. */
+    emblems: [
+      { kind: 'stripes', x0: 9, y0: 9, x1: 30, y1: 18, axis: 'x', band: 2,
+        colors: ['#142944', '#3b0e1f'], alpha: 0.9 },           // blaugrana
+      { kind: 'stripes', x0: 9, y0: 12.5, x1: 30, y1: 14.5, axis: 'y', band: 0.5,
+        colors: ['#55421c', '#3a0d18'], alpha: 0.55 },          // the senyera
+      { kind: 'mosaic', x0: 9, y0: 9, x1: 30, y1: 18, tile: 0.5, density: 0.10,
+        seed: 2026, alpha: 0.3,
+        colors: ['#24405f', '#5c1730', '#55421c', '#1f4a44'] }  // trencadis
+    ],
+    walls: border(40, 28).concat([
+      { x0: 9,  y0: 9,  x1: 30, y1: 18, kind: 'infield' },
+      { x0: 35, y0: 18, x1: 38, y1: 18, kind: 'jog' },   // the chicane up the right
+      { x0: 31, y0: 13, x1: 34, y1: 13, kind: 'jog' },
+      { x0: 35, y0: 8,  x1: 38, y1: 8,  kind: 'jog' },
+      { x0: 27, y0: 1,  x1: 27, y1: 4,  kind: 'jog' },   // the sequence along the top
+      { x0: 22, y0: 5,  x1: 22, y1: 8,  kind: 'jog' },
+      { x0: 17, y0: 1,  x1: 17, y1: 4,  kind: 'jog' }
+    ]),
+    route: [
+      { x: 5,    y: 23   },   // 0  onto the main straight
+      { x: 33,   y: 23   },   // 1  turn up the right, inside lane
+      { x: 33,   y: 16.5 },   // 2  the chicane
+      { x: 37,   y: 16.5 },   // 3
+      { x: 37,   y: 11.5 },   // 4
+      { x: 33,   y: 11.5 },   // 5
+      { x: 33,   y: 7    },   // 6  turn along the top, inside lane
+      { x: 25,   y: 7    },   // 7  the sequence
+      { x: 25,   y: 3    },   // 8
+      { x: 20,   y: 3    },   // 9
+      { x: 20,   y: 7    },   // 10
+      { x: 5,    y: 7    }    // 11 turn down the left, back to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 20, y0: 19, x1: 21, y1: 27 },   // main straight
+      { x0: 31, y0: 9,  x1: 35, y1: 10 },   // out of the chicane
+      { x0: 12, y0: 5,  x1: 13, y1: 9  },   // out of the top sequence
+      { x0: 1,  y0: 15, x1: 9,  y1: 16 }    // down the left
+    ],
+    finish: { x0: 9.6, y0: 19, x1: 10.4, y1: 27, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 8.0, y: 21.5, wp: 1 },
+      { x: 8.0, y: 24.5, wp: 1 },
+      { x: 6.1, y: 21.5, wp: 1 },
+      { x: 6.1, y: 24.5, wp: 1 }
+    ]
+  };
+
+  /* ------------------------------------------------------------------ *
+   * 6. CALDERA - moderate
    *
    * A ring road around a lava lake, six cells wide like Crossover, with one
    * lava flow across each of the long straights. Eight turns a lap against
@@ -402,7 +496,7 @@
   };
 
   /* ------------------------------------------------------------------ *
-   * 6. STAIRCASE
+   * 7. STAIRCASE
    *
    * A four-cell corridor around a solid infield. Every straight carries two
    * blocks on alternating halves of the road, so no straight can be taken in
@@ -467,5 +561,5 @@
     ]
   };
 
-  global.TRACKS = [CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CALDERA, STAIRCASE];
+  global.TRACKS = [CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE];
 })(typeof window !== 'undefined' ? window : globalThis);

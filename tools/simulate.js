@@ -86,6 +86,7 @@ for (let ti = 0; ti < TRACKS.length; ti++) {
   console.log(`\nTrack ${ti + 1}: ${TRACK.name} - ${RACES} races of ${LAPS} laps, ` +
     `speed ${CONFIG.speedName()}, slide ${CONFIG.slide}`);
   const paces = [];
+  let crashes = 0, scrapes = 0;
   for (let r = 0; r < RACES; r++) {
     const { cars } = race(r);
     const line = cars.map((c) => {
@@ -93,6 +94,7 @@ for (let ti = 0; ti < TRACKS.length; ti++) {
       const status = c.finished ? c.finishTime.toFixed(1) + 's' : 'DNF(lap ' + (c.lap + 1) + ')';
       if (!c.finished) allOk = false;
       c.lapTimes.forEach((x) => paces.push(x));
+      crashes += c.crashes; scrapes += c.scrapes;
       return `${c.name} ${status} best=${best} crashes=${c.crashes} scrapes=${c.scrapes}`;
     }).join('  |  ');
     if (RACES <= 10 || !cars.every((c) => c.finished)) console.log(`  race ${r + 1}: ${line}`);
@@ -102,6 +104,7 @@ for (let ti = 0; ti < TRACKS.length; ti++) {
     console.log(`  ${paces.length} laps: fastest ${paces[0].toFixed(2)}s  ` +
       `median ${paces[Math.floor(paces.length / 2)].toFixed(2)}s  ` +
       `slowest ${paces[paces.length - 1].toFixed(2)}s`);
+    console.log(`  ${crashes} crashes, ${scrapes} scrapes`);
   }
 }
 
