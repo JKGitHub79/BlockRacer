@@ -234,7 +234,94 @@
   };
 
   /* ------------------------------------------------------------------ *
-   * 4. CALDERA - moderate
+   * 4. WILDWOOD - moderate
+   *
+   * The point of this one is rhythm rather than shape. Single stands of trees
+   * close in from alternating sides of the bottom straight, spaced four cells
+   * apart, which at the default slide is close enough that a car is still
+   * coming out of one arc as it has to be thrown into the next - five corners
+   * running into one another with barely two cells of straight between them.
+   * The rest of the lap is deliberately plain: one long fast straight along
+   * the top to arrive from, and nothing else to think about.
+   *
+   * The road through the trees is eight cells rather than six, and the wood is
+   * cut back to row 18 to make the room. Three-cell lanes left barely half a
+   * cell of margin past each turn-in, which is not flowing, it is Staircase.
+   *
+   *          1   7    13 14  18  22  26    33  39
+   *      1 |   |                           |   |  rows 1-6   top straight
+   *      7 |   +-----+---------------------+   |
+   *        |   |     |      the wood       |   |  rows 7-18  wood, cut back
+   *     19 |   |     +--+--+---+--+---+----+   |  rows 19-22 inner lane
+   *     23 |   +--------+-----+--------+   |   |  rows 23-26 outer lane
+   *     27 +--------------------------------+
+   * ------------------------------------------------------------------ */
+  var WILDWOOD = {
+    id: 'wildwood',
+    name: 'WILDWOOD',
+    blurb: 'Five corners through the trees, each running into the next.',
+    grade: 'MODERATE',
+    cols: 40,
+    rows: 28,
+    aiPace: 0.95,
+    aiOffsetScale: 2,
+    aiMistakeScale: 0.6,
+    weather: 'leaves',
+    theme: {
+      bg:         '#050a06',
+      road:       '#241d14',   // forest floor, beaten down to dirt
+      roadLine:   '#302619',
+      wall:       '#1f4429',   // the wood
+      wallTop:    '#3f7a48',
+      jog:        '#2a5733',   // the stands out on their own
+      jogTop:     '#63ad68',
+      outer:      '#16301d',
+      outerTop:   '#2f5c39',
+      racingLine: 'rgba(190,232,170,0.26)',
+      check:      'rgba(150,240,170,0.08)',
+      checkNext:  'rgba(150,240,170,0.30)',
+      startLine:  '#f0f7ea'
+    },
+    walls: border(40, 28).concat([
+      { x0: 7,  y0: 7, x1: 12, y1: 20, kind: 'infield' },   // the wood
+      { x0: 13, y0: 7, x1: 32, y1: 18, kind: 'infield' },   // cut back for the esses
+      /* Single stands, alternating. A wider stand would need a wider gap to
+       * turn into, and the gap is what sets the rhythm. */
+      { x0: 26, y0: 23, x1: 26, y1: 26, kind: 'jog' },
+      { x0: 22, y0: 19, x1: 22, y1: 22, kind: 'jog' },
+      { x0: 18, y0: 23, x1: 18, y1: 26, kind: 'jog' },
+      { x0: 14, y0: 19, x1: 14, y1: 22, kind: 'jog' }
+    ]),
+    route: [
+      { x: 4,    y: 4  },   // 0  the long straight along the top
+      { x: 36,   y: 4  },   // 1  turn down the right road
+      { x: 36,   y: 21 },   // 2  turn along the bottom on the inside lane
+      { x: 24.5, y: 21 },   // 3  and now the esses, four cells apart all the way
+      { x: 24.5, y: 25 },   // 4
+      { x: 20.5, y: 25 },   // 5
+      { x: 20.5, y: 21 },   // 6
+      { x: 16.5, y: 21 },   // 7
+      { x: 16.5, y: 25 },   // 8
+      { x: 4,    y: 25 }    // 9  out of the trees, turn up the left road
+    ],
+    startLeg: 9,
+    checkpoints: [
+      { x0: 14, y0: 1,  x1: 15, y1: 7  },   // top straight
+      { x0: 33, y0: 12, x1: 39, y1: 13 },   // right road
+      { x0: 29, y0: 19, x1: 30, y1: 23 },   // into the trees
+      { x0: 8,  y0: 23, x1: 9,  y1: 27 }    // out of them
+    ],
+    finish: { x0: 1, y0: 15.6, x1: 7, y1: 16.4, dir: { x: 0, y: -1 } },
+    startGrid: [
+      { x: 2.8, y: 18.5, wp: 0 },
+      { x: 5.2, y: 18.5, wp: 0 },
+      { x: 2.8, y: 20.4, wp: 0 },
+      { x: 5.2, y: 20.4, wp: 0 }
+    ]
+  };
+
+  /* ------------------------------------------------------------------ *
+   * 5. CALDERA - moderate
    *
    * A ring road around a lava lake, six cells wide like Crossover, with one
    * lava flow across each of the long straights. Eight turns a lap against
@@ -315,7 +402,7 @@
   };
 
   /* ------------------------------------------------------------------ *
-   * 5. STAIRCASE
+   * 6. STAIRCASE
    *
    * A four-cell corridor around a solid infield. Every straight carries two
    * blocks on alternating halves of the road, so no straight can be taken in
@@ -380,5 +467,5 @@
     ]
   };
 
-  global.TRACKS = [CROSSOVER, SNOWDRIFT, MESA, CALDERA, STAIRCASE];
+  global.TRACKS = [CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CALDERA, STAIRCASE];
 })(typeof window !== 'undefined' ? window : globalThis);

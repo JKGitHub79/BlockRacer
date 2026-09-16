@@ -112,7 +112,26 @@ against Crossover's 80 - with a slightly quicker lap at 10.9s.
 
 The dust blows live, and the mesa in the middle is the wall.
 
-### 4 · Caldera — moderate
+### 4 · Wildwood — moderate
+
+The point of this one is rhythm rather than shape. Single stands of trees close
+in from alternating sides of the bottom straight, spaced four cells apart -
+which at the default slide is close enough that a car is still coming out of
+one arc as it has to be thrown into the next. **Five corners running into one
+another**, with 2.4 cells of straight between each and the same gap every time,
+arrived at off a thirty-cell straight along the top. The rest of the lap is
+deliberately plain, so the trees are the only thing to think about.
+
+The road through the trees is eight cells rather than six, and the wood is cut
+back to make the room. Three-cell lanes were tried first and left barely half a
+cell of margin past each turn-in: the AI crashed 247 times over 25 races, nearly
+all of it in there. That is not flowing, that is Staircase. At eight cells wide
+it is 152 - between Caldera and the easy three, which is where a moderate track
+belongs.
+
+Leaves fall as you drive.
+
+### 5 · Caldera — moderate
 
 A ring road around a lava lake, 40 x 28 cells. The roads are six cells wide,
 same as Crossover, and a flow of lava crosses each of the long straights -
@@ -130,7 +149,7 @@ The lava is animated: two sheets of glow scroll across each other under a
 cooled crust, painted at a third resolution and stretched back up, which is a
 ninth of the pixels and indistinguishable on something this soft.
 
-### 5 · Staircase — hard
+### 6 · Staircase — hard
 
 A four-cell corridor around a solid infield, 40 x 25 cells. Each of the four
 straights carries two blocks on **alternating halves** of the corridor, so no
@@ -238,7 +257,7 @@ opposition tries, `aiOffsetScale` for how far they spread across the road, and
 `aiMistakeScale` for how often they turn in late - worth turning down on a track
 whose legs are short enough that a late turn means a wall rather than a wide
 line. Marking a wall rectangle `kind: 'lava'` makes it molten and animated, and
-`weather: 'snow'` or `'dust'` blows weather across the board - flakes that fall
+`weather: 'snow'`, `'dust'` or `'leaves'` blows weather across the board - flakes that fall
 soft and fat, or grit that tears across almost flat and is smeared along its own
 direction of travel. Both wrap round the board in both directions, so nothing is
 ever spawned or retired.

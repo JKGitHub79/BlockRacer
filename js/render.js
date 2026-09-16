@@ -91,7 +91,9 @@
     snow: { per: 4200, color: '#eef5ff', r: [0.8, 2.4], vx: [-5, -21],
             vy: [16, 46], sway: 7, swayRate: 0.7, alpha: [0.30, 0.85], smear: 1 },
     dust: { per: 2600, color: '#e8cfa0', r: [0.5, 1.5], vx: [-60, -130],
-            vy: [-4, 7], sway: 3, swayRate: 1.6, alpha: [0.10, 0.34], smear: 5 }
+            vy: [-4, 7], sway: 3, swayRate: 1.6, alpha: [0.10, 0.34], smear: 5 },
+    leaves: { per: 9000, color: '#c08a3e', r: [1.0, 2.2], vx: [-9, -30],
+              vy: [8, 26], sway: 16, swayRate: 1.1, alpha: [0.25, 0.62], smear: 2 }
   };
 
   function ensureMotes() {
