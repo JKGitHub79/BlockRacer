@@ -120,7 +120,19 @@
         road: '#6a4d33', roadLine: '#5a402a' } }
     ],
 
-    /* ---- AI (one entry per opponent) -------------------------------- */
+    /* ---- Field size ---------------------------------------------------
+     * Four - you and three - unless the start menu says otherwise. A track
+     * only grids as many as its road holds, so the number asked for here is
+     * a ceiling rather than a promise: Staircase's four-cell corridor tops
+     * out at nine, and js/track.js reports what actually fit. */
+    cars: 4,
+    minCars: 2,
+    maxCars: 16,
+
+    /* ---- AI (one entry per opponent) --------------------------------
+     * Three hand-tuned opponents. A default race uses exactly these, in this
+     * order, so it is the race it has always been; CONFIG.aiSpec fills in the
+     * rest of a bigger field. */
     ai: [
       { speedMul: 0.985, mistake: 0.05, reaction: 0.18, offset:  0.00 },
       { speedMul: 0.960, mistake: 0.08, reaction: 0.26, offset:  0.30 },
@@ -164,6 +176,11 @@
     CONFIG.roadTint = Math.max(0,
       Math.min(CONFIG.roadTints.length - 1, parseInt(road[1], 10)));
   }
+  var cars = /[?&]cars=(\d+)/.exec(search);
+  if (cars) {
+    CONFIG.cars = Math.max(CONFIG.minCars,
+      Math.min(CONFIG.maxCars, parseInt(cars[1], 10)));
+  }
   var speed = /[?&]speed=(\d+)/.exec(search);
   if (speed) {
     CONFIG.speedLevel = Math.max(0, Math.min(CONFIG.speedLevels.length - 1, parseInt(speed[1], 10) - 1));
@@ -176,6 +193,25 @@
   CONFIG.speedMul = function () {
     return CONFIG.speedLevels[CONFIG.speedLevel].mul;
   };
+  /* Opponent number i of total. The first three are the hand-tuned ones. Past
+   * those the profiles are interpolated: the racing-line offset fans evenly
+   * across the road so fifteen opponents drive fifteen lines rather than five
+   * copies of three, and pace is dealt out in a different order so the slowest
+   * car is not always the one on the outside. */
+  CONFIG.aiSpec = function (i, total) {
+    if (i < CONFIG.ai.length) return CONFIG.ai[i];
+    var extras = total - CONFIG.ai.length;
+    var k = i - CONFIG.ai.length;
+    var fan = extras > 1 ? k / (extras - 1) : 0.5;
+    var pace = extras > 1 ? ((k * 7) % extras) / (extras - 1) : 0.5;
+    return {
+      speedMul: 0.985 - 0.085 * pace,
+      mistake: 0.05 + 0.09 * pace,
+      reaction: 0.18 + 0.18 * pace,
+      offset: -0.3 + 0.6 * fan
+    };
+  };
+
   CONFIG.roadColors = function () {
     return CONFIG.roadTints[CONFIG.roadTint].colors || null;
   };

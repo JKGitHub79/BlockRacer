@@ -10,12 +10,39 @@
   var Sound = global.Sound;
   var Renderer = global.Renderer;
 
+  /* The first four are the field as it has always been, in the order it has
+   * always been, so a default race is unchanged. The rest are only drawn on
+   * when the start menu asks for a bigger one. Every colour has to read on
+   * black tarmac and on white, which rules out anything too dark or too pale
+   * at either end. */
   var FIELD = [
     { name: 'VECTOR', color: '#ff5470' },
     { name: 'PIXEL',  color: '#ffd166' },
     { name: 'YOU',    color: '#5ef2ff', player: true },
-    { name: 'GRID',   color: '#b47cff' }
+    { name: 'GRID',   color: '#b47cff' },
+    { name: 'RASTER', color: '#4ade80' },
+    { name: 'SPRITE', color: '#f97316' },
+    { name: 'VERTEX', color: '#38bdf8' },
+    { name: 'SHADER', color: '#e879f9' },
+    { name: 'KERNEL', color: '#a3e635' },
+    { name: 'BUFFER', color: '#fb7185' },
+    { name: 'SCALAR', color: '#2dd4bf' },
+    { name: 'CIPHER', color: '#c084fc' },
+    { name: 'PHOTON', color: '#facc15' },
+    { name: 'LATTICE', color: '#60a5fa' },
+    { name: 'QUANTUM', color: '#fb923c' },
+    { name: 'NEUTRON', color: '#34d399' }
   ];
+
+  /* The player keeps third on the grid, as in the default four, unless the
+   * field is smaller than that. */
+  function fieldFor(n) {
+    var spec = FIELD.slice(0, n).map(function (car) {
+      return { name: car.name, color: car.color, player: false };
+    });
+    spec[Math.min(2, n - 1)].player = true;
+    return spec;
+  }
 
   var Game = {
     state: 'menu',
@@ -47,11 +74,17 @@
     this.results = [];
     this.countdown = C.countdown;
 
+    // The track grids as many as its road holds, which on a tight circuit is
+    // fewer than the menu asked for; the field is cut to whatever fit.
+    var grid = T.gridFor(C.cars);
+    var field = fieldFor(grid.length);
+    this.gridSize = grid.length;
+
     var aiIndex = 0;
-    for (var i = 0; i < FIELD.length; i++) {
-      var slot = T.START_GRID[i];
-      var spec = FIELD[i];
-      var cfg = spec.player ? null : C.ai[aiIndex++ % C.ai.length];
+    for (var i = 0; i < field.length; i++) {
+      var slot = grid[i];
+      var spec = field[i];
+      var cfg = spec.player ? null : C.aiSpec(aiIndex++, field.length - 1);
       var car = new Car({
         id: i,
         name: spec.name,
@@ -226,6 +259,9 @@
     el.roadButtons = document.getElementById('road-buttons');
     el.slideRange = document.getElementById('slide-range');
     el.slideRange.max = C.maxSlide;   // one place decides how far it goes
+    el.carsRange = document.getElementById('cars-range');
+    el.carsRange.min = C.minCars;
+    el.carsRange.max = C.maxCars;
   };
 
   Game.drawHud = function () {
@@ -249,6 +285,9 @@
         '</li>';
     });
     el.standings.innerHTML = rows;
+    // Past eight the leaderboard is taller than the HUD and starts to scroll,
+    // which is no use mid-race; the rows close up instead.
+    el.standings.classList.toggle('dense', this.cars.length > 8);
 
     if (this.state === 'racing' && p.crashed) {
       // The long form does not fit across a phone-sized board, and on a phone
@@ -281,6 +320,7 @@
         '</tr>';
     });
     el.resultsBody.innerHTML = rows;
+    el.resultsBody.parentNode.classList.toggle('dense', all.length > 8);
     el.results.classList.add('show');
   };
 
@@ -294,8 +334,9 @@
     document.getElementById('menu-track').textContent = T.name;
     document.getElementById('menu-grade').textContent = T.data.grade;
     document.getElementById('menu-blurb').textContent = T.data.blurb;
-    this.reset();
-    this.state = 'menu';
+    // A different track grids a different number, so the field label is stale
+    // the moment the track changes. setCars resets and re-enters the menu.
+    this.setCars(C.cars);
   };
 
   /* The turn radius, live. Every car reads CONFIG.slide each step - player and
@@ -320,6 +361,20 @@
       b.classList.toggle('on', parseInt(b.dataset.speed, 10) === level);
     });
     document.getElementById('menu-speed').textContent = C.speedName();
+    this.reset();
+    this.state = 'menu';
+  };
+
+  /* How many cars line up, you included. The number is a ceiling: a track
+   * grids as many as its road holds and the label says so when it holds
+   * fewer, rather than quietly racing a smaller field than was asked for. */
+  Game.setCars = function (n) {
+    C.cars = Math.max(C.minCars, Math.min(C.maxCars, n));
+    var fits = T.gridFor(C.cars).length;
+    document.getElementById('menu-cars').textContent = fits;
+    document.getElementById('menu-cars-note').textContent =
+      fits < C.cars ? '(all ' + T.name + ' will grid)' : '';
+    if (parseInt(el.carsRange.value, 10) !== C.cars) el.carsRange.value = C.cars;
     this.reset();
     this.state = 'menu';
   };
@@ -398,7 +453,7 @@
     this.setSlide(C.slide);
     this.setSpeed(C.speedLevel);
     this.setRoad(C.roadTint);
-    this.setTrack(C.track);
+    this.setTrack(C.track);   // also sets the field, which depends on the track
     el.menu.classList.add('show');
 
     Input.onCommand = function (n) { Game.command(n); };
@@ -418,6 +473,10 @@
     el.slideRange.addEventListener('input', function (e) {
       e.stopPropagation();
       Game.setSlide(parseFloat(el.slideRange.value));
+    });
+    el.carsRange.addEventListener('input', function (e) {
+      e.stopPropagation();
+      Game.setCars(parseInt(el.carsRange.value, 10));
     });
     Array.prototype.forEach.call(el.speedButtons.children, function (b) {
       b.addEventListener('click', function (e) {

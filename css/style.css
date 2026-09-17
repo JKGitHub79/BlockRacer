@@ -221,8 +221,15 @@ canvas { display: block; touch-action: none; }
  * one line rather than a block: the label on the left, six swatches showing
  * the actual tarmac on the right. A row of named buttons would have cost the
  * menu another fifty pixels, which is more than a 720-tall laptop has spare. */
-.roadrow { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
-.roadrow .lapline { margin: 0; white-space: nowrap; }
+/* Field size and road colour: two look-and-feel controls that each want a
+ * label and one widget. They stack on a tall screen and sit side by side on a
+ * short one, which is the difference between START being on the screen and
+ * below it at 375 tall. */
+.setrow { display: flex; flex-direction: column; gap: 14px; margin: 14px 0; }
+.carsrow, .roadrow { display: flex; align-items: center; gap: 10px; }
+.carsrow { flex: 1; min-width: 0; }
+.carsrow .lapline, .roadrow .lapline { margin: 0; white-space: nowrap; }
+.carsrow .slider { margin: 0; }
 .swatches { display: flex; gap: 5px; margin-left: auto; }
 .swatches button {
   width: 22px;
@@ -311,6 +318,16 @@ button.secondary:hover { border-color: var(--accent); }
 }
 code { color: var(--accent); }
 
+/* A sixteen-car classification is taller than a laptop window. The panel is
+ * capped at the viewport and the table alone scrolls inside it, so the result
+ * and the two buttons are on screen whatever the field size. */
+#results .panel { max-height: calc(100dvh - 20px); display: flex; flex-direction: column; }
+.results-scroll { overflow-y: auto; min-height: 0; margin-bottom: 18px; }
+.results-scroll .results { margin-bottom: 0; }
+/* Past eight finishers the rows close up, which is usually enough on its own. */
+.results.dense { font-size: 12px; }
+.results.dense td { padding: 3px 0; }
+
 .results { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 13px; }
 .results th {
   text-align: left;
@@ -350,6 +367,11 @@ code { color: var(--accent); }
 
 #standings { list-style: none; margin: 0; padding: 0; font-size: 13px; }
 #standings li { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+/* A sixteen-car field is taller than the HUD, and a leaderboard you have to
+ * scroll mid-race is no leaderboard. */
+#standings.dense { font-size: 11px; }
+#standings.dense li { padding: 1px 0; gap: 6px; }
+#standings.dense .lp { font-size: 10px; }
 #standings li.me { color: var(--accent); }
 #standings .pos { width: 14px; color: var(--dim); }
 #standings li.me .pos { color: var(--accent); }
@@ -433,7 +455,9 @@ code { color: var(--accent); }
   /* Every other row of buttons drops to 10px here; the lap row had been left
    * at 12, which cost a dozen pixels for nothing. */
   .laps button { font-size: 10px; padding: 6px 2px; }
-  .roadrow { margin: 6px 0; }
+  .setrow { flex-direction: row; align-items: center; gap: 10px; margin: 6px 0; }
+  /* The road name goes; six squares of tarmac say it better than a word. */
+  .roadrow .lapline { display: none; }
   .swatches button { width: 16px; height: 16px; }
   /* A short screen is a wide one, so the four levels fit across in one row -
    * and the row they save is what keeps START on screen. */

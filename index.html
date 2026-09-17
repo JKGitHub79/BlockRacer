@@ -11,7 +11,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.15.0', built: '2026-09-16' };
+window.BR = { version: '0.16.0', built: '2026-09-17' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -62,7 +62,14 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
             on any track. <code>[</code> and <code>]</code> step it by 0.05,
             mid-race included.</p>
 
-          <div class="roadrow">
+          <div class="setrow">
+           <div class="carsrow">
+            <p class="lapline">CARS &middot; <b id="menu-cars">4</b>
+              <span class="sub" id="menu-cars-note"></span></p>
+            <input id="cars-range" class="slider" type="range"
+                   min="2" max="16" step="1" value="4">
+           </div>
+           <div class="roadrow">
             <p class="lapline">ROAD &middot; <b id="menu-road">BLACK</b></p>
             <div id="road-buttons" class="swatches">
               <button data-road="0" style="--sw:#12161f" title="Black"></button>
@@ -72,6 +79,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
               <button data-road="4" style="--sw:#c0a079" title="Light brown"></button>
               <button data-road="5" style="--sw:#6a4d33" title="Brown"></button>
             </div>
+           </div>
           </div>
 
           <p class="lapline">GAME SPEED &middot; <b id="menu-speed">BEGINNER</b></p>
@@ -101,10 +109,12 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       <div id="results" class="overlay">
         <div class="panel wide">
           <h2 id="results-title">RESULT</h2>
-          <table class="results">
-            <thead><tr><th>#</th><th>Driver</th><th>Time</th><th>Best lap</th></tr></thead>
-            <tbody id="results-body"></tbody>
-          </table>
+          <div class="results-scroll">
+            <table class="results">
+              <thead><tr><th>#</th><th>Driver</th><th>Time</th><th>Best lap</th></tr></thead>
+              <tbody id="results-body"></tbody>
+            </table>
+          </div>
           <div class="row">
             <button id="btn-menu" class="secondary">SETTINGS</button>
             <button id="btn-again" class="primary">RACE AGAIN</button>

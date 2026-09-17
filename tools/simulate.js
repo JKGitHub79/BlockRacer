@@ -22,6 +22,8 @@ const ONLY = process.argv[4] ? parseInt(process.argv[4], 10) - 1 : null;
 // fourth and fifth override the game speed level (1-3) and the slide radius
 if (process.argv[5]) CONFIG.speedLevel = parseInt(process.argv[5], 10) - 1;
 if (process.argv[6]) CONFIG.slide = parseFloat(process.argv[6]);
+// sixth sets the field size; every car is an AI here, player included
+if (process.argv[7]) CONFIG.cars = parseInt(process.argv[7], 10);
 
 function race(seed) {
   // deterministic per-race randomness, so a bad race can be reproduced
@@ -32,8 +34,8 @@ function race(seed) {
     return rng / 0x7fffffff;
   };
   const cars = [], drivers = [];
-  TRACK.START_GRID.forEach((slot, i) => {
-    const cfg = CONFIG.ai[i % CONFIG.ai.length];
+  TRACK.gridFor(CONFIG.cars).forEach((slot, i, grid) => {
+    const cfg = CONFIG.aiSpec(i, grid.length);
     const car = new Car({
       id: i, name: 'AI' + i, color: '#fff',
       speedMul: cfg.speedMul * TRACK.aiPace * CONFIG.speedMul(),
@@ -84,7 +86,8 @@ for (let ti = 0; ti < TRACKS.length; ti++) {
   if (ONLY !== null && ti !== ONLY) continue;
   TRACK.load(ti);
   console.log(`\nTrack ${ti + 1}: ${TRACK.name} - ${RACES} races of ${LAPS} laps, ` +
-    `speed ${CONFIG.speedName()}, slide ${CONFIG.slide}`);
+    `speed ${CONFIG.speedName()}, slide ${CONFIG.slide}, ` +
+    `${TRACK.gridFor(CONFIG.cars).length} cars`);
   const paces = [];
   let crashes = 0, scrapes = 0;
   for (let r = 0; r < RACES; r++) {

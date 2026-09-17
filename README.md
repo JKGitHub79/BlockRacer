@@ -124,10 +124,9 @@ deliberately plain, so the trees are the only thing to think about.
 
 The road through the trees is eight cells rather than six, and the wood is cut
 back to make the room. Three-cell lanes were tried first and left barely half a
-cell of margin past each turn-in: the AI crashed 247 times over 25 races, nearly
-all of it in there. That is not flowing, that is Staircase. At eight cells wide
-it is 152 - between Caldera and the easy three, which is where a moderate track
-belongs.
+cell of margin past each turn-in, and nearly every crash in the race happened in
+there. That is not flowing, that is Staircase. At eight cells wide it sits with
+the other two moderates, which is where it belongs - see the table below.
 
 Leaves fall as you drive.
 
@@ -147,13 +146,14 @@ between.
 
 The first version put every gate between the chicane blocks at three cells with
 the racing line down the middle. At the default slide that leaves 0.3 cells of
-margin once the arc and the car's own width are paid for, and it showed: 188
-crashes over 25 races, 324 of them in the single cell under the first block
-after the main straight - harder than Caldera, which is not what a track this
-wide should be. Widening every gate to four cells took it to 170, and biasing
-the line half a cell toward the entry side - the overshoot is always late, never
-early, so the runoff wants to be past the apex rather than before it - took it
-to 159. Between Wildwood's 152 and Caldera's 168, which is where it belongs.
+margin once the arc and the car's own width are paid for, and it showed: in the
+first layout a sixth of every crash in the race happened in one cell, under the
+first chicane block after the main straight, and the track came out harder than
+Caldera - which is not what a track this wide should be. Widening every gate to
+four cells fixed most of it, and biasing the line half a cell toward the entry
+side did the rest: the overshoot is always late, never early, so the runoff
+wants to be past the apex rather than before it. It now sits with the other two
+moderates.
 
 The infield carries the livery: blaugrana stripes, a senyera band across the
 middle and a scatter of trencadis tiles over the top, all of it painted a
@@ -169,10 +169,6 @@ blocking one half, so you have to step across to the other and back. Eight
 turns a lap against Crossover's six, and the flows leave a three-cell gap where
 Staircase's chicanes leave two, two of them rather than eight.
 
-Measured over 25 simulated races: the field crashes 236 times here against 122
-on Crossover and 2140 on Staircase. A little harder than the first, a long way
-short of the third.
-
 Every solid on this track is molten - the rim, the lake and the flows - so a
 mistake is always the same mistake, and it stops you the same way a wall does.
 The lava is animated: two sheets of glow scroll across each other under a
@@ -186,6 +182,36 @@ straights carries two blocks on **alternating halves** of the corridor, so no
 straight can be driven in a single lane - you have to staircase your way round
 with 90° turns. The amber-edged blocks are the ones that will stop you if you
 miss a turn.
+
+### How hard each one actually is
+
+Crashes are what a track costs you, so that is what is counted: 60 headless
+races of 5 laps on each, four cars, beginner speed, the default slide. A crash
+is a contact square enough to stop a car dead; a scrape is one it carries speed
+through.
+
+| Track | Crashes | Scrapes |
+| --- | --- | --- |
+| Snowdrift | 135 | 1673 |
+| Crossover | 150 | 1576 |
+| Mesa | 196 | 1990 |
+| Catalunya | 407 | 2564 |
+| Wildwood | 417 | 1995 |
+| Caldera | 433 | 1547 |
+| Staircase | 2408 | 11962 |
+
+Three clear bands: an easy three, three moderates that are within six per cent
+of one another and are not meaningfully orderable between themselves, and
+Staircase on its own at nearly six times the moderates. Catalunya's high scrape
+count against its crash count is the eight-cell roads doing their job - you pay
+for a mistake there by losing a tenth down a wall rather than by stopping.
+
+These figures replaced an earlier set that ran lower. The simulator used to fill
+its fourth seat with a straight copy of the first opponent, so a quarter of
+every simulated field drove a line another car was already on; it now gets its
+own driver, like the fourth car in a real four-car race, and the moderates in
+particular moved by about a fifth. Nothing about the tracks changed. Do not
+compare these numbers with any quoted in an earlier commit.
 
 ## Slide
 
@@ -257,9 +283,10 @@ would otherwise put the drift on screen for about three frames.
 Five laps on Crossover at Easy by default. All three are set the same way:
 
 1. the buttons on the start menu,
-2. URL parameters - `index.html?track=2&laps=7&speed=3&slide=0.4&road=3`
-   (tracks and speeds are 1-based, laps 1-20, road 0-5),
-3. `track`, `laps`, `speedLevel`, `slide` and `roadTint` in `js/config.js`.
+2. URL parameters - `index.html?track=2&laps=7&speed=3&slide=0.4&road=3&cars=8`
+   (tracks and speeds are 1-based, laps 1-20, road 0-5, cars 2-16),
+3. `track`, `laps`, `speedLevel`, `slide`, `roadTint` and `cars` in
+   `js/config.js`.
 
 Game speed scales every car, player and AI alike:
 
@@ -274,6 +301,49 @@ Game speed scales every car, player and AI alike:
 and the per-driver AI settings (pace, how often they turn too late, how quickly
 they recover). Per-track overrides - grid size, how much the AI spreads across the
 road, how hard it tries - live with the track in `js/tracks.js`.
+
+## How many cars
+
+Four by default - you and three - and anything from 2 to 16 on the start menu.
+The number includes you, and you keep third on the grid whatever the field size.
+
+A track declares four grid slots, and at four or fewer those four are used
+exactly as declared, so a default race lines up where it always has. Past four
+the grid is built from scratch on the same piece of road: lanes across it, rows
+back up it, each slot tested against a car-sized box so nothing is ever gridded
+inside scenery.
+
+Neither the width nor the run-up is read from the track file - both are
+measured, by walking that box outward until it meets something. The width is
+measured at the finish line rather than at the grid, which matters: on several
+tracks the grid sits in the corner before the straight, and a probe started
+there escapes up the road the circuit arrives on and reports a width the
+straight has not got.
+
+**The number is a ceiling, not a promise.** Six of the seven tracks grid a full
+sixteen. Staircase tops out at nine - a four-cell corridor takes three abreast
+and there are only three rows of road behind the line before the corner - and
+the menu says so rather than quietly racing a smaller field:
+
+| Track | Grid | Layout |
+| --- | --- | --- |
+| Crossover, Snowdrift, Mesa, Wildwood, Caldera | 16 | 4 abreast, 4 rows |
+| Catalunya | 16 | 5 abreast, 4 rows |
+| Staircase | 9 | 3 abreast, 3 rows |
+
+Rows are spaced 1.9 cells apart, as every hand-written grid already was, and
+close up to 1.55 only if the road runs out before the field does.
+
+The three hand-tuned opponents in `js/config.js` are used as they are, in order,
+so a default race is the race it always was. Past the third, profiles are
+interpolated: the racing-line offset fans evenly across the road so fifteen
+opponents drive fifteen lines rather than five copies of three, and pace is
+dealt out in a different order so the slowest car is not always the one on the
+outside.
+
+Past eight cars the in-race leaderboard and the results table close their rows
+up, and the results table scrolls inside a panel capped at the window height, so
+the finishing position and both buttons stay on screen with a full field.
 
 ## Road colour
 
@@ -325,7 +395,12 @@ it is baked into the track canvas once, so it costs nothing per frame.
 
 The grid faces whichever way the leg it sits on runs, worked out from
 `startLeg`, so a circuit finishing westward grids up east of its line without
-having to say so.
+having to say so. Declare four slots as two lanes by two rows: those four are
+used as declared, and a bigger field is built from them and from the road the
+finish line crosses. Two things are worth getting right for that - the finish
+rectangle should sit squarely on the straight rather than in the corner before
+it, and the four slots should be roughly centred across the road, because their
+midpoint is where the width probe starts.
 
 ## Layout
 

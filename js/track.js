@@ -208,6 +208,112 @@
     return T;
   };
 
+  /* ---- Start grid ------------------------------------------------------
+   * A track declares four slots, and at four cars or fewer those are used
+   * exactly as declared, so a default race lines up where it always has.
+   *
+   * A bigger field is laid out from scratch on the same piece of road. The
+   * road's width and the run back up it are measured by walking a car-sized
+   * box outward until it meets scenery, rather than read off numbers in the
+   * track file: a four-cell corridor and an eight-cell straight then grid up
+   * correctly without either of them having to say how wide they are, and a
+   * slot is never placed inside a wall however tight the track is.
+   *
+   * The whole field will not fit on every track. The grid comes back as long
+   * as the road allows and the caller races whoever fits. */
+  var LANE_PITCH = 1.4;   // car width plus enough room to get off the line
+  var ROW_PITCHES = [1.9, 1.7, 1.55];   // roomy first; tighter only if needed
+  var GRID_PROBE = 0.05;
+  var GRID_EDGE = 0.2;    // never grid a car hard against a wall
+
+  function carFits(lat, lon, latKey) {
+    var halfW = C.carWidth / 2, halfL = C.carLength / 2;
+    var x = latKey === 'x' ? lat : lon;
+    var y = latKey === 'x' ? lon : lat;
+    var ax = latKey === 'x' ? halfW : halfL;
+    var ay = latKey === 'x' ? halfL : halfW;
+    return !boxHitsWall(x - ax, y - ay, x + ax, y + ay);
+  }
+
+  function nearestWp(lat, latKey) {
+    var declared = T.START_GRID, best = declared[0].wp, bd = Infinity;
+    for (var i = 0; i < declared.length; i++) {
+      var d = Math.abs(declared[i][latKey] - lat);
+      if (d < bd) { bd = d; best = declared[i].wp; }
+    }
+    return best;
+  }
+
+  function rowsFrom(lo, step, lanes, front, fwd, latKey, lonKey, pitch, n) {
+    var slots = [], lon = front;
+    // A row with nothing in it ends the grid; a single blocked lane in an
+    // otherwise clear row - a chicane block reaching back into the start
+    // straight - is just left empty.
+    while (slots.length < n) {
+      var placed = 0;
+      for (var i = 0; i < lanes && slots.length < n; i++) {
+        var lat = lo + i * step;
+        if (!carFits(lat, lon, latKey)) continue;
+        var slot = { wp: nearestWp(lat, latKey) };
+        slot[latKey] = lat;
+        slot[lonKey] = lon;
+        slots.push(slot);
+        placed++;
+      }
+      if (!placed) break;
+      lon -= pitch * fwd;
+    }
+    return slots;
+  }
+
+  function gridFor(n) {
+    var declared = T.START_GRID;
+    if (n <= declared.length) return declared.slice(0, n);
+
+    var vertical = T.startDir.y !== 0;
+    var latKey = vertical ? 'x' : 'y';
+    var lonKey = vertical ? 'y' : 'x';
+    var fwd = vertical ? T.startDir.y : T.startDir.x;
+
+    var front = declared[0][lonKey], mid = 0, i;
+    for (i = 0; i < declared.length; i++) {
+      if (declared[i][lonKey] * fwd > front * fwd) front = declared[i][lonKey];
+      mid += declared[i][latKey];
+    }
+    mid /= declared.length;
+
+    /* How wide the road is, measured by walking a car-sized box sideways
+     * until it meets scenery. The measurement is taken at the finish line
+     * rather than at the grid: the line is across the straight by definition,
+     * where the grid is often tucked into the corner before it, and a probe
+     * started there escapes up the road the circuit arrives on and reports a
+     * width the straight has not got. */
+    var lonProbe = (FINISH[lonKey + '0'] + FINISH[lonKey + '1']) / 2;
+    var lo = mid, hi = mid;
+    while (carFits(lo - GRID_PROBE, lonProbe, latKey)) lo -= GRID_PROBE;
+    while (carFits(hi + GRID_PROBE, lonProbe, latKey)) hi += GRID_PROBE;
+    lo += GRID_EDGE;
+    hi -= GRID_EDGE;
+    if (hi < lo) { lo = hi = mid; }
+
+    var span = hi - lo;
+    // The epsilon is not cosmetic: a four-cell corridor works out to exactly
+    // two pitches, and 2.8 / 1.4 is 1.9999999999999998 in binary.
+    var lanes = Math.max(1, Math.min(n, Math.floor(span / LANE_PITCH + 1e-9) + 1));
+    var step = lanes > 1 ? span / (lanes - 1) : 0;
+
+    // Rows go back up the straight at the spacing every declared grid uses.
+    // Only if that runs out of road before the field runs out of cars is the
+    // grid closed up, and never past a car length and a bit.
+    var best = [];
+    for (i = 0; i < ROW_PITCHES.length; i++) {
+      best = rowsFrom(lo, step, lanes, front, fwd, latKey, lonKey, ROW_PITCHES[i], n);
+      if (best.length >= n) break;
+    }
+    return best;
+  }
+
+  T.gridFor = gridFor;
   T.isWall = isWall;
   T.wallKind = wallKind;
   T.boxHitsWall = boxHitsWall;
