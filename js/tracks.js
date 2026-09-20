@@ -1205,11 +1205,322 @@
     ]
   };
 
+  /* ==================================================================== *
+   * CLIFFS - the fourth theme, and the hardest built so far.
+   *
+   * Rock rather than weather: grey stone, rust-stained ledges, grit in the
+   * air. The three shapes are a serpentine, a spiral and a circuit with a
+   * tight inner loop bolted onto it - none of which any earlier theme uses,
+   * because a theme that is the previous one recoloured is not a theme.
+   *
+   * They are a step above the snow three rather than a leap. The roads stay
+   * eight cells wide, as the snow's are: what makes them harder is the number
+   * of direction changes per lap, not a narrower gate. Narrowing the gate is
+   * the biggest single difficulty lever there is and it is also the one that
+   * stops a track being fun, because it turns every corner into the same
+   * problem. More corners, and corners of more kinds, is the better trade.
+   * ==================================================================== */
+  var CLIFF = {
+    bg:         '#07070a',
+    road:       '#121317',   // dark stone, kept near black like every road
+    roadLine:   '#1b1d23',
+    wall:       '#6b6459',   // the rock faces either side
+    wallTop:    '#a39a8a',
+    outer:      '#443f38',   // the massif, off the map
+    outerTop:   '#6e665a',
+    jog:        '#8a4a2a',   // rust-stained boulders out on the road
+    jogTop:     '#d08040',
+    racingLine: 'rgba(235,205,170,0.26)',
+    check:      'rgba(255,190,120,0.07)',
+    checkNext:  'rgba(255,190,120,0.28)',
+    startLine:  '#f4efe6'
+  };
+
+  /* ---- Cliffs 1: SCREE -------------------------------------------------
+   * A serpentine. There is no island anywhere on this map: four vertical
+   * lanes, folded into one another end to end, and a main straight along the
+   * bottom that returns you to the first of them.
+   *
+   *      +-----------------+##+--------------+
+   *      |  A --> top --> B|##|C --> top --> D|   folds at the top...
+   *      |  ^           |  |##|  ^          | |
+   *      |  ^           v  |##|  ^          | |
+   *      |  ^   +----- link ---+  ^         | |   ...and at the bottom
+   *      |  ^   +#################+         | |
+   *      |  <---------- main straight ------- |
+   *      +------------------------------------+
+   *
+   * Up A, across the top, down B, across the middle link, up C, across the
+   * top again, down D, and west along the bottom. Eight corners of structure
+   * and eight lane changes on top of them: the lap is a chain of direction
+   * changes with two long straights to breathe on.
+   * -------------------------------------------------------------------- */
+  var SCREE = {
+    id: 'scree',
+    name: 'SCREE',
+    blurb: 'A serpentine. Four lanes folded end to end, and no island at all.',
+    grade: 'CHALLENGING',
+    cols: 46,
+    rows: 38,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'grit',
+    theme: CLIFF,
+    walls: border(46, 38).concat([
+      // the four masses that fold the lanes into one another
+      { x0: 9,  y0: 9,  x1: 12, y1: 28, kind: 'edge' },     // between A and B
+      { x0: 21, y0: 1,  x1: 24, y1: 16, kind: 'edge' },     // between B and C
+      { x0: 13, y0: 25, x1: 32, y1: 28, kind: 'edge' },     // the floor under both
+      { x0: 33, y0: 9,  x1: 36, y1: 28, kind: 'edge' },     // between C and D
+      /* Three boulders, and only three. The first cut had one in every lane
+       * and ran to 742 crashes a thousand laps - two and a half times the
+       * snow three, where the brief was a little above them. Each lane change
+       * on this track is worth about a third of the crash count on its own,
+       * because the folds already are the difficulty: B, C and the middle
+       * link are left clean on purpose, so what you are driving is the
+       * serpentine rather than furniture standing in it.
+       *
+       * Each stand also sits well down its lane. Put one at the mouth and
+       * the corner out of the fold, the lane change and the corner into the
+       * next fold arrive within five cells of each other, which is a chicane,
+       * and the AI cannot string three of those together at any speed. */
+      { x0: 1,  y0: 8,  x1: 4,  y1: 14, kind: 'jog' },      // lane A
+      { x0: 41, y0: 21, x1: 44, y1: 26, kind: 'jog' },      // lane D
+      { x0: 18, y0: 33, x1: 23, y1: 36, kind: 'jog' }       // the main straight
+    ]),
+    route: [
+      { x: 39,   y: 33   },   // 0  onto the main straight, westbound
+      { x: 27,   y: 33   },   // 1
+      { x: 27,   y: 31   },   // 2  up over the stand
+      { x: 3,    y: 31   },   // 3  turn north into lane A
+      { x: 3,    y: 18   },   // 4
+      { x: 6.5,  y: 18   },   // 5  round the stand in A
+      { x: 6.5,  y: 4.5  },   // 6  into the top corridor, eastbound
+      { x: 16.5, y: 4.5  },   // 7  turn south into lane B
+      { x: 16.5, y: 20.5 },   // 8  into the middle link, eastbound
+      { x: 28.5, y: 20.5 },   // 9  turn north into lane C
+      { x: 28.5, y: 4.5  },   // 10 back into the top corridor
+      { x: 42.5, y: 4.5  },   // 11 turn south into lane D
+      { x: 42.5, y: 18   },   // 12
+      { x: 39,   y: 18   }    // 13 round the stand in D, then south back to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 1,  y0: 16, x1: 9,  y1: 17 },   // up lane A
+      { x0: 13, y0: 12, x1: 21, y1: 13 },   // down lane B
+      { x0: 25, y0: 9,  x1: 33, y1: 10 },   // up lane C
+      { x0: 37, y0: 12, x1: 45, y1: 13 }    // down lane D
+    ],
+    finish: { x0: 33.6, y0: 29, x1: 34.4, y1: 37, dir: { x: -1, y: 0 } },
+    startGrid: [
+      { x: 35.5, y: 31.8, wp: 1 },
+      { x: 35.5, y: 34.2, wp: 1 },
+      { x: 37.4, y: 31.8, wp: 1 },
+      { x: 37.4, y: 34.2, wp: 1 }
+    ]
+  };
+
+
+  /* ---- Cliffs 2: QUARRY ------------------------------------------------
+   * The map is a plus, not a rectangle, and that is the whole idea.
+   *
+   *              +----------+
+   *              |  top arm |
+   *      +-------+    ##    +-------+
+   *      | left    ########   right |
+   *      +-------+    ##    +-------+
+   *              | bottom   |
+   *              +----------+
+   *
+   * The road is the gap between a plus-shaped map and a smaller plus-shaped
+   * island, so the lap runs out along one side of each arm, round its tip
+   * and back down the other side. Twelve corners, and four of them are
+   * re-entrant - you turn around the OUTSIDE of an armpit rather than the
+   * inside of an island. Nothing else in the game asks for that corner, and
+   * it is the one that catches people: the wall you are turning away from is
+   * behind you, so there is nothing to aim at.
+   * -------------------------------------------------------------------- */
+  var QUARRY = {
+    id: 'quarry',
+    name: 'QUARRY',
+    blurb: 'A plus-shaped pit. Four arms, and four corners that turn outward.',
+    grade: 'CHALLENGING +',
+    cols: 44,
+    rows: 40,
+    aiPace: 0.95,
+    aiOffsetScale: 2,
+    aiMistakeScale: 1,
+    weather: 'grit',
+    theme: CLIFF,
+    walls: border(44, 40).concat([
+      // the four corners the plus cuts away
+      { x0: 1,  y0: 1,  x1: 10, y1: 9,  kind: 'edge' },
+      { x0: 33, y0: 1,  x1: 42, y1: 9,  kind: 'edge' },
+      { x0: 1,  y0: 32, x1: 10, y1: 38, kind: 'edge' },
+      { x0: 33, y0: 32, x1: 42, y1: 38, kind: 'edge' },
+      // and the island, which is the same plus one size down
+      { x0: 9,  y0: 18, x1: 34, y1: 23, kind: 'infield' },
+      { x0: 19, y0: 9,  x1: 24, y1: 30, kind: 'infield' },
+      /* A stand part way along each arm and each corridor, three cells
+       * thick against one wall, leaving a five-cell gate with the racing
+       * line down the middle of it. Five cells is exactly what the snow
+       * three use, and that is deliberate: what makes this track harder is
+       * that it has SEVEN of them and twelve corners, not that any one of
+       * them is tighter.
+       *
+       * The first cut used four- and three-cell gates and measured 1208
+       * crashes a thousand laps at the shipped settings - three times the
+       * hardest snow track. A three-cell gate and a three-cell turn radius
+       * cannot both exist on the same corner: the car is still arcing when
+       * it arrives. Margin is the sharpest lever there is, which is exactly
+       * why it is the wrong one to lean on.
+       *
+       * The bottom arm is left open. It is the main straight, the grid lines
+       * up on it, and a lap needs somewhere to breathe. */
+      /* Each arm gets a PAIR of stands, one against each wall and offset
+       * along the arm, so the lane they leave clear swaps half way down it.
+       * That is a lane change rather than a gate, and it is the right lever
+       * here: this track ships at a three-cell turn radius, where a tight
+       * gate is not hard, it is impossible - the car is still arcing when it
+       * arrives - while a corner costs the same at every radius.
+       *
+       * An earlier cut leaned on margin instead, with four- and three-cell
+       * gates. It measured 1208 crashes a thousand laps at the shipped
+       * settings, three times the hardest snow track, and every one of them
+       * was the same crash. Margin is the sharpest lever there is, which is
+       * exactly why it is the wrong one to lean on.
+       *
+       * The corridors between the arms keep a plain five-cell gate, which is
+       * what the snow three use. The bottom arm is left open: it is the main
+       * straight, the grid lines up on it, and a lap needs somewhere to
+       * breathe. */
+      { x0: 1,  y0: 23, x1: 4,  y1: 27, kind: 'jog' },   // the left arm
+      { x0: 5,  y0: 15, x1: 8,  y1: 18, kind: 'jog' },
+      { x0: 18, y0: 1,  x1: 25, y1: 3,  kind: 'jog' },   // the top arm
+      { x0: 40, y0: 18, x1: 42, y1: 23, kind: 'jog' },   // the right arm
+      { x0: 9,  y0: 15, x1: 12, y1: 17, kind: 'jog' },   // the four corridors
+      { x0: 31, y0: 15, x1: 34, y1: 17, kind: 'jog' },
+      { x0: 9,  y0: 24, x1: 12, y1: 26, kind: 'jog' },
+      { x0: 31, y0: 24, x1: 34, y1: 26, kind: 'jog' }
+    ]),
+    route: [
+      { x: 29,   y: 35   },   // 0  across the bottom tip, westbound
+      { x: 15,   y: 35   },   // 1  turn north up the bottom arm
+      { x: 15,   y: 29.5 },   // 2  through the lower left corridor
+      { x: 7,    y: 29.5 },   // 3  turn north into the left arm
+      { x: 7,    y: 21   },   // 4
+      { x: 3,    y: 21   },   // 5  the lane change round its tip
+      { x: 3,    y: 12.5 },   // 6  turn east
+      { x: 15,   y: 12.5 },   // 7  through the upper left corridor
+      { x: 15,   y: 6.5  },   // 8  turn east across the top arm
+      { x: 29,   y: 6.5  },   // 9  turn south
+      { x: 29,   y: 12.5 },   // 10 through the upper right corridor
+      { x: 37.5, y: 12.5 },   // 11 turn south into the right arm
+      { x: 37.5, y: 29.5 },   // 12 round its tip, into the lower corridor
+      { x: 29,   y: 29.5 }    // 13 turn south down the bottom arm, back to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 1,  y0: 19, x1: 9,  y1: 20 },   // round the left tip
+      { x0: 20, y0: 1,  x1: 21, y1: 9  },   // across the top tip
+      { x0: 35, y0: 19, x1: 43, y1: 20 },   // round the right tip
+      { x0: 11, y0: 32, x1: 33, y1: 33 }    // down into the bottom arm
+    ],
+    finish: { x0: 21.6, y0: 31, x1: 22.4, y1: 39, dir: { x: -1, y: 0 } },
+    startGrid: [
+      { x: 23.5, y: 33.8, wp: 1 },
+      { x: 23.5, y: 36.2, wp: 1 },
+      { x: 25.4, y: 33.8, wp: 1 },
+      { x: 25.4, y: 36.2, wp: 1 }
+    ]
+  };
+
+
+  /* ---- Cliffs 3: OVERHANG ----------------------------------------------
+   * Two tracks in one lap.
+   *
+   *      +-----------------------------------+
+   *      | <------------- top -------------- |
+   *      | v  ####shelf#####+#############+ ^|
+   *      | v  --- band 1 -->|#  island   #| ^|   the tight end
+   *      | v  ####+---------+#############| ^|
+   *      | v  <-- band 2 ---+#############| ^|
+   *      | v  ####shelf#####+#############+ ^|
+   *      | ------------- main straight ----->|
+   *      +-----------------------------------+
+   *
+   * The right two thirds is the fastest thing in the game: a thirty-nine
+   * cell straight, a long climb and a thirty-nine cell run back. The left
+   * third folds back on itself twice between six- and seven-cell ledges.
+   * You arrive at the tight end carrying everything the straight gave you,
+   * which is the whole joke of the track and the reason the roads there are
+   * narrower than anything else in the themed set.
+   * -------------------------------------------------------------------- */
+  var OVERHANG = {
+    id: 'overhang',
+    name: 'OVERHANG',
+    blurb: 'A long fast ledge, then a double-back under the rock.',
+    grade: 'CHALLENGING ++',
+    cols: 49,
+    rows: 36,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'grit',
+    theme: CLIFF,
+    walls: border(49, 36).concat([
+      { x0: 18, y0: 8,  x1: 39, y1: 28, kind: 'infield' },  // the massif
+      { x0: 8,  y0: 8,  x1: 17, y1: 9,  kind: 'infield' },  // the shelf over
+      { x0: 8,  y0: 27, x1: 17, y1: 28, kind: 'infield' },  // and under
+      { x0: 1,  y0: 17, x1: 11, y1: 19, kind: 'infield' },  // the fold
+      /* Three lane changes, all of them out on the fast side. A pair of
+       * boulders each, offset along the road so the lane one leaves clear
+       * is the lane the other blocks - there is no threading them, you have
+       * to move. The climb keeps a plain five-cell gate instead, and the
+       * tight end is left alone: it is already the tight end. */
+      { x0: 16, y0: 29, x1: 21, y1: 31, kind: 'jog' },      // the main straight
+      { x0: 28, y0: 32, x1: 33, y1: 34, kind: 'jog' },
+      { x0: 45, y0: 18, x1: 47, y1: 23, kind: 'jog' },      // the climb
+      { x0: 30, y0: 1,  x1: 35, y1: 3,  kind: 'jog' },      // the run back
+      { x0: 18, y0: 4,  x1: 23, y1: 7,  kind: 'jog' }
+    ]),
+    route: [
+      { x: 4.5, y: 33.5 },   // 0  the main straight, eastbound
+      { x: 25,  y: 33.5 },   // 1
+      { x: 25,  y: 30.5 },   // 2  up over the first boulder
+      { x: 42.5, y: 30.5 },  // 3  turn north up the long climb
+      { x: 42.5, y: 6   },   // 4  turn west along the top
+      { x: 27,  y: 6    },   // 5
+      { x: 27,  y: 2.5  },   // 6  up over the second boulder
+      { x: 4.5, y: 2.5  },   // 7  turn south into the tight end
+      { x: 4.5, y: 13.5 },   // 8  east along the upper ledge
+      { x: 15,  y: 13.5 },   // 9  turn south through the fold
+      { x: 15,  y: 23.5 },   // 10 west along the lower ledge
+      { x: 4.5, y: 23.5 }    // 11 turn south, back down to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 40, y0: 24, x1: 48, y1: 25 },   // up the climb
+      { x0: 24, y0: 1,  x1: 25, y1: 8  },   // along the top
+      { x0: 9,  y0: 10, x1: 10, y1: 17 },   // the upper ledge
+      { x0: 9,  y0: 20, x1: 10, y1: 27 }    // the lower ledge
+    ],
+    finish: { x0: 11.6, y0: 29, x1: 12.4, y1: 35, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 10.5, y: 30.8, wp: 1 },
+      { x: 10.5, y: 33.2, wp: 1 },
+      { x: 8.6,  y: 30.8, wp: 1 },
+      { x: 8.6,  y: 33.2, wp: 1 }
+    ]
+  };
+
   global.TRACKS = [
     // the themed circuits, in the order the play screen offers them
     PINEFALL, HOLLOW, CANOPY,
     DUNELINE, SALTFLATS, CANYONRUN,
     FROSTLINE, GLACIER, WHITEOUT,
+    SCREE, QUARRY, OVERHANG,
     // and the seven built before the themes, kept raceable under LEGACY
     CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE
   ];

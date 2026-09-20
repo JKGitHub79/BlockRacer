@@ -123,11 +123,23 @@ for (let ti = 0; ti < TRACKS.length; ti++) {
   }
   report();
 
+  /* EVERY line has to cross EVERY zone, not just one of them.
+   *
+   * This check used to pass as soon as a single offset found the zone, and
+   * that is not the same thing at all: TRACK.inZone tests a car's CENTRE
+   * against the raw rectangle, so a checkpoint laid out thin ACROSS the road
+   * instead of thin ALONG it is a band the offset lines drive past on either
+   * side. Quarry shipped past this check with a checkpoint like that and
+   * two of its four cars could not complete a single lap - they drove the
+   * circuit perfectly, forever, stuck on checkpoint two.
+   *
+   * The rule the shape has to follow: a checkpoint is thin in the direction
+   * the car is TRAVELLING and spans the full width of the road across it. */
   console.log('  checkpoints on the racing line:');
   const zones = [...TRACK.CHECKPOINTS, TRACK.FINISH];
   zones.forEach((z, zi) => {
-    let hit = false;
     for (const off of OFFSETS) {
+      let hit = false;
       const route = TRACK.offsetRoute(off);
       for (let i = 0; i < route.length && !hit; i++) {
         const a = route[i], d = TRACK.LEG_DIR[i];
@@ -136,8 +148,11 @@ for (let ti = 0; ti < TRACKS.length; ti++) {
           if (TRACK.inZone(z, a.x + d.x * t, a.y + d.y * t)) { hit = true; break; }
         }
       }
+      if (!hit) {
+        fail(`zone ${zi} is never crossed at offset ${off.toFixed(2)} - a car ` +
+             `on that line can never complete a lap`);
+      }
     }
-    if (!hit) fail(`zone ${zi} is never crossed by the racing line`);
   });
   report();
 

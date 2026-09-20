@@ -138,6 +138,22 @@
     }
   }
 
+  /* A stepped rock rim. Not peaks and not dunes: a run of flat-topped blocks
+   * that each step up or down from the one before, which is what a quarried
+   * cliff actually looks like from a distance and what the tracks in that
+   * theme are made of. Drawn as rectangles down to the floor, so a nearer
+   * band simply covers the one behind it. */
+  function terrace(g, y, height, color, seed, step) {
+    var rnd = rng(seed);
+    var lvl = y - height * (0.35 + rnd() * 0.45);
+    g.fillStyle = color;
+    for (var x = -step; x < W + step; x += step) {
+      lvl += (rnd() - 0.5) * height * 0.55;
+      lvl = Math.max(y - height, Math.min(y - height * 0.12, lvl));
+      g.fillRect(x, lvl, step + 1, H - lvl);
+    }
+  }
+
   function recede(g) {
     g.fillStyle = 'rgba(4,8,14,0.18)';
     g.fillRect(0, 0, W, H);
@@ -198,6 +214,19 @@
       }
     },
 
+    cliffs: {
+      weather: 'grit',
+      paint: function (g) {
+        sky(g, [[0, '#150d10'], [0.30, '#3b2420'], [0.60, '#7a4a33'],
+                [0.82, '#b07a4e'], [1, '#d9a874']]);
+        sun(g, W * 0.21, H * 0.21, H * 0.048, '#ffe9c4', 'rgba(255,198,138,0.26)');
+        terrace(g, H * (HORIZON + 0.02), H * 0.32, '#6d4c3a', 37, W * 0.055);
+        terrace(g, H * (HORIZON + 0.15), H * 0.24, '#3f2b23', 59, W * 0.042);
+        terrace(g, H * (HORIZON + 0.32), H * 0.18, '#1c1311', 73, W * 0.033);
+        recede(g);
+      }
+    },
+
     /* The front screen sits on its own night sky rather than borrowing a
      * theme's, so arriving at the game does not imply a theme. */
     night: {
@@ -228,7 +257,9 @@
     dust:   { n: 55, color: '#e8cfa0', r: [0.5, 1.3], vx: [-110, -260], vy: [-5, 9],
               sway: 6, rate: 1.7, alpha: [0.05, 0.16], wide: 6 },
     snow:   { n: 70, color: '#eef5ff', r: [0.7, 2.0], vx: [-8, -34], vy: [26, 78],
-              sway: 13, rate: 0.7, alpha: [0.18, 0.62], wide: 1 }
+              sway: 13, rate: 0.7, alpha: [0.18, 0.62], wide: 1 },
+    grit:   { n: 60, color: '#c8b9a4', r: [0.5, 1.5], vx: [-30, -80], vy: [20, 60],
+              sway: 5, rate: 1.3, alpha: [0.08, 0.30], wide: 2 }
   };
 
   function ensureMotes(kind) {

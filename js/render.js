@@ -97,7 +97,11 @@
     dust: { per: 2600, color: '#e8cfa0', r: [0.5, 1.5], vx: [-60, -130],
             vy: [-4, 7], sway: 3, swayRate: 1.6, alpha: [0.10, 0.34], smear: 5 },
     leaves: { per: 9000, color: '#c08a3e', r: [1.0, 2.2], vx: [-9, -30],
-              vy: [8, 26], sway: 16, swayRate: 1.1, alpha: [0.25, 0.62], smear: 2 }
+              vy: [8, 26], sway: 16, swayRate: 1.1, alpha: [0.25, 0.62], smear: 2 },
+    // Rock dust off the faces: finer and faster than snow, and it falls
+    // rather than drifts, because there is nothing up there to hold it.
+    grit:   { per: 3000, color: '#c8b9a4', r: [0.6, 1.6], vx: [-18, -55],
+              vy: [14, 42], sway: 3, swayRate: 1.3, alpha: [0.14, 0.42], smear: 2 }
   };
 
   function ensureMotes() {

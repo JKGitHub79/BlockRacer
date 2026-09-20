@@ -49,6 +49,18 @@
         { id: 'glacier',   name: 'GLACIER',   grade: 'MODERATE +' },
         { id: 'whiteout',  name: 'WHITEOUT',  grade: 'MODERATE ++' }
       ]
+    },
+    {
+      id: 'cliffs',
+      name: 'CLIFFS',
+      tagline: 'Rock, and not much room. A serpentine, a pit and a ledge.',
+      scene: 'cliffs',
+      accent: '#d9884a',
+      tracks: [
+        { id: 'scree',    name: 'SCREE',    grade: 'CHALLENGING' },
+        { id: 'quarry',   name: 'QUARRY',   grade: 'CHALLENGING +' },
+        { id: 'overhang', name: 'OVERHANG', grade: 'CHALLENGING ++' }
+      ]
     }
   ];
 })(typeof window !== 'undefined' ? window : globalThis);

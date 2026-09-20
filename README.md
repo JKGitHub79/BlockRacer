@@ -49,17 +49,18 @@ zero-sized.
 
 ## Themes and tracks
 
-Three themes, ascending in difficulty, three tracks each:
+Four themes, ascending in difficulty, three tracks each:
 
 | Theme | Tracks | | |
 | --- | --- | --- | --- |
 | Forest | Pinefall, Hollow, Canopy | easiest | **built** |
 | Desert | Duneline, Salt Flats, Canyon Run | harder | **built** |
 | Snow | Frostline, Glacier, Whiteout | moderate | **built** |
+| Cliffs | Scree, Quarry, Overhang | challenging | **built** |
 
-All nine are built. A theme's track is matched to `js/tracks.js` by id, and a
+All twelve are built. A theme's track is matched to `js/tracks.js` by id, and a
 name with no track behind it renders as a placeholder rather than being hidden,
-so a fourth theme can be sketched in `js/themes.js` and filled in later.
+so a fifth theme can be sketched in `js/themes.js` and filled in later.
 
 ### The forest three
 
@@ -181,21 +182,58 @@ a *corner*, and that matters more than the runoff either side of it. That is a
 fourth lever, and one that behaves differently per shape rather than
 uniformly, which is why it is not in the list below.
 
+### The cliffs three
+
+Rock, and three silhouettes that share nothing with each other or with
+anything earlier. The roads stay eight cells wide - the snow three's width -
+everywhere except Overhang's tight end. What makes them harder is how often
+the road asks a question, not how little room it leaves: the sharpest lever
+in the game is gate margin, and that is exactly why none of these leans on it.
+
+**Scree** is a serpentine. There is no island anywhere on the map: four
+vertical lanes folded into one another end to end, with a main straight along
+the bottom returning you to the first. It is the longest lap in the game at
+168 cells, and three stands - one each in lane A, lane D and the straight.
+
+The first cut had a stand in every lane and measured 742 crashes a thousand
+laps, two and a half times the snow three. Each lane change on this track is
+worth about a third of the crash count on its own, because the folds already
+are the difficulty. Lanes B and C and the middle link are clean on purpose.
+
+**Quarry** is a plus, not a rectangle. The road is the gap between a
+plus-shaped map and a smaller plus-shaped island, so the lap runs out along
+one side of each arm, round its tip and back down the other. Twelve corners,
+and **four of them are re-entrant**: you turn around the outside of an armpit
+rather than the inside of an island, which nothing else in the game asks for.
+It is the corner that catches people, because the wall you are turning away
+from is behind you and there is nothing to aim at.
+
+**Overhang** is two tracks in one lap. The right two thirds is the fastest
+thing in the game - a thirty-nine cell straight, a long climb, a thirty-nine
+cell run back. The left third folds back on itself twice between six- and
+seven-cell ledges. You arrive at the tight end carrying everything the
+straight gave you.
+
 ### The ladder
 
-Nine tracks, one continuous curve:
+Twelve tracks, one continuous curve. Crashes per thousand laps of AI racing,
+measured the way the whole ladder has always been measured - beginner speed,
+slide 0.8, four cars (see **A note on the numbers** below):
 
 | | 1 | 2 | 3 |
 | --- | --- | --- | --- |
 | Forest | 58 | 88 | 124 |
 | Desert | 69 | 144 | 190 |
 | Snow | 294 | 318 | 450 |
+| Cliffs | 375 | 408 | 617 |
 
-In order: 58, 69, 88, 124, 144, 190, 294, 318, 450. Forest and Desert
-interleave, so the first track of the desert is easier than the last of the
-forest and a new theme reads as a new theme rather than a wall. Snow does not
-interleave - it steps clear of the desert and stays there, because it is the
-moderate band.
+In order: 58, 69, 88, 124, 144, 190, 294, 318, 375, 408, 450, 617. Forest and
+Desert interleave, so the first track of the desert is easier than the last of
+the forest and a new theme reads as a new theme rather than a wall. Snow steps
+clear of the desert and stays there. Cliffs interleaves with Snow the way
+Desert does with Forest - each cliffs track is above its snow counterpart, but
+the first two sit under Whiteout, so arriving at a harder theme is a step
+rather than a cliff.
 
 Three levers, in order of how much they are worth:
 
@@ -203,10 +241,34 @@ Three levers, in order of how much they are worth:
    roughly double the crash count. Held still within a theme, changed only
    between them.
 2. **How often the road asks** - one more lane change per track is worth
-   somewhere around a fifth to a third.
+   somewhere around a fifth to a third, and considerably more than that on a
+   track with a lot of corners already.
 3. **Runoff past a turn-in** - eight cells to five is worth around 10-20 per
    cent. The fine adjustment, and how each theme's three tracks were levelled
    against one another.
+
+### A note on the numbers
+
+Every figure above is measured at **slide 0.8**, which is what the whole
+ladder was built against and is no longer the value the game ships at. The
+shipped default is 3.0, and it changes what "hard" means rather than just how
+hard things are:
+
+| | Snow | | | Cliffs | | |
+| --- | --- | --- | --- | --- | --- | --- |
+| slide 0.8 | 294 | 318 | 450 | 375 | 408 | 617 |
+| slide 3.0 | 227 | 272 | 373 | 216 | 292 | 432 |
+
+At a three-cell turn radius the car is still arcing when it reaches the next
+corner, so **margin stops being a difficulty lever and becomes a wall**: an
+early cut of Quarry with three- and four-cell gates measured 1208 crashes at
+the shipped settings, three times the hardest snow track, and every one of
+them was the same crash. Corner count, which costs the same at any radius, is
+the lever that survives. All three cliffs tracks are built on it.
+
+The ordering holds at both radii with one exception: at slide 3.0 Scree (216)
+lands a whisker under Frostline (227), because its lap is half again as long
+as Frostline's and crashes are counted per lap rather than per cell.
 
 The seven circuits that came first - Crossover, Snowdrift, Mesa, Wildwood,
 Catalunya, Caldera, Staircase - are the **legacy tracks**, on the options
@@ -387,6 +449,10 @@ Three things learned the hard way getting them to read:
 - **A mountain range needs many more peaks than you think.** Seven points across
   the screen gives slabs. The step is 4.5% of the width, and the heights are
   skewed so most of the range is low and the occasional one stands out of it.
+- **Rock is not a mountain.** The cliffs scene uses `terrace` rather than
+  `peaks`: a run of flat-topped blocks that each step up or down from the one
+  before. Triangles read as alpine whatever colour they are, and the point of
+  the theme is quarried stone.
 
 Scenes also keep their horizon and their landmarks out of the middle third of
 the screen, where the cards are, so the scenery is seen rather than half-hidden
@@ -833,10 +899,30 @@ node tools/simulate.js 5 40      # 40 full races of real physics and real AI
 node tools/simulate.js 5 40 1    # ...on track 1 only
 node tools/simulate.js 5 40 "" 3 0.4   # ...at Hard, slide 0.4
 node tools/simulate.js 5 40 "" "" "" "" 10   # ...against level 10 opponents
+node tools/map.js 10               # an ASCII picture of track 10
 ```
 
-`validate-track.js` sweeps a car along each track's racing line at every lateral
-offset the AI uses, and fails if it ever touches a wall or cannot rotate at a
+`simulate.js` reads the defaults in `js/config.js` for anything it is not
+given, so **pass the settings explicitly when comparing against the ladder**:
+`node tools/simulate.js 5 60 10 1 0.8 4` is beginner, slide 0.8, four cars.
+The numbers in the table above are meaningless against a run at the shipped
+defaults, and that mistake cost an hour of tuning against the wrong baseline.
+
+`map.js` prints a track as characters - scenery, stands, the racing line, the
+waypoints, the checkpoints, the start grid. It is a design aid rather than a
+check, but a layout that looks wrong there is wrong, and seeing it costs
+nothing.
+
+`validate-track.js` sweeps a car along each track's racing line at **every**
+lateral offset the AI uses - every one, not one of them. `TRACK.inZone` tests a
+car's CENTRE against the raw rectangle, so a checkpoint laid out thin ACROSS
+the road instead of thin ALONG it is a band the offset lines drive past on
+either side. Quarry shipped past the old version of this check with a
+checkpoint like that, and two of its four cars drove the circuit perfectly,
+forever, stuck on checkpoint two. **A checkpoint is thin in the direction the
+car is travelling and spans the full width of the road across it.**
+
+It fails if a car ever touches a wall or cannot rotate at a
 corner - so a track cannot be edited into something undriveable without
 noticing. It then *drives* every corner with the real car physics at the
 configured slide radius, and fails if the arc clips anything or comes out off
