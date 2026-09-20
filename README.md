@@ -518,37 +518,69 @@ underneath, as a pair, and the cards get the whole width: 97px each at 320,
 120 at 390, 138 at 430. The arrows are an easier thumb target there than a
 38px sliver at the edge of the screen, too.
 
-### Why it fitted on one phone and not another
+### iOS Safari answers two questions wrong
 
-Because the breakpoints were asking about the wrong thing, in two places:
+This is what "fits on one phone and not another" actually was, and none of it
+shows up in a desktop browser, because in a desktop browser the wrong answer
+and the right answer are the same number.
 
-**A phone in landscape does not hand the page its height.** The browser's
-toolbar takes 40-50px of it, and Chrome for Android with its tab strip takes
-closer to 90. A 375-tall landscape screen is therefore anywhere between 375 and
-285 tall depending on the browser, the scroll position, and whether the page
-has been installed to the home screen. The track cards' pictures were sized by
-WIDTH, through an `aspect-ratio`, and knew nothing about that - so on a phone
-whose browser left 300px they fitted, and on the same phone in a browser that
-left 270 they ran off the bottom. Below 460px of height the cards are now sized
-by HEIGHT instead: the picture takes a share of the viewport and the card's
-width follows from its aspect ratio, which is the way round that cannot
-overflow.
+**`100vh`, `100%` and `inset: 0` all resolve against the viewport with the
+toolbars HIDDEN.** They are not hidden. So the page was laid out 46 to 90
+pixels taller than the part of it anyone could see, every full-screen menu
+had its bottom - which is where the buttons are - underneath Safari's own
+chrome, and the whole game could be dragged up off the top of the screen,
+which made Safari hide its toolbar, which changed the height again. `100dvh`
+was meant to fix exactly this and does, on iOS 15.4 and up; below that it is
+not supported at all.
 
-**"Narrow" and "upright" are not the same question.** The rule that stacks the
-panel under the board keyed off `max-width: 820px`. An iPad Pro 11 is 834 CSS
-pixels wide upright - fourteen past the cutoff - so it kept the side panel, and
-a 200px column out of 834 held the board to 596 across on a screen 1194 tall: a
-quarter of the display, with the rest of the height empty. It now keys off
-`max-width: 820px, (orientation: portrait)`, and that board is 808 x 593.
+So the height is **measured** instead. `js/viewport.js` reads
+`visualViewport.height` - which is the part of the page you can actually see,
+reported correctly on every iOS that has it, and updated as the toolbar comes
+and goes - and writes it to `--app-h` on `<html>`. `html`, `body`, `#backdrop`,
+`.screen` and `.overlay` are all sized from that, with `100dvh` and then
+`100vh` left as fallbacks for anything with no script. Every `vh` in the
+stylesheet is now a share of `--app-h` for the same reason.
 
-`npm run layout` is the check that finds this class of bug. It drives every
-screen of the game at **72 viewport sizes** - the device list is
-`tools/devices.js`, and every landscape entry is tested three times, at the
-clean swap and with 46px and 90px of browser chrome taken off the height - and
-fails on anything that runs off the side, anything below the fold on a screen
-that is supposed to fit without scrolling, any control smaller than 40px, and
-any card that has stopped being side by side with the other two. 432 checks. It
-needs Playwright, which is why it is not part of `npm run check`.
+**The notch.** `index.html` asks for `viewport-fit=cover` so the painted
+landscape can run under the notch and the rounded corners, which is right -
+a band of black at the top of a painted sky looks like a fault. The price of
+asking for it is that the *content* runs under them too unless something pads
+it back, and nothing was: that was a regression introduced with the zoom fix.
+On an iPhone in landscape the side inset is 47pt, which is enough to swallow
+the BACK button whole. `--sa-t/r/b/l` carry `env(safe-area-inset-*)` and every
+full-bleed layer and corner-pinned button adds them to its padding.
+
+`-webkit-backdrop-filter` is now beside every `backdrop-filter`, too; without
+it the blur behind the cards and arrows silently does nothing on iOS.
+
+### The check that finds this class of bug
+
+`npm run layout` drives every screen at **72 viewport sizes** - the device
+list is `tools/devices.js` - and the two things it does that a device preset
+does not are the whole point:
+
+- **It holds the visible height below the window.** Shrinking the test window
+  does not reproduce the iOS bug, because then `100vh` is *correct*. The
+  window has to stay tall while the visible height is told to be short, which
+  is what the `visible` field does. Every landscape size is tested three
+  times: at the clean swap, and with 46px and 90px of browser chrome taken
+  off.
+- **It puts a notch on it.** A desktop browser reports every safe-area inset
+  as zero. The audit sets real ones - 47/0/34/0 upright and 0/47/21/47 on its
+  side for a notched iPhone - through the same custom properties the
+  stylesheet reads, so it exercises the real code path.
+
+It then fails on anything that runs off the side, anything under the chrome or
+the notch on a screen that is supposed to fit without scrolling, any control
+smaller than 40px, any card that has stopped being level with the other two,
+and - directly - any full-screen layer whose height is the window's rather
+than the visible viewport's. 792 checks. Putting `html { height: 100% }` back
+fails 36 of them immediately, which is the test earning its keep.
+
+It needs Playwright, which is why it is not part of `npm run check`. It runs
+Chromium, so it cannot catch a bug that is purely a WebKit rendering
+difference - what it can do is make the two things iOS does differently
+*explicit*, and hold the layout to them.
 
 ### Things you press
 
@@ -984,6 +1016,7 @@ midpoint is where the width probe starts.
 | `js/render.js` | canvas drawing, including the track thumbnails |
 | `js/game.js` | race loop, rules, HUD |
 | `js/audio.js` | WebAudio blips, no asset files |
+| `js/viewport.js` | measures the visible viewport, because iOS will not |
 | `tools/devices.js` | the 72 viewport sizes the layout has to survive |
 
 Scripts are plain `<script>` tags in order, deliberately: ES modules do not load

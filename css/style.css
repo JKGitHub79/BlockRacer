@@ -6,6 +6,33 @@
   --dim: #7f8ca8;
   --accent: #5ef2ff;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* How tall the screen ACTUALLY is. js/viewport.js measures it from
+     visualViewport and writes it here; 100dvh is the no-script fallback, and
+     100vh the fallback below iOS 15.4 where dvh does not exist. On iOS both
+     of those resolve against the viewport with the toolbars HIDDEN, which is
+     not the viewport anyone is looking at - hence the measurement. */
+  --app-h: 100dvh;
+
+  /* The notch, the rounded corners and the home indicator. index.html asks
+     for viewport-fit=cover so the painted landscape runs under all three,
+     and the price of asking is that content runs under them too unless it is
+     padded back. In landscape on a notched iPhone the left inset is 44pt -
+     more than enough to swallow the BACK button whole. */
+  --sa-t: env(safe-area-inset-top, 0px);
+  --sa-r: env(safe-area-inset-right, 0px);
+  --sa-b: env(safe-area-inset-bottom, 0px);
+  --sa-l: env(safe-area-inset-left, 0px);
+
+  /* The gap between the game and the edge of the screen, before the insets
+     are added to it. Media queries change these two rather than restating
+     the whole padding and dropping the insets on the floor. */
+  --pad-y: 14px;
+  --pad-x: 12px;
+}
+
+@supports not (height: 100dvh) {
+  :root { --app-h: 100vh; }
 }
 
 * { box-sizing: border-box; }
@@ -19,9 +46,22 @@ html, body {
 
 /* The game fills the viewport rather than flowing down the page: the canvas is
  * sized by script to whatever box is left over, so the whole thing has to be a
- * chain of flex boxes with min-height 0 or the box never shrinks. dvh rather
- * than vh so a phone's collapsing address bar does not cut the bottom off. */
-html { height: 100%; -webkit-text-size-adjust: 100%; }
+ * chain of flex boxes with min-height 0 or the box never shrinks. The height
+ * comes from --app-h, which js/viewport.js measures - see the note on it in
+ * :root, and js/viewport.js for why the browser's own answer is not usable. */
+/* Sized to what is VISIBLE, and not scrollable.
+ *
+ * `height: 100%` here meant the document was as tall as the LAYOUT viewport,
+ * which on iOS is the one with the toolbars hidden - so the document was 46
+ * to 90 pixels taller than the window, the whole game could be dragged up
+ * off the top of the screen, and dragging it made Safari hide its toolbar,
+ * which changed the height again. Nothing inside scrolls the document; the
+ * one screen that is genuinely long scrolls itself. */
+html {
+  height: var(--app-h);
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+}
 
 /* `pan-y` rather than `none`: it refuses every scaling gesture - double tap
    to zoom, pinch to zoom - while still allowing a vertical drag to scroll.
@@ -29,10 +69,12 @@ html { height: 100%; -webkit-text-size-adjust: 100%; }
    taller than a phone, could not be scrolled at all. The board itself takes
    `none`, because there nothing is a scroll and everything is a turn. */
 body {
-  height: 100dvh;
+  height: var(--app-h);
   display: flex;
   justify-content: center;
-  padding: 14px 12px;
+  padding:
+    calc(var(--pad-y) + var(--sa-t)) calc(var(--pad-x) + var(--sa-r))
+    calc(var(--pad-y) + var(--sa-b)) calc(var(--pad-x) + var(--sa-l));
   overflow: hidden;
   touch-action: pan-y;
   -webkit-user-select: none;
@@ -144,12 +186,17 @@ canvas { display: block; touch-action: none; }
  * screen; the board keeps whatever is left when the menu is gone. */
 .overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--app-h);
   z-index: 10;
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding:
+    calc(10px + var(--sa-t)) calc(10px + var(--sa-r))
+    calc(10px + var(--sa-b)) calc(10px + var(--sa-l));
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
@@ -436,7 +483,7 @@ body.mode-trial .stat.trial-only { display: flex; }
  * scrolls rather than overflowing off the bottom. The cutoff has to clear
  * 600, or a 4:3 window loses START below the fold. */
 @media (max-height: 640px) {
-  body { padding: 6px 8px; }
+  body { --pad-y: 6px; --pad-x: 8px; }
   .topbar { margin-bottom: 6px; }
   .topbar h1 { font-size: 15px; letter-spacing: 2px; }
   .topbar h1 em { margin-left: 6px; font-size: 9px; }
@@ -493,24 +540,32 @@ body.mode-trial .stat.trial-only { display: flex; }
  * exactly that container.
  * ==================================================================== */
 
+/* The one layer that SHOULD run under the notch: it is scenery, and a band
+   of black at the top of a painted landscape looks like a fault. */
 #backdrop {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   z-index: 5;
   width: 100%;
-  height: 100%;
+  height: var(--app-h);
   display: block;
 }
 body.in-race #backdrop { display: none; }
 
 .screen {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--app-h);
   z-index: 10;
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 18px;
+  padding:
+    calc(18px + var(--sa-t)) calc(18px + var(--sa-r))
+    calc(18px + var(--sa-b)) calc(18px + var(--sa-l));
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -539,10 +594,12 @@ body.in-race #backdrop { display: none; }
 
 /* Back out of a screen. Parked in the corner rather than in the flow, so it
    never takes a row from the content. */
+/* Absolute, so the screen's own padding does not move it - the insets have
+   to be added here as well or it lands under the notch in landscape. */
 .back {
   position: absolute;
-  top: 16px;
-  left: 16px;
+  top: calc(16px + var(--sa-t));
+  left: calc(16px + var(--sa-l));
   z-index: 2;
   padding: 9px 16px;
   font: inherit;
@@ -553,6 +610,7 @@ body.in-race #backdrop { display: none; }
   border: 1px solid var(--line);
   border-radius: 6px;
   cursor: pointer;
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 .back:hover { border-color: var(--accent); color: var(--accent); }
@@ -580,7 +638,7 @@ body.in-race #backdrop { display: none; }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
-  margin-top: clamp(24px, 6vh, 56px);
+  margin-top: clamp(24px, calc(var(--app-h) * 6 / 100), 56px);
 }
 
 .door {
@@ -589,7 +647,7 @@ body.in-race #backdrop { display: none; }
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: clamp(110px, 22vh, 190px);
+  min-height: clamp(110px, calc(var(--app-h) * 22 / 100), 190px);
   padding: 18px 10px;
   font: inherit;
   color: var(--text);
@@ -598,6 +656,7 @@ body.in-race #backdrop { display: none; }
   border-radius: 10px;
   cursor: pointer;
   transition: transform 0.12s, border-color 0.12s, background 0.12s;
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
 .door:hover { transform: translateY(-3px); border-color: var(--accent); }
@@ -658,13 +717,13 @@ body.in-race #backdrop { display: none; }
   display: flex;
   align-items: center;
   gap: clamp(6px, 2vw, 18px);
-  margin-top: clamp(16px, 4vh, 34px);
+  margin-top: clamp(16px, calc(var(--app-h) * 4 / 100), 34px);
 }
 
 .arrow {
   flex: 0 0 auto;
   width: clamp(38px, 5vw, 52px);
-  height: clamp(66px, 12vh, 104px);
+  height: clamp(66px, calc(var(--app-h) * 12 / 100), 104px);
   font: inherit;
   font-size: 26px;
   line-height: 1;
@@ -673,6 +732,7 @@ body.in-race #backdrop { display: none; }
   border: 1px solid var(--line);
   border-radius: 8px;
   cursor: pointer;
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 .arrow:hover { border-color: var(--theme, var(--accent)); color: var(--theme, var(--accent)); }
@@ -697,6 +757,7 @@ body.in-race #backdrop { display: none; }
   border-radius: 10px;
   cursor: pointer;
   transition: transform 0.12s, border-color 0.12s;
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
 .card:hover { transform: translateY(-4px); border-color: var(--theme, var(--accent)); }
@@ -745,6 +806,7 @@ body.in-race #backdrop { display: none; }
   background: rgba(14, 21, 36, 0.82);
   border: 1px solid var(--line);
   border-radius: 10px;
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
 .opt .lapline { margin-bottom: 8px; }
@@ -995,7 +1057,7 @@ body.in-race #backdrop { display: none; }
  * Chrome for Android in landscape on a mid-size phone leaves about 300px
  * for the whole game, and the top bar was taking twelve per cent of it. */
 @media (max-height: 380px) {
-  body { padding: 4px 6px; }
+  body { --pad-y: 4px; --pad-x: 6px; }
   .topbar { margin-bottom: 4px; gap: 10px; }
   .topbar h1 { font-size: 13px; letter-spacing: 1px; }
   .topbar h1 em { font-size: 8px; margin-left: 4px; }
@@ -1058,30 +1120,32 @@ body.in-race #backdrop { display: none; }
  * its aspect ratio, which is the way round that cannot overflow. The rest
  * of the screen's furniture goes on a diet at the same time. */
 @media (max-height: 460px) {
-  .screen { padding: 8px 12px; }
+  .screen { padding:
+    calc(8px + var(--sa-t)) calc(12px + var(--sa-r))
+    calc(8px + var(--sa-b)) calc(12px + var(--sa-l)); }
   .mode-tag { margin-bottom: 4px; padding: 2px 9px; font-size: 9px; letter-spacing: 2px; }
-  .theme-head h2 { font-size: clamp(18px, 5vh, 34px); letter-spacing: clamp(3px, 1vw, 10px); }
+  .theme-head h2 { font-size: clamp(18px, calc(var(--app-h) * 5 / 100), 34px); letter-spacing: clamp(3px, 1vw, 10px); }
   .theme-head p { font-size: 10px; margin-top: 3px; }
-  .carousel { margin-top: clamp(6px, 2vh, 16px); }
+  .carousel { margin-top: clamp(6px, calc(var(--app-h) * 2 / 100), 16px); }
   .cards { gap: 8px; }
   .card { padding: 6px; gap: 4px; }
   /* width: auto with a set height and an aspect-ratio makes the BOX follow
      the picture rather than the column, so a short screen shrinks the card
      instead of pushing it off the bottom. */
   .card-art {
-    height: clamp(46px, 26vh, 150px);
+    height: clamp(46px, calc(var(--app-h) * 26 / 100), 150px);
     width: auto;
     max-width: 100%;
     margin: 0 auto;
   }
   .card-art canvas { width: auto; height: 100%; }
-  .card-name { font-size: clamp(10px, 2.4vh, 14px); letter-spacing: 1px; }
+  .card-name { font-size: clamp(10px, calc(var(--app-h) * 2.4 / 100), 14px); letter-spacing: 1px; }
   .card-grade { font-size: 9px; letter-spacing: 0; }
   .card-medal, .card-record { top: 6px; right: 6px; padding: 0 5px; font-size: 9px; }
-  .arrow { height: clamp(40px, 18vh, 90px); }
+  .arrow { height: clamp(40px, calc(var(--app-h) * 18 / 100), 90px); }
   .screen-foot { margin-top: 8px; font-size: 10px; letter-spacing: 1px; }
   .wordmark-sub { display: none; }
-  .screen-title { margin-bottom: 10px; font-size: clamp(14px, 4vh, 24px); letter-spacing: 3px; }
+  .screen-title { margin-bottom: 10px; font-size: clamp(14px, calc(var(--app-h) * 4 / 100), 24px); letter-spacing: 3px; }
 }
 
 /* Shorter still - Chrome for Android in landscape on a small phone leaves
@@ -1105,7 +1169,9 @@ body.in-race #backdrop { display: none; }
  * That hands the cards the whole width: 97px each at 320, 120 at 390, 138 at
  * 430. The screen's own padding comes down too, which is worth another 20. */
 @media (max-width: 480px) {
-  .screen { padding: 10px 8px; }
+  .screen { padding:
+    calc(10px + var(--sa-t)) calc(8px + var(--sa-r))
+    calc(10px + var(--sa-b)) calc(8px + var(--sa-l)); }
   .carousel { flex-wrap: wrap; justify-content: center; gap: 10px 8px; margin-top: 12px; }
   .cards { flex: 0 0 100%; order: 1; gap: 6px; }
   .arrow { order: 2; width: clamp(64px, 26vw, 110px); height: 40px; font-size: 20px; }
@@ -1116,7 +1182,8 @@ body.in-race #backdrop { display: none; }
   .card:hover { transform: none; }
   .theme-head p { font-size: 11px; letter-spacing: 1px; }
   .screen-foot { font-size: 10px; letter-spacing: 1px; margin-top: 12px; }
-  .back { top: 8px; left: 8px; padding: 7px 12px; font-size: 11px; }
+  .back { top: calc(8px + var(--sa-t)); left: calc(8px + var(--sa-l));
+    padding: 7px 12px; font-size: 11px; }
   .doors { gap: 8px; }
   .door-sub { display: none; }
 }
@@ -1130,7 +1197,7 @@ body.in-race #backdrop { display: none; }
  * the screen has, and the panel takes everything underneath rather than
  * leaving a band of nothing above it and another below. */
 @media (orientation: portrait) and (max-width: 620px) {
-  body { padding: 6px 4px; }
+  body { --pad-y: 6px; --pad-x: 4px; }
   .topbar { gap: 10px; margin-bottom: 6px; }
   .topbar h1 { font-size: 15px; letter-spacing: 2px; }
   .topbar h1 em { margin-left: 6px; font-size: 9px; }

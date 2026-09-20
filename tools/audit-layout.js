@@ -63,18 +63,75 @@ const SCREENS = [
     await page.goto(FILE);
     await page.waitForFunction(() => window.Game && window.Screens);
 
+    /* Be the phone, not the desktop browser pretending to be one: hold the
+     * visible height below the window the way a browser toolbar does, and
+     * put a notch on it. Both go through the same custom properties the
+     * stylesheet reads, so this exercises the real code path. */
+    await page.evaluate(({ visible, insets }) => {
+      const r = document.documentElement;
+      r.style.setProperty('--app-h', visible + 'px');
+      r.style.setProperty('--sa-t', insets[0] + 'px');
+      r.style.setProperty('--sa-r', insets[1] + 'px');
+      r.style.setProperty('--sa-b', insets[2] + 'px');
+      r.style.setProperty('--sa-l', insets[3] + 'px');
+      // and stop js/viewport.js putting the window's height back
+      window.Viewport.measure = function () {};
+    }, { visible: c.visible, insets: c.insets });
+    await page.waitForTimeout(60);
+
+    /* The fix itself, asserted directly: every full-screen layer has to be
+     * as tall as the VISIBLE viewport, not as tall as the window. This is
+     * the check that would have caught `inset: 0` and `100vh` - both of
+     * which look perfect in a desktop browser, where the two are the same
+     * number, and hide the bottom of the page on every iPhone. */
+    const layers = await page.evaluate(() => {
+      const out = {};
+      [['html', document.documentElement], ['body', document.body],
+       ['#backdrop', document.getElementById('backdrop')],
+       ['.screen', document.getElementById('screen-main')],
+       ['.overlay', document.getElementById('results')]].forEach(([n, el]) => {
+        if (!el) return;
+        const prev = el.style.display;
+        if (getComputedStyle(el).display === 'none') el.style.display = 'flex';
+        out[n] = Math.round(el.getBoundingClientRect().height);
+        el.style.display = prev;
+      });
+      return out;
+    });
+    Object.entries(layers).forEach(([n, h]) => {
+      if (Math.abs(h - c.visible) > 1) {
+        problems.push(`${c.label} (${c.w}x${c.h}, ${c.visible} visible): ` +
+          `${n} is ${h}px tall, should be ${c.visible} - it will run under ` +
+          `the browser's own toolbar on iOS`);
+      }
+    });
+    checks += Object.keys(layers).length;
+
     for (const sc of SCREENS) {
       await page.evaluate(sc.go);
       await page.waitForTimeout(60);
-      const r = await page.evaluate(({ must, box }) => {
+      const r = await page.evaluate(({ must, box, visible, insets }) => {
+        // What the user can actually see, not what the window claims.
+        const VH = visible;
+        const SAFE = { t: insets[0], r: insets[1], b: insets[2], l: insets[3] };
         const doc = document.documentElement;
         const out = {
           hScroll: doc.scrollWidth - window.innerWidth,
           missing: [], offRight: [], offBottom: [], tiny: []
         };
         const b = box && document.querySelector(box);
-        out.vScroll = b ? b.scrollHeight - b.clientHeight
-                        : doc.scrollHeight - window.innerHeight;
+        /* documentElement.scrollHeight is never reported as less than the
+         * viewport, so it cannot answer "does the content fit" at document
+         * level. For the race view, which is not a .screen, measure what the
+         * content actually reaches instead. */
+        if (b) {
+          out.vScroll = b.scrollHeight - b.clientHeight;
+        } else {
+          const shell = document.querySelector('.shell');
+          out.vScroll = shell
+            ? Math.max(0, Math.round(shell.getBoundingClientRect().bottom - (VH - SAFE.b)))
+            : 0;
+        }
         must.forEach((sel) => {
           const els = document.querySelectorAll(sel);
           if (!els.length) { out.missing.push(sel); return; }
@@ -82,8 +139,10 @@ const SCREENS = [
             const b = el.getBoundingClientRect();
             if (b.width < 1 || b.height < 1) { out.tiny.push(sel); return; }
             // Off the SIDE is a bug. Off the bottom is a scroll.
-            if (b.right > window.innerWidth + 1 || b.left < -1) out.offRight.push(sel);
-            if (b.bottom > window.innerHeight + 1 || b.top < -1) out.offBottom.push(sel);
+            if (b.right > window.innerWidth - SAFE.r + 1 || b.left < SAFE.l - 1) {
+              out.offRight.push(sel);
+            }
+            if (b.bottom > VH - SAFE.b + 1 || b.top < SAFE.t - 1) out.offBottom.push(sel);
           });
         });
         // the carousel must keep its three cards in one row
@@ -95,7 +154,7 @@ const SCREENS = [
         const board = document.getElementById('game').getBoundingClientRect();
         out.board = { w: Math.round(board.width), h: Math.round(board.height),
                       pct: Math.round(100 * board.width * board.height /
-                                      (window.innerWidth * window.innerHeight)) };
+                                      (window.innerWidth * VH)) };
         /* Anything you are meant to press has to be big enough to press.
          * 44px is Apple's number and 48 is Google's; 40 is the floor here,
          * because the arrows and the back button are secondary. */
@@ -110,7 +169,7 @@ const SCREENS = [
           });
         });
         return out;
-      }, { must: sc.must, box: sc.box });
+      }, { must: sc.must, box: sc.box, visible: c.visible, insets: c.insets });
       checks++;
 
       const bad = [];
@@ -120,7 +179,8 @@ const SCREENS = [
       if (r.offRight.length) bad.push('off the side: ' + [...new Set(r.offRight)].join(','));
       if (sc.fits && r.vScroll > 1) bad.push('needs ' + r.vScroll + 'px of scroll');
       if (sc.fits && r.offBottom.length) {
-        bad.push('below the fold: ' + [...new Set(r.offBottom)].join(','));
+        bad.push('under the browser chrome or the notch: ' +
+                 [...new Set(r.offBottom)].join(','));
       }
       if (sc.name === 'play' && r.stacked) bad.push('cards stacked instead of side by side');
       if (sc.name === 'race' && r.board.w < 120) bad.push('board only ' + r.board.w + 'x' + r.board.h);
