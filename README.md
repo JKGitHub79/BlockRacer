@@ -508,18 +508,55 @@ that. What did change:
   fill left the board at **nine per cent** of a phone screen.
 - The running order goes to two columns, which fits a sixteen-car field at a
   size you can read.
-- The carousel stacks. Three cards across 390px did not fit - the grid
-  overflowed its own container and the right-hand arrow sat on top of the third
-  card - so upright each card turns on its side, picture on the left and name on
-  the right, and the three stack down the screen.
 
-On a 390x844 phone the board went from 30% of the screen to 32%, which is not
-the point; the point is that the 68% around it is now the panel and the thumb
-band rather than dead air.
+**The track cards stay three across, at every width.** They were stacked for a
+while and that was wrong: the picture of the track is the thing you are
+choosing between, and three of them side by side is the comparison. Three
+across 320px is 76 pixels each once the arrows and gaps have taken their
+share, which is not a card - so below 480px the arrows drop to their own row
+underneath, as a pair, and the cards get the whole width: 97px each at 320,
+120 at 390, 138 at 430. The arrows are an easier thumb target there than a
+38px sliver at the edge of the screen, too.
 
-Scenes also keep their horizon and their landmarks out of the middle third of
-the screen, where the cards are, so the scenery is seen rather than half-hidden
-behind them.
+### Why it fitted on one phone and not another
+
+Because the breakpoints were asking about the wrong thing, in two places:
+
+**A phone in landscape does not hand the page its height.** The browser's
+toolbar takes 40-50px of it, and Chrome for Android with its tab strip takes
+closer to 90. A 375-tall landscape screen is therefore anywhere between 375 and
+285 tall depending on the browser, the scroll position, and whether the page
+has been installed to the home screen. The track cards' pictures were sized by
+WIDTH, through an `aspect-ratio`, and knew nothing about that - so on a phone
+whose browser left 300px they fitted, and on the same phone in a browser that
+left 270 they ran off the bottom. Below 460px of height the cards are now sized
+by HEIGHT instead: the picture takes a share of the viewport and the card's
+width follows from its aspect ratio, which is the way round that cannot
+overflow.
+
+**"Narrow" and "upright" are not the same question.** The rule that stacks the
+panel under the board keyed off `max-width: 820px`. An iPad Pro 11 is 834 CSS
+pixels wide upright - fourteen past the cutoff - so it kept the side panel, and
+a 200px column out of 834 held the board to 596 across on a screen 1194 tall: a
+quarter of the display, with the rest of the height empty. It now keys off
+`max-width: 820px, (orientation: portrait)`, and that board is 808 x 593.
+
+`npm run layout` is the check that finds this class of bug. It drives every
+screen of the game at **72 viewport sizes** - the device list is
+`tools/devices.js`, and every landscape entry is tested three times, at the
+clean swap and with 46px and 90px of browser chrome taken off the height - and
+fails on anything that runs off the side, anything below the fold on a screen
+that is supposed to fit without scrolling, any control smaller than 40px, and
+any card that has stopped being side by side with the other two. 432 checks. It
+needs Playwright, which is why it is not part of `npm run check`.
+
+### Things you press
+
+`@media (hover: none)` is the honest test for "this is a finger, not a mouse".
+Apple's guidance is 44px and Google's is 48; nothing here was close. The
+sliders were the worst: the element IS the 6px track, so the whole hit area was
+six pixels tall. They are 40px now, with the visible track painted by
+`::-webkit-slider-runnable-track` so they look exactly the same.
 
 ## Controls
 
@@ -947,6 +984,7 @@ midpoint is where the width probe starts.
 | `js/render.js` | canvas drawing, including the track thumbnails |
 | `js/game.js` | race loop, rules, HUD |
 | `js/audio.js` | WebAudio blips, no asset files |
+| `tools/devices.js` | the 72 viewport sizes the layout has to survive |
 
 Scripts are plain `<script>` tags in order, deliberately: ES modules do not load
 over `file://`, and the point is that you can double-click the HTML file.
@@ -963,6 +1001,7 @@ node tools/simulate.js 5 40 1    # ...on track 1 only
 node tools/simulate.js 5 40 "" 3 0.4   # ...at Hard, slide 0.4
 node tools/simulate.js 5 40 "" "" "" "" 10   # ...against level 10 opponents
 node tools/map.js 10               # an ASCII picture of track 10
+npm run layout                     # every screen at 72 viewport sizes
 ```
 
 `simulate.js` reads the defaults in `js/config.js` for anything it is not

@@ -384,9 +384,16 @@ body.mode-trial .stat.trial-only { display: flex; }
   vertical-align: middle;
 }
 
-/* Narrow: stack the panel under the board and lay the readouts out in a row
- * that wraps, rather than a tall column that would steal the board's height. */
-@media (max-width: 820px) {
+/* Stack the panel under the board and lay the readouts out in a row that
+ * wraps, rather than a tall column that would steal the board's height.
+ *
+ * Two conditions, not one. Narrow is the obvious case. PORTRAIT is the case
+ * that was missed: an iPad Pro 11 is 834 CSS pixels wide upright, fourteen
+ * wider than the cutoff, so it kept the side panel - and a 200px column out
+ * of 834 held the board to 596 across on a screen 1194 tall, a quarter of
+ * the display, with the rest of the height empty. Upright, at any size, the
+ * width is the scarce thing and the height is not. */
+@media (max-width: 820px), (orientation: portrait) {
   /* Board and panel are sized to their content and centred as a pair, rather
    * than the board floating in the middle of whatever is left over. */
   .stage { flex-direction: column; justify-content: center; }
@@ -984,6 +991,136 @@ body.in-race #backdrop { display: none; }
   #standings .chip { width: 7px; height: 7px; margin-right: 3px; }
 }
 
+/* ---- very short: every pixel of height is board ----------------------
+ * Chrome for Android in landscape on a mid-size phone leaves about 300px
+ * for the whole game, and the top bar was taking twelve per cent of it. */
+@media (max-height: 380px) {
+  body { padding: 4px 6px; }
+  .topbar { margin-bottom: 4px; gap: 10px; }
+  .topbar h1 { font-size: 13px; letter-spacing: 1px; }
+  .topbar h1 em { font-size: 8px; margin-left: 4px; }
+  .homebtn { min-height: 40px; padding: 8px 10px; font-size: 10px; letter-spacing: 1px; }
+}
+
+/* ---- touch: things you press have to be big enough to press ----------
+ *
+ * `hover: none` is the honest test for "this is a finger, not a mouse".
+ * Apple's guidance is 44px and Google's is 48; none of these were close.
+ *
+ * The sliders are the worst of them: the element is the 6px track, so the
+ * whole hit area was six pixels tall. A transparent box around it and the
+ * track painted by ::-webkit-slider-runnable-track instead gives a 28px
+ * target that looks exactly the same. */
+@media (hover: none) {
+  .homebtn { min-height: 42px; padding: 10px 14px; }
+  .back { min-height: 42px; }
+  .arrow { min-width: 44px; }
+  .swatches { gap: 8px; }
+  .swatches button { width: 34px; height: 34px; }
+  .laps button { min-height: 40px; }
+
+  .slider {
+    height: 40px;
+    margin: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+  .slider::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: #1b2438;
+    border: 1px solid var(--line);
+  }
+  .slider::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: #1b2438;
+    border: 1px solid var(--line);
+  }
+  .slider::-webkit-slider-thumb { width: 22px; height: 22px; margin-top: -9px; }
+  .slider::-moz-range-thumb { width: 22px; height: 22px; }
+}
+
+/* ---- short: the track carousel has to fit the height it is given -----
+ *
+ * This is the one that was breaking, and it is why the game "fits on one
+ * phone and not another". A phone in landscape does not hand the page its
+ * height: the browser's toolbar takes 40-50px of it, and Chrome for Android
+ * with its tab strip takes closer to 90. A 375-tall landscape screen is
+ * therefore anywhere between 375 and 285 tall depending on the browser, the
+ * scroll position and whether the thing is installed to the home screen -
+ * and the track cards, whose pictures are sized by WIDTH through an
+ * aspect-ratio, did not know anything about that. They ran off the bottom.
+ *
+ * So below 460px of height the cards are sized by HEIGHT instead: the
+ * picture takes a share of the viewport and the card's width follows from
+ * its aspect ratio, which is the way round that cannot overflow. The rest
+ * of the screen's furniture goes on a diet at the same time. */
+@media (max-height: 460px) {
+  .screen { padding: 8px 12px; }
+  .mode-tag { margin-bottom: 4px; padding: 2px 9px; font-size: 9px; letter-spacing: 2px; }
+  .theme-head h2 { font-size: clamp(18px, 5vh, 34px); letter-spacing: clamp(3px, 1vw, 10px); }
+  .theme-head p { font-size: 10px; margin-top: 3px; }
+  .carousel { margin-top: clamp(6px, 2vh, 16px); }
+  .cards { gap: 8px; }
+  .card { padding: 6px; gap: 4px; }
+  /* width: auto with a set height and an aspect-ratio makes the BOX follow
+     the picture rather than the column, so a short screen shrinks the card
+     instead of pushing it off the bottom. */
+  .card-art {
+    height: clamp(46px, 26vh, 150px);
+    width: auto;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  .card-art canvas { width: auto; height: 100%; }
+  .card-name { font-size: clamp(10px, 2.4vh, 14px); letter-spacing: 1px; }
+  .card-grade { font-size: 9px; letter-spacing: 0; }
+  .card-medal, .card-record { top: 6px; right: 6px; padding: 0 5px; font-size: 9px; }
+  .arrow { height: clamp(40px, 18vh, 90px); }
+  .screen-foot { margin-top: 8px; font-size: 10px; letter-spacing: 1px; }
+  .wordmark-sub { display: none; }
+  .screen-title { margin-bottom: 10px; font-size: clamp(14px, 4vh, 24px); letter-spacing: 3px; }
+}
+
+/* Shorter still - Chrome for Android in landscape on a small phone leaves
+   about 230px for everything. The tagline and the footer are the first
+   things that can go, because neither is a control. */
+@media (max-height: 330px) {
+  .theme-head p, .play .screen-foot { display: none; }
+  .mode-tag { margin-bottom: 2px; }
+}
+
+/* ---- narrow: the track carousel keeps three cards ACROSS ------------
+ *
+ * Three cards across 320px is 76 pixels each once the two arrows and the
+ * gaps have taken their share, which is not a card. The fix is not to stack
+ * them - the picture of the track is the thing you are choosing between, and
+ * three of them side by side is the comparison - it is to stop the arrows
+ * taking width they do not need. Below 480px they drop to their own row
+ * under the cards, as a pair, where they are also an easier thumb target
+ * than a 38px sliver at the edge of the screen.
+ *
+ * That hands the cards the whole width: 97px each at 320, 120 at 390, 138 at
+ * 430. The screen's own padding comes down too, which is worth another 20. */
+@media (max-width: 480px) {
+  .screen { padding: 10px 8px; }
+  .carousel { flex-wrap: wrap; justify-content: center; gap: 10px 8px; margin-top: 12px; }
+  .cards { flex: 0 0 100%; order: 1; gap: 6px; }
+  .arrow { order: 2; width: clamp(64px, 26vw, 110px); height: 40px; font-size: 20px; }
+  .card { padding: 6px; gap: 5px; }
+  .card-name { font-size: 12px; letter-spacing: 1px; }
+  .card-grade { font-size: 9px; letter-spacing: 0; }
+  .card-medal, .card-record { top: 7px; right: 7px; padding: 0 5px; font-size: 9px; }
+  .card:hover { transform: none; }
+  .theme-head p { font-size: 11px; letter-spacing: 1px; }
+  .screen-foot { font-size: 10px; letter-spacing: 1px; margin-top: 12px; }
+  .back { top: 8px; left: 8px; padding: 7px 12px; font-size: 11px; }
+  .doors { gap: 8px; }
+  .door-sub { display: none; }
+}
+
 /* ---- upright: a phone in portrait ------------------------------------
  *
  * Every track is wider than it is tall, so here the board is limited by the
@@ -1002,7 +1139,7 @@ body.in-race #backdrop { display: none; }
   /* Board at the top at the full width the screen has, panel directly under
      it, and whatever is left over is one band at the BOTTOM rather than two
      bands of nothing with the game floating between them.
-     
+
      The panel must stay `flex: 0 0 auto`. Renderer.fit sizes the board to
      the stage minus the panel, so a panel that grows to fill takes the space
      from the board and then the board shrinks and the panel grows again -
@@ -1018,31 +1155,4 @@ body.in-race #backdrop { display: none; }
   #standings { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; }
   #standings li { padding: 1px 0; }
   #standings .lp { display: inline; }
-
-  /* The carousel does not fit three cards across 390px - the grid overflowed
-     its own container and the right-hand arrow sat on top of the third card.
-     Upright there is height to spare, so they stack, and each one turns on
-     its side: picture on the left, name and grade on the right. */
-  .carousel { gap: 8px; margin-top: 14px; }
-  .arrow { height: auto; align-self: stretch; width: 34px; font-size: 20px; }
-  .cards { grid-template-columns: 1fr; gap: 10px; }
-  .card {
-    display: grid;
-    grid-template-columns: 44% 1fr;
-    grid-template-rows: auto auto;
-    grid-template-areas: "art name" "art grade";
-    align-items: center;
-    column-gap: 12px;
-    row-gap: 2px;
-    text-align: left;
-  }
-  .card-art { grid-area: art; }
-  .card-name { grid-area: name; align-self: end; }
-  .card-grade { grid-area: grade; align-self: start; }
-  .card-medal, .card-record { top: 8px; right: 8px; padding: 1px 6px; font-size: 10px; }
-  .card:hover { transform: none; }
-
-  .theme-head p { font-size: 11px; }
-  .doors { gap: 8px; }
-  .door-sub { display: none; }
 }
