@@ -47,10 +47,10 @@ Three themes, ascending in difficulty, three tracks each:
 | Theme | Tracks | | |
 | --- | --- | --- | --- |
 | Forest | Pinefall, Hollow, Canopy | easiest | **built** |
-| Desert | Duneline, Salt Flats, Canyon Run | harder | to come |
+| Desert | Duneline, Salt Flats, Canyon Run | harder | **built** |
 | Snow | Frostline, Glacier, Whiteout | harder again | to come |
 
-Forest is built. Desert and Snow are named in `js/themes.js` and show on the
+Forest and Desert are built. Snow is named in `js/themes.js` and shows on the
 cards as still to come: a theme's track is matched to `js/tracks.js` by id, and
 a name with no track behind it renders as a placeholder rather than being
 hidden, so the shape of what is being built stays visible while it is built.
@@ -96,6 +96,46 @@ One thing deliberately *not* done: the AI's late-turn mistake rate was left
 alone. Turning it down halves the crash count on any track, but it makes the
 opposition tidier rather than the track kinder, and the count is only useful as
 a measure of the geometry while the drivers stay the same.
+
+### The desert three
+
+One step up from the forest, and a deliberately small one. The roads stay
+**nine cells wide** and the stands stay three thick, so the gate a car threads
+is the same six cells with the same 3.0 cells of margin. Two things change:
+each track asks for **one more change of lane** than its forest counterpart,
+and the runoff past a turn-in comes down from eight cells to six.
+
+| | Corners | Lane changes | Crashes | vs forest |
+| --- | --- | --- | --- | --- |
+| Duneline | 8 | 2 | 69 | Pinefall 58 |
+| Salt Flats | 12 | 4 | 144 | Hollow 88 |
+| Canyon Run | 14 | 5 | 190 | Canopy 124 |
+
+Three footprints rather than one, so they do not read as the forest
+recoloured: Duneline is long and low (48 x 26) with two twenty-cell straights,
+Salt Flats is tall and square (40 x 32) and asks for a change on every side,
+Canyon Run is the big one (46 x 30) with a double-S down the main straight -
+out, back, out again - before the first corner.
+
+**Narrowing the road to eight cells was tried first, and it is not a small
+step at all.** A five-cell gate leaves 2.5 cells of margin against the
+forest's 3.0, which sounds like nothing; it more than doubled the cost of
+every lane change and put two of the three in the same band as Wildwood and
+Caldera:
+
+| | Duneline | Salt Flats | Canyon Run |
+| --- | --- | --- | --- |
+| eight-cell roads, five-cell gates | 156 | 373 | 417 |
+| **nine-cell roads, six-cell gates** | **69** | **144** | **190** |
+
+Same layouts, same lane counts, one cell of road. The gate margin dominates
+every other term, which is why it is now the one thing held still across a
+theme and the difficulty step comes from how *often* the road asks, not from
+how tight the ask is.
+
+Across both themes the ladder comes out monotonic - 58, 69, 88, 124, 144, 190
+- in steps of between 16 and 41 per cent, so playing Forest 1 through Desert 3
+in order is a continuously rising curve rather than six tracks in two clumps.
 
 The seven circuits that came first - Crossover, Snowdrift, Mesa, Wildwood,
 Catalunya, Caldera, Staircase - are the **legacy tracks**, on the options
@@ -149,10 +189,10 @@ stops, and the in-memory copy still shows what was won in the session. What
 comes back out of storage is filtered to values that are still a podium place,
 because it was put there by an older version of the file or by hand.
 
-**A loophole worth knowing about:** a medal is recorded for any podium finish
-at whatever settings the race was run at, exactly as specified. With the field
-set to two cars you are first or second by definition, so silver is free. Say
-the word and a medal can require a field of at least four.
+A medal is recorded for any podium finish at whatever settings the race ran
+at. With the field set to two cars you are first or second by definition, so
+silver is free - left as it is deliberately, because the options screen is a
+set of testing controls rather than a difficulty dial.
 
 ### The landscapes
 
@@ -366,18 +406,21 @@ through.
 | Track | Crashes | Scrapes |
 | --- | --- | --- |
 | Pinefall | 58 | 623 |
+| Duneline | 69 | 1067 |
 | Hollow | 88 | 1416 |
-| Canopy | 125 | 1942 |
+| Canopy | 124 | 1927 |
 | Snowdrift | 135 | 1673 |
+| Salt Flats | 144 | 2256 |
 | Crossover | 150 | 1576 |
+| Canyon Run | 190 | 2632 |
 | Mesa | 196 | 1990 |
 | Catalunya | 407 | 2564 |
 | Wildwood | 417 | 1995 |
 | Caldera | 433 | 1547 |
 | Staircase | 2408 | 11962 |
 
-Four clear bands: the forest three, then the easy three that came before them,
-three moderates that are within six per cent
+The six themed tracks and the easy three now interleave into one smooth run
+from 58 to 196, then there are three moderates that are within six per cent
 of one another and are not meaningfully orderable between themselves, and
 Staircase on its own at nearly six times the moderates. Catalunya's high scrape
 count against its crash count is the eight-cell roads doing their job - you pay

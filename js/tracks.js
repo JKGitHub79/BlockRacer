@@ -767,9 +767,214 @@
     ]
   };
 
+
+  /* ---- The desert theme ------------------------------------------------
+   * One step up from the forest, and a small one. The roads stay nine cells
+   * wide and the stands stay three thick, so the gate a car threads is the
+   * same six cells with the same 3.0 cells of margin. Two things change:
+   * each track asks for one more change of lane than its forest counterpart,
+   * and the runoff past a turn-in comes down from eight cells to six.
+   *
+   * Narrowing the road to eight was tried first and is not a small step at
+   * all: a five-cell gate more than doubled the cost of every lane change
+   * and put two of the three in the same band as Wildwood and Caldera. The
+   * gate margin dominates everything else, so it is the one thing held
+   * still.
+   *
+   * The three footprints differ so they do not read as the forest recoloured:
+   * Duneline is long and low, Salt Flats tall and square, Canyon Run the big
+   * one with a double-S on the main straight.
+   * -------------------------------------------------------------------- */
+  var DESERT = {
+    bg:         '#120b07',
+    road:       '#0f0b07',   // baked hardpan, in shadow
+    roadLine:   '#1b1410',
+    wall:       '#a8703c',   // sandstone, bright against the road
+    wallTop:    '#d69c5e',
+    outer:      '#7d4f2a',   // open desert, off the map
+    outerTop:   '#ab7644',
+    jog:        '#6b3a20',   // the outcrops out on the road
+    jogTop:     '#a86a3c',
+    racingLine: 'rgba(255,226,172,0.24)',
+    check:      'rgba(255,200,120,0.06)',
+    checkNext:  'rgba(255,200,120,0.26)',
+    startLine:  '#f6e8cf'
+  };
+
+  /* ---- Desert 1: DUNELINE ----------------------------------------------
+   * Long and low: a 48 x 26 ring with two twenty-cell straights and one
+   * change of lane on each. Eight corners a lap.
+   * -------------------------------------------------------------------- */
+  var DUNELINE = {
+    id: 'duneline',
+    name: 'DUNELINE',
+    blurb: 'Two long straights across the sand, one change of lane on each.',
+    grade: 'EASY',
+    cols: 48,
+    rows: 26,
+    aiPace: 0.95,
+    aiOffsetScale: 2,
+    aiMistakeScale: 1,
+    weather: 'dust',
+    theme: DESERT,
+    walls: border(48, 26).concat([
+      { x0: 10, y0: 10, x1: 37, y1: 15, kind: 'infield' },
+      { x0: 12, y0: 16, x1: 17, y1: 18, kind: 'jog' },   // the bottom straight
+      { x0: 24, y0: 22, x1: 29, y1: 24, kind: 'jog' },
+      { x0: 30, y0: 1,  x1: 35, y1: 3,  kind: 'jog' },   // the top straight
+      { x0: 17, y0: 7,  x1: 22, y1: 9,  kind: 'jog' }
+    ]),
+    route: [
+      { x: 5.5,  y: 22   },   // 0  the main straight, low lane
+      { x: 21,   y: 22   },   // 1
+      { x: 21,   y: 19   },   // 2  lane change
+      { x: 42.5, y: 19   },   // 3  into the right road
+      { x: 42.5, y: 7    },   // 4  along the top, low lane
+      { x: 26.5, y: 7    },   // 5
+      { x: 26.5, y: 4    },   // 6  lane change
+      { x: 5.5,  y: 4    }    // 7  into the left road, then down to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 35, y0: 16, x1: 36, y1: 25 },   // out of the bottom change
+      { x0: 38, y0: 12, x1: 47, y1: 13 },   // up the right
+      { x0: 11, y0: 1,  x1: 12, y1: 10 },   // out of the top change
+      { x0: 1,  y0: 13, x1: 10, y1: 14 }    // down the left
+    ],
+    finish: { x0: 9.6, y0: 16, x1: 10.4, y1: 25, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 8.0, y: 20.8, wp: 1 },
+      { x: 8.0, y: 23.2, wp: 1 },
+      { x: 6.1, y: 20.8, wp: 1 },
+      { x: 6.1, y: 23.2, wp: 1 }
+    ]
+  };
+
+  /* ---- Desert 2: SALT FLATS --------------------------------------------
+   * Tall and square, and every side of it asks you to move: four changes of
+   * lane, twelve corners a lap.
+   * -------------------------------------------------------------------- */
+  var SALTFLATS = {
+    id: 'saltflats',
+    name: 'SALT FLATS',
+    blurb: 'Four changes of lane, one on every side of the circuit.',
+    grade: 'EASY +',
+    cols: 40,
+    rows: 32,
+    aiPace: 0.95,
+    aiOffsetScale: 2,
+    aiMistakeScale: 1,
+    weather: 'dust',
+    theme: DESERT,
+    walls: border(40, 32).concat([
+      { x0: 10, y0: 10, x1: 29, y1: 21, kind: 'infield' },
+      { x0: 12, y0: 22, x1: 17, y1: 24, kind: 'jog' },   // the bottom
+      { x0: 24, y0: 28, x1: 29, y1: 30, kind: 'jog' },
+      { x0: 30, y0: 17, x1: 32, y1: 21, kind: 'jog' },   // up the right
+      { x0: 36, y0: 6,  x1: 38, y1: 10, kind: 'jog' },
+      { x0: 22, y0: 1,  x1: 27, y1: 3,  kind: 'jog' },   // along the top
+      { x0: 10, y0: 7,  x1: 15, y1: 9,  kind: 'jog' },
+      { x0: 1,  y0: 8,  x1: 3,  y1: 12, kind: 'jog' },   // down the left
+      { x0: 7,  y0: 19, x1: 9,  y1: 23, kind: 'jog' }
+    ]),
+    route: [
+      { x: 4,  y: 28 },   // 0  the main straight, low lane
+      { x: 21, y: 28 },   // 1
+      { x: 21, y: 25 },   // 2  lane change
+      { x: 36, y: 25 },   // 3  into the right road, outside lane
+      { x: 36, y: 14 },   // 4
+      { x: 33, y: 14 },   // 5  lane change
+      { x: 33, y: 7  },   // 6  into the top road, low lane
+      { x: 19, y: 7  },   // 7
+      { x: 19, y: 4  },   // 8  lane change
+      { x: 7,  y: 4  },   // 9  into the left road, inside lane
+      { x: 7,  y: 16 },   // 10
+      { x: 4,  y: 16 }    // 11 lane change, then down the left to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 32, y0: 22, x1: 33, y1: 31 },   // out of the bottom change
+      { x0: 30, y0: 10, x1: 36, y1: 11 },   // out of the right-hand change
+      { x0: 12, y0: 1,  x1: 13, y1: 7  },   // out of the top change
+      { x0: 1,  y0: 19, x1: 7,  y1: 20 }    // down the left
+    ],
+    finish: { x0: 8.6, y0: 22, x1: 9.4, y1: 31, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 7.4, y: 26.8, wp: 1 },
+      { x: 7.4, y: 29.2, wp: 1 },
+      { x: 5.5, y: 26.8, wp: 1 },
+      { x: 5.5, y: 29.2, wp: 1 }
+    ]
+  };
+
+  /* ---- Desert 3: CANYON RUN --------------------------------------------
+   * The big one. A double-S on the main straight - out, back, out again
+   * before the first corner - then one change on each of the other three
+   * sides. Five changes and fourteen corners a lap.
+   * -------------------------------------------------------------------- */
+  var CANYONRUN = {
+    id: 'canyonrun',
+    name: 'CANYON RUN',
+    blurb: 'A double-S down the main straight, then a change on every side.',
+    grade: 'EASY ++',
+    cols: 46,
+    rows: 30,
+    aiPace: 0.95,
+    aiOffsetScale: 2,
+    aiMistakeScale: 1,
+    weather: 'dust',
+    theme: DESERT,
+    walls: border(46, 30).concat([
+      { x0: 10, y0: 10, x1: 35, y1: 19, kind: 'infield' },
+      { x0: 10, y0: 20, x1: 15, y1: 22, kind: 'jog' },   // the double-S
+      { x0: 22, y0: 26, x1: 27, y1: 28, kind: 'jog' },
+      { x0: 34, y0: 20, x1: 39, y1: 22, kind: 'jog' },
+      { x0: 36, y0: 15, x1: 38, y1: 19, kind: 'jog' },   // up the right
+      { x0: 42, y0: 4,  x1: 44, y1: 8,  kind: 'jog' },
+      { x0: 27, y0: 1,  x1: 32, y1: 3,  kind: 'jog' },   // along the top
+      { x0: 15, y0: 7,  x1: 20, y1: 9,  kind: 'jog' },
+      { x0: 1,  y0: 7,  x1: 3,  y1: 11, kind: 'jog' },   // down the left
+      // This one has to finish clear of the start/finish line: a stand beside
+      // it narrows the road exactly where the grid is measured, and a
+      // sixteen-car field lost four places to it.
+      { x0: 7,  y0: 18, x1: 9,  y1: 20, kind: 'jog' }
+    ]),
+    route: [
+      { x: 4,  y: 26 },   // 0  the main straight, low lane
+      { x: 19, y: 26 },   // 1
+      { x: 19, y: 23 },   // 2  out
+      { x: 31, y: 23 },   // 3
+      { x: 31, y: 26 },   // 4  and back
+      { x: 42, y: 26 },   // 5  into the right road, outside lane
+      { x: 42, y: 12 },   // 6
+      { x: 39, y: 12 },   // 7  lane change
+      { x: 39, y: 7  },   // 8  into the top road, low lane
+      { x: 24, y: 7  },   // 9
+      { x: 24, y: 4  },   // 10 lane change
+      { x: 7,  y: 4  },   // 11 into the left road, inside lane
+      { x: 7,  y: 15 },   // 12
+      { x: 4,  y: 15 }    // 13 lane change, then down the left to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 32, y0: 20, x1: 33, y1: 29 },   // out of the double-S
+      { x0: 36, y0: 10, x1: 45, y1: 11 },   // out of the right-hand change
+      { x0: 11, y0: 1,  x1: 12, y1: 10 },   // out of the top change
+      { x0: 1,  y0: 17, x1: 10, y1: 18 }    // down the left
+    ],
+    finish: { x0: 7.6, y0: 20, x1: 8.4, y1: 29, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 6.4, y: 24.8, wp: 1 },
+      { x: 6.4, y: 27.2, wp: 1 },
+      { x: 4.5, y: 24.8, wp: 1 },
+      { x: 4.5, y: 27.2, wp: 1 }
+    ]
+  };
+
   global.TRACKS = [
     // the themed circuits, in the order the play screen offers them
     PINEFALL, HOLLOW, CANOPY,
+    DUNELINE, SALTFLATS, CANYONRUN,
     // and the seven built before the themes, kept raceable under LEGACY
     CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE
   ];

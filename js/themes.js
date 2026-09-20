@@ -29,13 +29,13 @@
     {
       id: 'desert',
       name: 'DESERT',
-      tagline: 'Long straights, hard corners, nowhere to hide a mistake.',
+      tagline: 'Wide open and still forgiving, but it asks more of you.',
       scene: 'desert',
       accent: '#e8a23c',
       tracks: [
-        { id: 'duneline',  name: 'DUNELINE',  grade: 'MODERATE' },
-        { id: 'saltflats', name: 'SALT FLATS', grade: 'MODERATE' },
-        { id: 'canyonrun', name: 'CANYON RUN', grade: 'HARD' }
+        { id: 'duneline',  name: 'DUNELINE',   grade: 'EASY' },
+        { id: 'saltflats', name: 'SALT FLATS', grade: 'EASY +' },
+        { id: 'canyonrun', name: 'CANYON RUN', grade: 'EASY ++' }
       ]
     },
     {
