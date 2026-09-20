@@ -1,8 +1,15 @@
 /* Block Racer - what you have won.
  *
- * One number per track: the best finishing position you have ever managed on
- * it, and only if that was a podium. The track-select screen turns it into a
- * bronze, silver or gold border.
+ * Two records, kept apart from each other on purpose.
+ *
+ * MEDALS are a race result: one number per track, the best finishing position
+ * you have ever managed on it, and only if that was a podium. The
+ * track-select screen turns it into a bronze, silver or gold border.
+ *
+ * LAP RECORDS are a time trial result: your fastest single lap, in seconds.
+ * They share nothing with the medals - not the storage key, not the API, not
+ * the reading code - because they are not the same achievement and a time
+ * trial has no positions to be a podium in.
  *
  * Only improvements are written. Finishing fourth after a win does not take
  * the gold away, and neither does finishing second - a medal is the high-water
@@ -18,9 +25,10 @@
   'use strict';
 
   var KEY = 'blockracer.medals.v1';
+  var LAP_KEY = 'blockracer.laps.v1';
   var PODIUM = 3;
 
-  var Progress = { best: {} };
+  var Progress = { best: {}, laps: {} };
 
   function load() {
     try {
@@ -67,11 +75,73 @@
     return true;
   };
 
+  /* ---- lap records ----------------------------------------------------
+   *
+   * Keyed by track AND game speed, because they are not comparable across
+   * speeds: a lap set at SWEAT is twice as quick as the same driving at
+   * BEGINNER, and a single stored number would mean one run at the top speed
+   * permanently retires the track. A record therefore belongs to the setting
+   * it was set at, and the card shows the one for the speed you are about to
+   * drive at. */
+  function lapKey(trackId, speedLevel) {
+    return trackId + '@' + speedLevel;
+  }
+
+  function loadLaps() {
+    try {
+      var raw = global.localStorage && global.localStorage.getItem(LAP_KEY);
+      if (!raw) return {};
+      var parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return {};
+      var clean = {};
+      Object.keys(parsed).forEach(function (k) {
+        var t = parseFloat(parsed[k]);
+        // A lap is a positive number of seconds. An hour is not a lap time;
+        // it is a corrupt or hand-edited entry.
+        if (t > 0 && t < 3600) clean[k] = t;
+      });
+      return clean;
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveLaps() {
+    try {
+      if (global.localStorage) {
+        global.localStorage.setItem(LAP_KEY, JSON.stringify(Progress.laps));
+      }
+    } catch (e) {
+      /* out of quota, or storage blocked: the session keeps its records anyway */
+    }
+  }
+
+  /* Seconds, or 0 for no record yet. */
+  Progress.lapRecord = function (trackId, speedLevel) {
+    return this.laps[lapKey(trackId, speedLevel)] || 0;
+  };
+
+  /* True when this lap was quicker than anything before it. */
+  Progress.recordLap = function (trackId, speedLevel, seconds) {
+    if (!trackId || !(seconds > 0)) return false;
+    var k = lapKey(trackId, speedLevel);
+    var had = this.laps[k];
+    if (had && had <= seconds) return false;
+    this.laps[k] = seconds;
+    saveLaps();
+    return true;
+  };
+
+  /* Both records go, because RESET DATA on the options screen says it wipes
+   * your data and leaving half of it behind would be a lie. */
   Progress.clear = function () {
     this.best = {};
+    this.laps = {};
     save();
+    saveLaps();
   };
 
   Progress.best = load();
+  Progress.laps = loadLaps();
   global.Progress = Progress;
 })(typeof window !== 'undefined' ? window : globalThis);

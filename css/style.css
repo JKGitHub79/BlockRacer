@@ -332,6 +332,18 @@ code { color: var(--accent); }
 }
 
 .stat { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 9px; }
+
+/* A time trial has no opponents, so POSITION and the running order have
+   nothing true to say and are taken out rather than filled with '1 / 1'. The
+   standing lap record takes the space. The switch is one class on <body>, so
+   the HUD does not have to rebuild its own structure every frame. */
+.trial-only { display: none; }
+/* #standings is styled by id further down, including inside the narrow-screen
+   media queries, so the id has to appear here too or those rules out-specify
+   the hiding and the empty list keeps its row on a phone. */
+body.mode-trial .race-only,
+body.mode-trial #standings { display: none; }
+body.mode-trial .stat.trial-only { display: flex; }
 .stat span { color: var(--dim); font-size: 11px; letter-spacing: 1px; }
 .stat b { font-size: 16px; }
 
@@ -579,6 +591,10 @@ body.in-race #backdrop { display: none; }
 .door-name { font-size: clamp(14px, 2.4vw, 20px); letter-spacing: 4px; }
 .door-sub { font-size: 11px; letter-spacing: 1px; color: var(--dim); }
 
+/* The mode screen offers two, so it gets two columns rather than three with
+   an empty one. */
+.doors-two { grid-template-columns: repeat(2, 1fr); }
+
 /* PLAY is the one you came for, so it is the one that looks like it. */
 .door-main {
   background: rgba(94, 242, 255, 0.10);
@@ -593,6 +609,21 @@ body.in-race #backdrop { display: none; }
 .door-locked .door-mark { color: var(--dim); }
 
 /* ---- track select ---------------------------------------------------- */
+
+/* Which mode you are picking a track FOR. Without it the carousel looks
+   identical either way and the only way to find out which you chose is to
+   start a race and count the cars. */
+.mode-tag {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 3px 12px;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--theme, var(--accent));
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  opacity: 0.85;
+}
 
 .theme-head h2 {
   margin: 0;
@@ -801,6 +832,30 @@ body.in-race #backdrop { display: none; }
   border-radius: 999px;
 }
 .card-medal sup { font-size: 8px; letter-spacing: 0; }
+
+/* ---- lap records -----------------------------------------------------
+   A time trial's card carries a time where a race's card carries a medal.
+   Deliberately a different shape and a different colour from the medal
+   badge: they are separate records, and a record that looked like a medal
+   would read as one. The card border is left alone - a lap record is a
+   number you are trying to beat, not a trophy. */
+.card-record {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  color: var(--accent);
+  background: rgba(6, 10, 18, 0.88);
+  border: 1px solid rgba(94, 242, 255, 0.55);
+  border-radius: 4px;
+}
+
+@media (max-height: 520px) {
+  .card-record { top: 10px; right: 10px; padding: 1px 6px; font-size: 10px; }
+}
 
 /* Legacy rows get the same treatment at row scale: a left edge and the
    place, with the name left alone. */

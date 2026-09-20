@@ -25,11 +25,11 @@
 
   var el = {};
 
-  var SCENE_FOR = { main: 'night', options: 'night' };
+  var SCENE_FOR = { main: 'night', options: 'night', mode: 'night' };
 
   Screens.show = function (name) {
     this.current = name;
-    ['main', 'options', 'play'].forEach(function (s) {
+    ['main', 'options', 'play', 'mode'].forEach(function (s) {
       el[s].classList.toggle('on', s === name);
     });
     document.body.classList.toggle('in-race', name === 'race');
@@ -52,6 +52,14 @@
   }
 
   var MEDALS = ['', 'gold', 'silver', 'bronze'];
+
+  /* m:ss.hh, the same shape the HUD uses, so a record on a card and the clock
+   * in the race read as the same number. */
+  function lapTime(t) {
+    var m = Math.floor(t / 60);
+    var sec = t - m * 60;
+    return m + ':' + (sec < 10 ? '0' : '') + sec.toFixed(2);
+  }
 
   /* Which tracks exist, in the order the play screen offers them. Themed
    * entries with no track behind them yet are skipped, so NEXT TRACK never
@@ -124,18 +132,27 @@
     el.themeTag.textContent = theme.tagline;
     el.themeIndex.textContent = (this.theme + 1) + ' / ' + THEMES.length;
     el.play.style.setProperty('--theme', theme.accent);
+    el.playMode.textContent = global.Game.mode === 'trial' ? 'TIME TRIAL' : 'RACE';
+
+    // A race card carries the medal; a trial card carries the lap record. The
+    // two are never shown together, because they are separate achievements
+    // and a card that showed both would suggest one counts towards the other.
+    var trial = global.Game.mode === 'trial';
 
     el.cards.innerHTML = '';
     theme.tracks.forEach(function (entry) {
       var found = trackData(entry.id);
-      var medal = global.Progress.medal(entry.id);
+      var medal = trial ? 0 : global.Progress.medal(entry.id);
+      var lap = trial ? global.Progress.lapRecord(entry.id, C.speedLevel) : 0;
       var card = document.createElement('button');
       card.className = 'card' + (found ? '' : ' soon') +
-                       (medal ? ' medal medal-' + MEDALS[medal] : '');
+                       (medal ? ' medal medal-' + MEDALS[medal] : '') +
+                       (lap ? ' recorded' : '');
       card.innerHTML =
         '<span class="card-art"></span>' +
         (medal ? '<span class="card-medal">' + medal + '<sup>' +
                  (medal === 1 ? 'st' : medal === 2 ? 'nd' : 'rd') + '</sup></span>' : '') +
+        (lap ? '<span class="card-record">' + lapTime(lap) + '</span>' : '') +
         '<span class="card-name">' + entry.name + '</span>' +
         '<span class="card-grade">' + (found ? entry.grade : 'COMING SOON') + '</span>';
       if (found) {
@@ -174,7 +191,10 @@
       b.className = medal ? 'medal medal-' + MEDALS[medal] : '';
       b.innerHTML = '<b>' + t.name + '</b><span>' + t.grade +
         (medal ? ' &middot; P' + medal : '') + '</span>';
-      b.addEventListener('click', function () { Screens.race(i, 'options'); });
+      b.addEventListener('click', function () {
+        global.Game.setMode('race');
+        Screens.race(i, 'options');
+      });
       el.legacyList.appendChild(b);
     });
   };
@@ -183,15 +203,27 @@
     el.main = document.getElementById('screen-main');
     el.options = document.getElementById('screen-options');
     el.play = document.getElementById('screen-play');
+    el.mode = document.getElementById('screen-mode');
     el.cards = document.getElementById('theme-cards');
     el.themeName = document.getElementById('theme-name');
     el.themeTag = document.getElementById('theme-tagline');
     el.themeIndex = document.getElementById('theme-index');
+    el.playMode = document.getElementById('play-mode');
     el.legacyList = document.getElementById('legacy-list');
 
     this.buildLegacy();
 
+    // PLAY asks how you want to drive before it asks what you want to drive
+    // on, because the answer changes what the track cards have to say.
     document.getElementById('btn-play').addEventListener('click', function () {
+      Screens.show('mode');
+    });
+    document.getElementById('btn-mode-race').addEventListener('click', function () {
+      global.Game.setMode('race');
+      Screens.show('play');
+    });
+    document.getElementById('btn-mode-trial').addEventListener('click', function () {
+      global.Game.setMode('trial');
       Screens.show('play');
     });
     document.getElementById('btn-options').addEventListener('click', function () {
@@ -229,7 +261,7 @@
       }
       clearTimeout(armed);
       global.Progress.clear();
-      Screens.buildLegacy();
+      Screens.buildLegacy();       // and the cards, next time they are painted
       reset.textContent = 'DATA RESET';
       reset.classList.remove('danger');
       armed = 0;

@@ -14,19 +14,26 @@ what you pushed.
 
 ## Screens
 
-Four of them, and the race is only one.
+Five of them, and the race is only one.
 
 **Front door.** Three doors across: OPTIONS, PLAY, SHOP. The shop is not built,
 so it is shown as what it is - dimmed and marked - rather than as a live button
 that opens nothing.
 
+**Mode.** PLAY asks how you want to drive before it asks what you want to drive
+on: RACE or TIME TRIAL. It comes first because the answer changes what the
+track cards have to say - a medal in a race, a lap record in a trial.
+
 **Play.** One theme at a time, three tracks across, arrows either side and the
 left/right keys doing the same. The theme's landscape is behind it. Themes come
 from `js/themes.js` and the screen is built entirely from that list, so a fourth
-theme is a data entry and no screen code changes.
+theme is a data entry and no screen code changes. A pill above the theme name
+says which mode you are picking for, because the carousel is otherwise
+identical either way and the only way to find out would be to start a race and
+count the cars.
 
-**Options.** Everything that configures a race - slide, field size, game speed,
-race length, road colour - plus the legacy tracks.
+**Options.** Everything that configures a race - slide, field size, AI level,
+game speed, race length, road colour - plus the legacy tracks.
 
 **Race.** A HOME button sits at the top left. It pauses and offers HOME or
 CONTINUE, and `ESC` does the same. Leaving a race used to be one keystroke with
@@ -227,7 +234,89 @@ Where a race was started from is a hint rather than an answer - a URL can start
 a themed track without the carousel being involved - so if the current track is
 not in the list that hint points at, the other list is used.
 
-## Medals
+## Race and time trial
+
+**RACE** is the game as it was: a field of cars, a finishing position, medals.
+
+**TIME TRIAL** takes the field away. One car, yours, on an empty track. There
+are no opponents, so there is no position and no running order - those two HUD
+rows are removed rather than filled with a meaningless `1 / 1` - and there is
+no podium, so no medal is written. What replaces them is the clock: LAST LAP,
+BEST LAP, and RECORD, the fastest lap you have ever driven there.
+
+The result panel lists your laps instead of a finishing order, marks the
+quickest one, and says whether it was a record.
+
+A record is banked the moment it is set rather than at the end of the run, so
+quitting a trial half way through does not throw away the fastest lap you have
+ever driven on the track.
+
+`Game.mode` is `'race'` or `'trial'` and is the only thing that branches:
+`reset` builds one car instead of a field, `drawHud` swaps two rows,
+`showResults` hands off to `showTrialResults`. Nothing in the physics, the
+track code or the renderer knows which mode it is in.
+
+## The starting grid
+
+**You start at the back.** `T.gridFor` hands its slots back front-to-back, so
+the field is the opponents in their usual order with YOU appended - last index,
+last slot, last row - whether that is a field of two or of sixteen, and on
+every track, because nothing in `fieldFor` knows what shape the grid it is
+being poured into has.
+
+Starting third of four was a hangover from the field being a fixed list with
+YOU sitting in the middle of it. Racing from the back means the race has
+somewhere to go.
+
+On the grid the running order is taken from the grid itself rather than from
+`progressAlong`. That projects a car onto the racing line; on most tracks the
+back rows sit where the line is arcing through a corner, and the projection of
+a row of cars sitting perfectly level then differs by up to a couple of cells
+from lane to lane. Taken literally it showed you seventh of eight while you sat
+on the last slot of the grid. Nothing has moved during the countdown, so there
+is nothing to measure.
+
+## AI level
+
+A slider on the options screen, 1 to 10, remembered between sessions under its
+own `localStorage` key. **It changes how well the opponents drive, not how fast
+they can go.**
+
+Level 5 is exactly the hand-tuned field: every multiplier is 1, so a default
+race is the race it has always been and every crash count in the table above
+still means what it says. Level 1 turns too late for roughly a corner in three.
+Level 10 hardly ever does.
+
+`CONFIG.aiLevels` is the table and `CONFIG.aiSpec` applies it, scaling a
+profile rather than replacing it so the shape of the field - who runs wide, who
+is slowest - survives every level. It multiplies three things:
+
+| | mistake rate | recovery time | pace |
+| --- | --- | --- | --- |
+| 1 | x2.80 | x2.20 | x0.880 |
+| 5 | x1.00 | x1.00 | x1.000 |
+| 10 | x0.10 | x0.45 | x1.020 |
+
+Pace moves with the level, but `aiSpec` clamps `speedMul` to 1 and every
+track's `aiPace` is at or below 1, so **an opponent never has a higher top
+speed than yours at any level.** Measured over 40 races on Pinefall, the median
+AI lap goes 12.41s at level 1, 10.24s at level 5, 9.78s at level 10 - but the
+*slowest* lap falls much further, 16.59s to 13.54s to 11.63s. That is the right
+shape: a high level does not out-run you, it stops throwing laps away. A
+flawless player still beats level 10, which is what "extremely well" should
+mean in a game with one speed and no brakes.
+
+The level is a preference rather than a result, so RESET DATA leaves it alone.
+Time trials ignore it entirely - there is nobody to set a level for.
+
+## Medals and lap records
+
+Two records, kept apart on purpose: different storage keys, different API,
+different code paths, and never shown on the same card. A medal is a race
+result and a lap record is a time-trial result; neither counts towards the
+other.
+
+### Medals
 
 Finish a track on the podium and the track-select card keeps a border for good:
 bronze for a third, silver for a second, gold for a win. Only an improvement is
@@ -241,10 +330,10 @@ obvious thing to do and the first thing to become unreadable - a gold name on a
 gold-lit card is the worst of the three, and silver on a light card is not much
 better.
 
-**RESET DATA** on the options screen wipes them. It takes two presses, because
-it cannot be undone, and the armed state times out after five seconds rather
-than sticking - a stray press left on screen should not be finishable by an
-accidental second one later.
+**RESET DATA** on the options screen wipes both the medals and the lap records.
+It takes two presses, because it cannot be undone, and the armed state times
+out after five seconds rather than sticking - a stray press left on screen
+should not be finishable by an accidental second one later.
 
 Stored in `localStorage` under one key, which is allowed to be missing, full,
 or to throw on read in a private window or with site data blocked. Every access
@@ -258,7 +347,27 @@ at. With the field set to two cars you are first or second by definition, so
 silver is free - left as it is deliberately, because the options screen is a
 set of testing controls rather than a difficulty dial.
 
-### The landscapes
+### Lap records
+
+A time trial's card carries your fastest lap where a race's card carries a
+medal, as a time in a square chip rather than a round badge: a record is a
+number to beat, not a trophy, and one that looked like a medal would read as
+one. The card border is left alone.
+
+**Records are keyed by track AND game speed**, because they are not comparable
+across speeds. A lap at SWEAT is twice as quick as the same driving at
+BEGINNER, and a single stored number would mean one run at the top speed
+permanently retires the track. A record belongs to the setting it was set at,
+and the card shows the one for the speed you are about to drive at. Slide is
+deliberately *not* part of the key - it is a live prototyping control that `[`
+and `]` change mid-lap, and a key that moved under you every time you pressed a
+bracket would be worse than no key at all.
+
+Stored under `blockracer.laps.v1`, wrapped exactly as the medals are, and
+filtered on read to positive times under an hour - an hour is not a lap, it is
+a corrupt or hand-edited entry.
+
+## The landscapes
 
 Painted in code - `js/backdrop.js` - from rectangles, triangles and gradients,
 in the same flat idiom as the track itself, so the menus and the game look like
@@ -569,12 +678,13 @@ would otherwise put the drift on screen for about three frames.
 Five laps on Crossover at Easy by default. All three are set the same way:
 
 1. the options screen,
-2. URL parameters - `index.html?track=2&laps=7&speed=3&slide=0.4&road=3&cars=8`
-   (tracks and speeds are 1-based, laps 1-20, road 0-5, cars 2-16). Naming a
+2. URL parameters - `index.html?track=2&laps=7&speed=3&slide=0.4&road=3&cars=8&ai=9`
+   (tracks and speeds are 1-based, laps 1-20, road 0-5, cars 2-16, ai 1-10).
+   Naming a
    track **starts that race straight away**: before the menus were screens the
    parameter only preselected it, because the one menu was a click from
    starting, and now it would be three clicks through a legacy list,
-3. `track`, `laps`, `speedLevel`, `slide`, `roadTint` and `cars` in
+3. `track`, `laps`, `speedLevel`, `slide`, `roadTint`, `cars` and `aiLevel` in
    `js/config.js`.
 
 Game speed scales every car, player and AI alike:
@@ -722,6 +832,7 @@ node tools/validate-track.js     # geometry: can a car actually drive the line?
 node tools/simulate.js 5 40      # 40 full races of real physics and real AI
 node tools/simulate.js 5 40 1    # ...on track 1 only
 node tools/simulate.js 5 40 "" 3 0.4   # ...at Hard, slide 0.4
+node tools/simulate.js 5 40 "" "" "" "" 10   # ...against level 10 opponents
 ```
 
 `validate-track.js` sweeps a car along each track's racing line at every lateral

@@ -43,6 +43,7 @@
     this.lapTime = 0;
     this.bestLap = 0;
     this.lastLap = 0;
+    this.lapTimes = [];       // every completed lap, in order
 
     this.leg = 0;
     this.arc = 0;

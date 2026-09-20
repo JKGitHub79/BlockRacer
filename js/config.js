@@ -140,6 +140,42 @@
       { speedMul: 0.930, mistake: 0.12, reaction: 0.34, offset: -0.30 }
     ],
 
+    /* ---- AI level -----------------------------------------------------
+     * How WELL the opponents drive - 1 to 10, set on the options screen and
+     * remembered between sessions.
+     *
+     * It scales the two things that actually make an AI car beatable: how
+     * often it turns too late for a corner, and how long it flounders before
+     * it has sorted itself out again. Nothing else about them changes.
+     *
+     * Level 5 is exactly the hand-tuned field above - every multiplier is 1 -
+     * so a default race is the race it has always been, and every crash count
+     * in the README still means what it says.
+     *
+     * Pace moves with the level too, but `aiSpec` clamps speedMul to 1, so a
+     * higher level never gives an opponent a higher top speed than yours.
+     * Level 10 is a car that almost never makes a mistake and recovers fast
+     * when it does, not a car with a faster engine - there are no engines
+     * here, and a field that simply out-ran you would not be a harder race,
+     * it would be an unwinnable one. */
+    aiLevel: 5,
+    minAiLevel: 1,
+    maxAiLevel: 10,
+    /* Index 0 is level 1. Read by CONFIG.aiSpec, which multiplies a profile
+     * by this row. Monotone in all three columns, and exactly 1/1/1 at 5. */
+    aiLevels: [
+      { name: 'SUNDAY',    mistake: 2.80, reaction: 2.20, pace: 0.880 },
+      { name: 'CLUB',      mistake: 2.30, reaction: 1.90, pace: 0.910 },
+      { name: 'STEADY',    mistake: 1.80, reaction: 1.60, pace: 0.940 },
+      { name: 'KEEN',      mistake: 1.40, reaction: 1.30, pace: 0.970 },
+      { name: 'NORMAL',    mistake: 1.00, reaction: 1.00, pace: 1.000 },
+      { name: 'SHARP',     mistake: 0.75, reaction: 0.88, pace: 1.005 },
+      { name: 'QUICK',     mistake: 0.55, reaction: 0.76, pace: 1.010 },
+      { name: 'HARD',      mistake: 0.38, reaction: 0.64, pace: 1.014 },
+      { name: 'RUTHLESS',  mistake: 0.22, reaction: 0.54, pace: 1.017 },
+      { name: 'FLAWLESS',  mistake: 0.10, reaction: 0.45, pace: 1.020 }
+    ],
+
     /* ---- Simulation ------------------------------------------------- */
     dt: 1 / 120,          // fixed physics step
     maxFrame: 0.25,       // clamp huge frame gaps (tab was backgrounded)
@@ -204,18 +240,62 @@
    * copies of three, and pace is dealt out in a different order so the slowest
    * car is not always the one on the outside. */
   CONFIG.aiSpec = function (i, total) {
-    if (i < CONFIG.ai.length) return CONFIG.ai[i];
-    var extras = total - CONFIG.ai.length;
-    var k = i - CONFIG.ai.length;
-    var fan = extras > 1 ? k / (extras - 1) : 0.5;
-    var pace = extras > 1 ? ((k * 7) % extras) / (extras - 1) : 0.5;
+    var base;
+    if (i < CONFIG.ai.length) {
+      base = CONFIG.ai[i];
+    } else {
+      var extras = total - CONFIG.ai.length;
+      var k = i - CONFIG.ai.length;
+      var fan = extras > 1 ? k / (extras - 1) : 0.5;
+      var pace = extras > 1 ? ((k * 7) % extras) / (extras - 1) : 0.5;
+      base = {
+        speedMul: 0.985 - 0.085 * pace,
+        mistake: 0.05 + 0.09 * pace,
+        reaction: 0.18 + 0.18 * pace,
+        offset: -0.3 + 0.6 * fan
+      };
+    }
+    // The level scales the profile rather than replacing it, so the shape of
+    // the field - who runs wide, who is slowest - survives every level.
+    var L = CONFIG.aiLevelSpec();
     return {
-      speedMul: 0.985 - 0.085 * pace,
-      mistake: 0.05 + 0.09 * pace,
-      reaction: 0.18 + 0.18 * pace,
-      offset: -0.3 + 0.6 * fan
+      // Never above the player's own speed, whatever the level asks for.
+      speedMul: Math.min(1, base.speedMul * L.pace),
+      mistake: base.mistake * L.mistake,
+      reaction: base.reaction * L.reaction,
+      offset: base.offset
     };
   };
+
+  CONFIG.clampAiLevel = function (n) {
+    if (!(n >= CONFIG.minAiLevel)) return 5;
+    return Math.max(CONFIG.minAiLevel, Math.min(CONFIG.maxAiLevel, Math.round(n)));
+  };
+  CONFIG.aiLevelSpec = function () {
+    return CONFIG.aiLevels[CONFIG.clampAiLevel(CONFIG.aiLevel) - 1];
+  };
+  CONFIG.aiLevelName = function () {
+    return CONFIG.aiLevelSpec().name;
+  };
+
+  /* The level is a preference rather than a result, so it lives under its own
+   * key and RESET DATA - which wipes what you have WON - leaves it alone.
+   * Storage is allowed to be missing or to throw; a failure means the level
+   * does not survive the session, never that the game stops. */
+  var AI_KEY = 'blockracer.ailevel.v1';
+  CONFIG.saveAiLevel = function () {
+    try {
+      if (global.localStorage) {
+        global.localStorage.setItem(AI_KEY, String(CONFIG.aiLevel));
+      }
+    } catch (e) { /* storage blocked or full */ }
+  };
+  try {
+    var savedAi = global.localStorage && global.localStorage.getItem(AI_KEY);
+    if (savedAi) CONFIG.aiLevel = CONFIG.clampAiLevel(parseInt(savedAi, 10));
+  } catch (e) { /* unreadable storage: keep the default */ }
+  var aiParam = /[?&]ai=(\d+)/.exec(search);
+  if (aiParam) CONFIG.aiLevel = CONFIG.clampAiLevel(parseInt(aiParam[1], 10));
 
   CONFIG.roadColors = function () {
     return CONFIG.roadTints[CONFIG.roadTint].colors || null;

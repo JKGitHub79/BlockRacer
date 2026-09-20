@@ -10,11 +10,9 @@
   var Sound = global.Sound;
   var Renderer = global.Renderer;
 
-  /* The first four are the field as it has always been, in the order it has
-   * always been, so a default race is unchanged. The rest are only drawn on
-   * when the start menu asks for a bigger one. Every colour has to read on
-   * black tarmac and on white, which rules out anything too dark or too pale
-   * at either end. */
+  /* The opponents, in the order they are drawn on, and you. Every colour has
+   * to read on black tarmac and on white, which rules out anything too dark
+   * or too pale at either end. */
   var FIELD = [
     { name: 'VECTOR', color: '#ff5470' },
     { name: 'PIXEL',  color: '#ffd166' },
@@ -34,18 +32,33 @@
     { name: 'NEUTRON', color: '#34d399' }
   ];
 
-  /* The player keeps third on the grid, as in the default four, unless the
-   * field is smaller than that. */
+  /* You start at the back. T.gridFor hands its slots back front-to-back, so
+   * the field is the opponents in their usual order with YOU appended: last
+   * index, last slot, last row - whether that is a field of two or of
+   * sixteen, and on every track, because nothing here knows or cares what
+   * shape the grid it is being poured into has.
+   *
+   * Starting third of four was a hangover from the field being a fixed list
+   * with YOU sitting in the middle of it. Racing from the back means the
+   * race has somewhere to go. */
+  var PLAYER_CAR = FIELD.filter(function (c) { return c.player; })[0];
+  var OPPONENTS = FIELD.filter(function (c) { return !c.player; });
+
   function fieldFor(n) {
-    var spec = FIELD.slice(0, n).map(function (car) {
-      return { name: car.name, color: car.color, player: false };
-    });
-    spec[Math.min(2, n - 1)].player = true;
+    var spec = [];
+    for (var i = 0; i < n - 1 && i < OPPONENTS.length; i++) {
+      spec.push({ name: OPPONENTS[i].name, color: OPPONENTS[i].color, player: false });
+    }
+    spec.push({ name: PLAYER_CAR.name, color: PLAYER_CAR.color, player: true });
     return spec;
   }
 
   var Game = {
     state: 'menu',
+    /* 'race' or 'trial'. Picked between PLAY and the track carousel. A trial
+     * is the same car on the same track with the field taken away: no
+     * opponents, so no positions, so no medals - only the clock. */
+    mode: 'race',
     cars: [],
     drivers: [],
     player: null,
@@ -75,10 +88,14 @@
     this.countdown = C.countdown;
 
     // The track grids as many as its road holds, which on a tight circuit is
-    // fewer than the menu asked for; the field is cut to whatever fit.
-    var grid = T.gridFor(C.cars);
-    var field = fieldFor(grid.length);
-    this.gridSize = grid.length;
+    // fewer than the menu asked for; the field is cut to whatever fit. A
+    // trial ignores the number entirely and takes the front slot.
+    var trial = this.mode === 'trial';
+    this.lapRecord = trial ? global.Progress.lapRecord(T.data.id, C.speedLevel) : 0;
+    this.newRecord = false;
+    var grid = T.gridFor(trial ? 1 : C.cars);
+    var field = fieldFor(trial ? 1 : grid.length);
+    this.gridSize = field.length;
 
     var aiIndex = 0;
     for (var i = 0; i < field.length; i++) {
@@ -144,6 +161,17 @@
       car.lap++;
       car.lastLap = car.lapTime;
       if (!car.bestLap || car.lapTime < car.bestLap) car.bestLap = car.lapTime;
+      // Kept for the time-trial result, which lists the laps rather than the
+      // finishing order there is none of.
+      car.lapTimes.push(car.lapTime);
+      // A trial banks a record the moment it is set, rather than at the end:
+      // quitting a trial half way through should not throw away the fastest
+      // lap you have ever driven on the track.
+      if (game.mode === 'trial' && car.isPlayer &&
+          global.Progress.recordLap(T.data.id, C.speedLevel, car.lastLap)) {
+        game.lapRecord = car.lastLap;
+        game.newRecord = true;
+      }
       car.lapTime = 0;
       if (car.lap >= game.laps) {
         car.finished = true;
@@ -166,7 +194,16 @@
         ? laps + 1000 - car.finishTime / 100000
         : car.lap + T.lapFraction(p.arc);
     });
-    var order = this.cars.slice().sort(function (a, b) { return b.progress - a.progress; });
+    /* On the grid the running order IS the grid order. It cannot be read off
+     * progressAlong there: that projects a car onto the racing line, the line
+     * is arcing through a corner where the back rows sit on most tracks, and
+     * the projection of a row of cars sitting perfectly level then differs by
+     * up to a couple of cells from lane to lane. Taken literally it puts you
+     * seventh of eight while you are sitting on the last slot of the grid.
+     * Nothing has moved yet, so there is nothing to measure. */
+    var order = this.state === 'countdown'
+      ? this.cars.slice()            // pushed in grid order, front to back
+      : this.cars.slice().sort(function (a, b) { return b.progress - a.progress; });
     order.forEach(function (car, i) { car.place = i + 1; });
     this.order = order;
   };
@@ -263,6 +300,13 @@
     el.carsRange = document.getElementById('cars-range');
     el.carsRange.min = C.minCars;
     el.carsRange.max = C.maxCars;
+    el.aiRange = document.getElementById('ai-range');
+    el.aiRange.min = C.minAiLevel;
+    el.aiRange.max = C.maxAiLevel;
+    el.record = document.getElementById('hud-record');
+    el.resultsHead = document.getElementById('results-head');
+    el.btnAgain = document.getElementById('btn-again');
+    el.timeLabel = document.getElementById('hud-time-label');
   };
 
   Game.drawHud = function () {
@@ -271,10 +315,31 @@
     el.speed.textContent = C.speedName();
     el.slide.textContent = C.slide.toFixed(2);
     el.lap.textContent = Math.min(p.lap + 1, this.laps) + ' / ' + this.laps;
-    el.pos.textContent = p.place + ' / ' + this.cars.length;
     el.time.textContent = fmt(this.time);
     el.best.textContent = p.bestLap ? fmt(p.bestLap) : '--:--.--';
     el.last.textContent = p.lastLap ? fmt(p.lastLap) : '--:--.--';
+
+    if (this.state === 'racing' && p.crashed) {
+      // The long form does not fit across a phone-sized board, and on a phone
+      // you are tapping rather than pressing anything anyway.
+      el.msg.textContent = el.board.clientWidth < 430
+        ? 'CRASHED - TAP LEFT OR RIGHT'
+        : 'CRASHED - press LEFT or RIGHT to turn and go';
+      el.msg.classList.add('show');
+    } else {
+      el.msg.classList.remove('show');
+    }
+
+    // A trial has no opponents, so it has no position and no running order.
+    // Those two rows are hidden by the body class rather than filled with a
+    // meaningless '1 / 1'; the standing record takes their place.
+    if (this.mode === 'trial') {
+      el.record.textContent = this.lapRecord ? fmt(this.lapRecord) : '--:--.--';
+      el.standings.innerHTML = '';
+      return;
+    }
+
+    el.pos.textContent = p.place + ' / ' + this.cars.length;
 
     var rows = '';
     this.order.forEach(function (car, i) {
@@ -290,19 +355,14 @@
     // which is no use mid-race; the rows close up instead.
     el.standings.classList.toggle('dense', this.cars.length > 8);
 
-    if (this.state === 'racing' && p.crashed) {
-      // The long form does not fit across a phone-sized board, and on a phone
-      // you are tapping rather than pressing anything anyway.
-      el.msg.textContent = el.board.clientWidth < 430
-        ? 'CRASHED - TAP LEFT OR RIGHT'
-        : 'CRASHED - press LEFT or RIGHT to turn and go';
-      el.msg.classList.add('show');
-    } else {
-      el.msg.classList.remove('show');
-    }
   };
 
   Game.showResults = function () {
+    if (this.mode === 'trial') return this.showTrialResults();
+
+    el.resultsHead.innerHTML =
+      '<tr><th>#</th><th>Driver</th><th>Time</th><th>Best lap</th></tr>';
+
     var finished = this.results.slice();
     var rest = this.order.filter(function (c) { return !c.finished; });
     var all = finished.concat(rest);
@@ -331,10 +391,78 @@
     });
     el.resultsBody.innerHTML = rows;
     el.resultsBody.parentNode.classList.toggle('dense', all.length > 8);
+    this.showNextButton();
+    el.results.classList.add('show');
+  };
+
+  /* A trial has no finishing order to show, so the table lists the laps
+   * instead - which is the thing you actually drove for. No medal is written
+   * and Progress.record is never called: a medal is a race result, and one
+   * car finishing first out of one is not one. */
+  Game.showTrialResults = function () {
+    var p = this.player;
+    var record = this.lapRecord;
+
+    el.resultsTitle.textContent = this.newRecord ? 'NEW RECORD' : 'TIME TRIAL';
+    el.resultsTitle.className = this.newRecord ? 'podium p1' : '';
+    el.resultsNote.textContent = p.bestLap
+      ? (this.newRecord
+          ? fmt(p.bestLap) + ' \u2013 the fastest lap yet on ' + T.name
+          : 'BEST THIS RUN ' + fmt(p.bestLap) +
+            (record ? '  \u00b7  RECORD ' + fmt(record) : ''))
+      : 'No lap completed';
+
+    el.resultsHead.innerHTML = '<tr><th>Lap</th><th>Time</th><th></th></tr>';
+
+    // Only the FIRST lap at the best time is marked, or two identical laps
+    // both claim it and the row stops meaning "this is the one".
+    var bestAt = p.lapTimes.indexOf(p.bestLap);
+    var rows = '';
+    p.lapTimes.forEach(function (t, i) {
+      var isBest = i === bestAt;
+      rows += '<tr' + (isBest ? ' class="me"' : '') + '>' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td>' + fmt(t) + '</td>' +
+        '<td>' + (isBest ? 'BEST' : '') + '</td>' +
+        '</tr>';
+    });
+    if (!rows) rows = '<tr><td colspan="3">\u2013</td></tr>';
+    el.resultsBody.innerHTML = rows;
+    el.resultsBody.parentNode.classList.toggle('dense', p.lapTimes.length > 8);
+
+    this.showNextButton();
+    el.results.classList.add('show');
+  };
+
+  Game.showNextButton = function () {
     var next = global.Screens.nextTrack();
     el.btnNext.style.display = next === null ? 'none' : '';
     if (next !== null) el.btnNext.textContent = global.TRACKS[next].name + ' \u2192';
-    el.results.classList.add('show');
+  };
+
+  /* Race or time trial. Chosen between PLAY and the track carousel, and read
+   * by reset, the HUD and the results; nothing else in here branches on it.
+   * The body class is what hides the position row and the running order, so
+   * the HUD does not have to rebuild itself every frame to stay honest. */
+  Game.setMode = function (mode) {
+    this.mode = mode === 'trial' ? 'trial' : 'race';
+    document.body.classList.toggle('mode-trial', this.mode === 'trial');
+    el.btnAgain.textContent = this.mode === 'trial' ? 'TRY AGAIN' : 'RACE AGAIN';
+    el.timeLabel.textContent = this.mode === 'trial' ? 'TOTAL TIME' : 'RACE TIME';
+    this.reset();
+    this.state = 'menu';
+  };
+
+  /* How well the opponents drive. Takes effect on the next race, because a
+   * driver's profile is fixed when the field is built - which reset does. */
+  Game.setAiLevel = function (n) {
+    C.aiLevel = C.clampAiLevel(n);
+    C.saveAiLevel();
+    document.getElementById('menu-ai').textContent = C.aiLevel;
+    document.getElementById('menu-ai-name').textContent = C.aiLevelName();
+    if (parseInt(el.aiRange.value, 10) !== C.aiLevel) el.aiRange.value = C.aiLevel;
+    this.reset();
+    this.state = 'menu';
   };
 
   Game.setTrack = function (index) {
@@ -473,6 +601,8 @@
     this.setSlide(C.slide);
     this.setSpeed(C.speedLevel);
     this.setRoad(C.roadTint);
+    this.setAiLevel(C.aiLevel);
+    this.setMode('race');
     this.setTrack(C.track);   // also sets the field, which depends on the track
     if (C.deepLink) {
       global.Screens.from = global.Screens.homeFor(C.track);
@@ -496,6 +626,10 @@
     el.carsRange.addEventListener('input', function (e) {
       e.stopPropagation();
       Game.setCars(parseInt(el.carsRange.value, 10));
+    });
+    el.aiRange.addEventListener('input', function (e) {
+      e.stopPropagation();
+      Game.setAiLevel(parseInt(el.aiRange.value, 10));
     });
     Array.prototype.forEach.call(el.speedButtons.children, function (b) {
       b.addEventListener('click', function (e) {

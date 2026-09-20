@@ -11,7 +11,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.22.0', built: '2026-09-20' };
+window.BR = { version: '0.23.0', built: '2026-09-20' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -60,7 +60,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           <p id="results-note" class="results-note"></p>
           <div class="results-scroll">
             <table class="results">
-              <thead><tr><th>#</th><th>Driver</th><th>Time</th><th>Best lap</th></tr></thead>
+              <thead id="results-head"><tr><th>#</th><th>Driver</th><th>Time</th><th>Best lap</th></tr></thead>
               <tbody id="results-body"></tbody>
             </table>
           </div>
@@ -80,12 +80,13 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       <div class="stat"><span>SPEED</span><b id="hud-speed">BEGINNER</b></div>
       <div class="stat"><span>SLIDE</span><b id="hud-slide">0.80</b></div>
       <div class="stat"><span>LAP</span><b id="hud-lap">1 / 5</b></div>
-      <div class="stat"><span>POSITION</span><b id="hud-pos">1 / 4</b></div>
-      <div class="stat"><span>RACE TIME</span><b id="hud-time">0:00.00</b></div>
+      <div class="stat race-only"><span>POSITION</span><b id="hud-pos">1 / 4</b></div>
+      <div class="stat"><span id="hud-time-label">RACE TIME</span><b id="hud-time">0:00.00</b></div>
       <div class="stat"><span>LAST LAP</span><b id="hud-last">--:--.--</b></div>
       <div class="stat"><span>BEST LAP</span><b id="hud-best">--:--.--</b></div>
-      <h3>ORDER</h3>
-      <ol id="standings"></ol>
+      <div class="stat trial-only"><span>RECORD</span><b id="hud-record">--:--.--</b></div>
+      <h3 class="race-only">ORDER</h3>
+      <ol id="standings" class="race-only"></ol>
     </aside>
   </div>
 </div>
@@ -118,11 +119,36 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
   </div>
 </section>
 
-<!-- =========================== track select =========================== -->
-<section id="screen-play" class="screen play">
+<!-- ======================= race or time trial ========================= -->
+<section id="screen-mode" class="screen mode">
   <button class="back" data-back="main">&larr; BACK</button>
   <div class="screen-inner">
+    <h2 class="screen-title">HOW DO YOU WANT TO DRIVE?</h2>
+
+    <nav class="doors doors-two">
+      <button id="btn-mode-race" class="door door-main">
+        <span class="door-mark">&#9873;</span>
+        <span class="door-name">RACE</span>
+        <span class="door-sub">A field of cars, a finishing position, medals</span>
+      </button>
+      <button id="btn-mode-trial" class="door">
+        <span class="door-mark">&#9201;</span>
+        <span class="door-name">TIME TRIAL</span>
+        <span class="door-sub">Empty track, one clock, your lap record</span>
+      </button>
+    </nav>
+
+    <p class="screen-foot">Medals and lap records are kept separately &middot;
+      one is not the other</p>
+  </div>
+</section>
+
+<!-- =========================== track select =========================== -->
+<section id="screen-play" class="screen play">
+  <button class="back" data-back="mode">&larr; BACK</button>
+  <div class="screen-inner">
     <header class="theme-head">
+      <p class="mode-tag" id="play-mode">RACE</p>
       <h2 id="theme-name">FOREST</h2>
       <p id="theme-tagline">&nbsp;</p>
     </header>
@@ -163,6 +189,16 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       </div>
 
       <div class="opt">
+        <p class="lapline">AI LEVEL &middot; <b id="menu-ai">5</b>
+          <span class="sub" id="menu-ai-name">NORMAL</span></p>
+        <input id="ai-range" class="slider" type="range" min="1" max="10" step="1" value="5">
+        <p class="hint">How well the opponents drive, not how fast: 1 makes
+          mistakes constantly, 5 is the normal field, 10 barely puts a wheel
+          wrong. No level ever gives them a higher top speed than yours.
+          Ignored in a time trial.</p>
+      </div>
+
+      <div class="opt">
         <p class="lapline">GAME SPEED &middot; <b id="menu-speed">BEGINNER</b></p>
         <div id="speed-buttons" class="laps speeds">
           <button data-speed="0">BEGINNER</button>
@@ -198,8 +234,9 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 
       <div class="opt">
         <p class="lapline">YOUR DATA</p>
-        <p class="hint">The medals on the track cards, and nothing else. Resetting
-          them cannot be undone.</p>
+        <p class="hint">Race medals and time-trial lap records. Both go, and
+          resetting them cannot be undone. Your settings, this one included,
+          are left alone.</p>
         <button id="btn-reset" class="secondary wide-btn">RESET DATA</button>
       </div>
 
@@ -213,7 +250,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
     </div>
 
     <p class="screen-foot">Settings apply to every race &middot;
-      <code>?track=2&amp;laps=7&amp;cars=8</code> races that track straight away</p>
+      <code>?track=2&amp;laps=7&amp;cars=8&amp;ai=9</code> races that track straight away</p>
   </div>
 </section>
 

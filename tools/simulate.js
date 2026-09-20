@@ -24,6 +24,9 @@ if (process.argv[5]) CONFIG.speedLevel = parseInt(process.argv[5], 10) - 1;
 if (process.argv[6]) CONFIG.slide = parseFloat(process.argv[6]);
 // sixth sets the field size; every car is an AI here, player included
 if (process.argv[7]) CONFIG.cars = parseInt(process.argv[7], 10);
+// seventh sets the AI level (1-10). 5 is the tuned default every number in
+// the README was measured at.
+if (process.argv[8]) CONFIG.aiLevel = CONFIG.clampAiLevel(parseInt(process.argv[8], 10));
 
 function race(seed) {
   // deterministic per-race randomness, so a bad race can be reproduced
