@@ -454,6 +454,69 @@ Three things learned the hard way getting them to read:
   before. Triangles read as alpine whatever colour they are, and the point of
   the theme is quarried stone.
 
+The solids on a cliffs track get the same treatment in `js/render.js`. A theme
+with `rock: true` in its palette has every wall cell painted with a whole-cell
+tone, sometimes a bed line where one course of stone meets the next, and two
+chips - all rectangles on the cell grid, in the same blocky idiom as the rest
+of the game. Overhang's massif is twenty-two cells by twenty-one, and at that
+size a flat fill stops reading as rock and starts reading as a hole cut in the
+picture.
+
+The values come from each cell's own coordinates rather than from a random
+stream, so a cell is the same stone every time the track is baked. Moving the
+slide slider rebakes the scenery, and a texture seeded from `Math.random`
+would crawl every time you pressed a bracket.
+
+## On a phone
+
+**No zoom, anywhere.** A racing game's controls are taps, and two quick taps -
+which is exactly what taking a corner looks like - were being read as
+double-tap-to-zoom, leaving the board blown up and off centre with no way back
+on a device with no keyboard. Three things turn it off, because no one of them
+covers every browser:
+
+- `touch-action: pan-y` on `<body>`, which refuses every scaling gesture while
+  still allowing a vertical drag. Not `none`: that refuses the zoom too, but it
+  also meant the options screen, which is taller than a phone, could not be
+  scrolled at all. The board itself takes `none`, because there nothing is a
+  scroll and everything is a turn.
+- `user-scalable=no, maximum-scale=1` in the viewport meta, for Android.
+- `gesturestart`/`gesturechange`/`gestureend` handlers in `js/input.js`, for
+  iOS Safari, which fires its own pinch events on top of the touch model and
+  has ignored both of the above since iOS 10.
+
+**Landscape is a question about height, not width.** The responsive rules used
+to key off width alone, and a phone in landscape is 844x390, or 852x393, or
+926x428 - *wider* than the 820px cutoff. They were getting the desktop layout:
+a 200px side panel eating a quarter of the screen and a running order that ran
+off the bottom of it. There is now a block keyed on `max-height: 560px` that
+narrows the panel to about 135px and sizes the order to fit eight rows, and it
+sits last in the stylesheet so it wins wherever the two overlap.
+
+**Portrait cannot make the board bigger, so it stops wasting the height.**
+Every track is wider than it is tall, so upright the board is limited by the
+width of the screen and nothing short of turning the track sideways changes
+that. What did change:
+
+- The chrome shrinks and the board goes to the top at the full width the
+  screen has, with the panel directly under it. The leftover is one band at the
+  bottom rather than two bands of nothing with the game floating between them -
+  and that band is where your thumbs are, where a tap is a turn.
+- The panel stays `flex: 0 0 auto`. `Renderer.fit` sizes the board to the stage
+  minus the panel, so a panel that grows to fill takes the space from the board,
+  and then the board shrinks and the panel grows again. An attempt at letting it
+  fill left the board at **nine per cent** of a phone screen.
+- The running order goes to two columns, which fits a sixteen-car field at a
+  size you can read.
+- The carousel stacks. Three cards across 390px did not fit - the grid
+  overflowed its own container and the right-hand arrow sat on top of the third
+  card - so upright each card turns on its side, picture on the left and name on
+  the right, and the three stack down the screen.
+
+On a 390x844 phone the board went from 30% of the screen to 32%, which is not
+the point; the point is that the 68% around it is now the panel and the thumb
+band rather than dead air.
+
 Scenes also keep their horizon and their landmarks out of the middle third of
 the screen, where the cards are, so the scenery is seen rather than half-hidden
 behind them.

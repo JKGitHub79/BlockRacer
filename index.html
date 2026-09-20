@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- user-scalable=no and maximum-scale kill double-tap-to-zoom on Android.
+     iOS has ignored both since iOS 10, so the real fix there is touch-action
+     in the stylesheet and the gesture handlers in js/input.js - this line is
+     the belt, those are the braces. viewport-fit=cover lets the backdrop run
+     under a notch instead of stopping at a white band. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Block Racer</title>
 <script>
 /* Single source of truth for the version.
@@ -11,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.25.0', built: '2026-09-20' };
+window.BR = { version: '0.26.0', built: '2026-09-20' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>

@@ -52,5 +52,26 @@
     Input.turns.push(e.clientX < global.innerWidth / 2 ? -1 : 1);
   });
 
+  /* Zoom, off.
+   *
+   * A racing game's controls are taps, and two quick taps - which is exactly
+   * what taking a corner looks like - were being read as double-tap-to-zoom,
+   * leaving the board blown up and off centre with no way back on a device
+   * that has no keyboard.
+   *
+   * `touch-action` in the stylesheet is what actually stops it in every
+   * current browser. These two are for iOS Safari, which fires its own
+   * pinch-gesture events on top of the touch model and honours neither
+   * user-scalable=no nor maximum-scale; without them a two-finger pinch
+   * still zooms the page even though the double tap no longer does.
+   *
+   * Only zoom is taken away. Scrolling still works, and every screen that is
+   * taller than the window still scrolls, because touch-action allows the
+   * pan and refuses the scale. */
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (name) {
+    global.addEventListener(name, function (e) { e.preventDefault(); }, { passive: false });
+  });
+  global.addEventListener('dblclick', function (e) { e.preventDefault(); }, { passive: false });
+
   global.Input = Input;
 })(typeof window !== 'undefined' ? window : globalThis);

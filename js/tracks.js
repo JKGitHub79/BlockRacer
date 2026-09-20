@@ -1221,13 +1221,17 @@
    * problem. More corners, and corners of more kinds, is the better trade.
    * ==================================================================== */
   var CLIFF = {
+    /* `rock` turns on the per-cell stone texture in js/render.js. Without it
+     * these solids are flat fills, and at the size of Overhang's massif a
+     * flat fill reads as a hole in the picture rather than as rock. */
+    rock:       true,
     bg:         '#07070a',
     road:       '#121317',   // dark stone, kept near black like every road
     roadLine:   '#1b1d23',
-    wall:       '#6b6459',   // the rock faces either side
-    wallTop:    '#a39a8a',
-    outer:      '#443f38',   // the massif, off the map
-    outerTop:   '#6e665a',
+    wall:       '#6e6154',   // warm grey-brown, not grey
+    wallTop:    '#a89684',
+    outer:      '#473c31',   // the massif, off the map, browner and darker
+    outerTop:   '#736250',
     jog:        '#8a4a2a',   // rust-stained boulders out on the road
     jogTop:     '#d08040',
     racingLine: 'rgba(235,205,170,0.26)',

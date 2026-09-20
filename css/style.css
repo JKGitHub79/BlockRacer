@@ -21,15 +21,20 @@ html, body {
  * sized by script to whatever box is left over, so the whole thing has to be a
  * chain of flex boxes with min-height 0 or the box never shrinks. dvh rather
  * than vh so a phone's collapsing address bar does not cut the bottom off. */
-html { height: 100%; }
+html { height: 100%; -webkit-text-size-adjust: 100%; }
 
+/* `pan-y` rather than `none`: it refuses every scaling gesture - double tap
+   to zoom, pinch to zoom - while still allowing a vertical drag to scroll.
+   `none` did refuse the zoom, but it also meant the options screen, which is
+   taller than a phone, could not be scrolled at all. The board itself takes
+   `none`, because there nothing is a scroll and everything is a turn. */
 body {
   height: 100dvh;
   display: flex;
   justify-content: center;
   padding: 14px 12px;
   overflow: hidden;
-  touch-action: none;
+  touch-action: pan-y;
   -webkit-user-select: none;
   user-select: none;
   background-image: radial-gradient(circle at 50% 0%, #14203a 0%, #070a11 60%);
@@ -468,6 +473,8 @@ body.mode-trial .stat.trial-only { display: flex; }
 }
 
 .slider { touch-action: none; }
+.board, #backdrop { touch-action: none; }
+.screen { touch-action: pan-y; }
 
 /* ======================================================================
  * SCREENS
@@ -934,4 +941,108 @@ body.in-race #backdrop { display: none; }
 
 @media (max-height: 560px) {
   .homebtn { padding: 5px 10px; font-size: 11px; }
+}
+
+/* ======================================================================
+ * PHONES
+ *
+ * The two rules above this comment key off width alone, and width alone is
+ * the wrong question on a phone. A phone in landscape is 844 x 390 or 852 x
+ * 393 or 926 x 428 - WIDER than the 820px cutoff, so it was getting the
+ * desktop layout: a 200px side panel eating a quarter of the screen and a
+ * running order that ran off the bottom of it. What matters there is that
+ * the viewport is SHORT, whatever its width.
+ *
+ * So: one block keyed on height for any short screen, and one keyed on
+ * orientation for a phone held upright. They are last in the file so they
+ * win over the width rules where the two overlap.
+ * ==================================================================== */
+
+/* ---- short: a phone in landscape, or a squat desktop window ---------- */
+@media (max-height: 560px) {
+  /* The board is height-limited here, so the panel costs it nothing in the
+     direction that matters - and everything if it is stacked underneath. */
+  .stage { flex-direction: row; }
+  .hud {
+    flex: 0 0 clamp(118px, 16vw, 160px);
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0;
+    padding: 8px 10px;
+  }
+  .stat { margin-bottom: 2px; gap: 8px; }
+  .stat span { font-size: 9px; letter-spacing: 0.5px; }
+  .stat b { font-size: 11px; }
+  /* The order is worth keeping at this size - it is the only thing telling
+     you whether the race is going well - so it stays, at a size that fits
+     eight rows rather than four. */
+  .hud h3 { display: block; margin: 7px 0 3px; padding-top: 6px; font-size: 9px; }
+  #standings { display: block; font-size: 10px; }
+  #standings li { padding: 0; gap: 5px; }
+  #standings .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #standings .lp { display: none; }
+  #standings .chip { width: 7px; height: 7px; margin-right: 3px; }
+}
+
+/* ---- upright: a phone in portrait ------------------------------------
+ *
+ * Every track is wider than it is tall, so here the board is limited by the
+ * width of the screen and there is nothing that can be done about that
+ * short of turning the track sideways. What CAN be done is stop wasting the
+ * height: the chrome shrinks, the board goes to the top at the full width
+ * the screen has, and the panel takes everything underneath rather than
+ * leaving a band of nothing above it and another below. */
+@media (orientation: portrait) and (max-width: 620px) {
+  body { padding: 6px 4px; }
+  .topbar { gap: 10px; margin-bottom: 6px; }
+  .topbar h1 { font-size: 15px; letter-spacing: 2px; }
+  .topbar h1 em { margin-left: 6px; font-size: 9px; }
+  .homebtn { padding: 7px 10px; font-size: 10px; }
+
+  /* Board at the top at the full width the screen has, panel directly under
+     it, and whatever is left over is one band at the BOTTOM rather than two
+     bands of nothing with the game floating between them.
+     
+     The panel must stay `flex: 0 0 auto`. Renderer.fit sizes the board to
+     the stage minus the panel, so a panel that grows to fill takes the space
+     from the board and then the board shrinks and the panel grows again -
+     an attempt at letting it fill left the board at nine per cent of a
+     phone screen. The empty band is also where your thumbs are, and on this
+     screen a thumb is a turn. */
+  .stage { flex-direction: column; justify-content: flex-start; gap: 8px; }
+  .canvas-wrap { flex: 0 0 auto; }
+  .hud { flex: 0 0 auto; padding: 10px 12px; }
+  .stat { margin-bottom: 0; }
+  /* Two columns rather than a wrapping row: with the whole lower half of the
+     screen to work with, a sixteen-car order fits at a size you can read. */
+  #standings { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; }
+  #standings li { padding: 1px 0; }
+  #standings .lp { display: inline; }
+
+  /* The carousel does not fit three cards across 390px - the grid overflowed
+     its own container and the right-hand arrow sat on top of the third card.
+     Upright there is height to spare, so they stack, and each one turns on
+     its side: picture on the left, name and grade on the right. */
+  .carousel { gap: 8px; margin-top: 14px; }
+  .arrow { height: auto; align-self: stretch; width: 34px; font-size: 20px; }
+  .cards { grid-template-columns: 1fr; gap: 10px; }
+  .card {
+    display: grid;
+    grid-template-columns: 44% 1fr;
+    grid-template-rows: auto auto;
+    grid-template-areas: "art name" "art grade";
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 2px;
+    text-align: left;
+  }
+  .card-art { grid-area: art; }
+  .card-name { grid-area: name; align-self: end; }
+  .card-grade { grid-area: grade; align-self: start; }
+  .card-medal, .card-record { top: 8px; right: 8px; padding: 1px 6px; font-size: 10px; }
+  .card:hover { transform: none; }
+
+  .theme-head p { font-size: 11px; }
+  .doors { gap: 8px; }
+  .door-sub { display: none; }
 }

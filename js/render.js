@@ -138,6 +138,55 @@
     g.restore();
   };
 
+  /* ---- stone ----------------------------------------------------------
+   *
+   * A cliffs solid is a single flat colour otherwise, and Overhang's massif
+   * is twenty-two cells by twenty-one of it: at that size a flat fill stops
+   * reading as rock and starts reading as a hole cut in the picture.
+   *
+   * Everything here is rectangles on the cell grid, in the same blocky idiom
+   * as the rest of the game - no gradients, no noise texture, nothing that
+   * would look borrowed from a different renderer. Per cell: a whole-cell
+   * tone so no two cells sit at quite the same value, sometimes a bed line
+   * where one course of stone meets the next, and two chips.
+   *
+   * The values come from the cell's OWN coordinates rather than from a
+   * random stream, so the same cell is the same stone every time the track
+   * is baked. Moving the slide slider rebakes the scenery, and a texture
+   * seeded from Math.random would crawl every time you pressed a bracket. */
+  function cellNoise(cx, cy, salt) {
+    var h = Math.imul(cx, 73856093) ^ Math.imul(cy, 19349663) ^ Math.imul(salt, 83492791);
+    h = Math.imul(h ^ (h >>> 15), 2246822519);
+    h = Math.imul(h ^ (h >>> 13), 3266489917);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+
+  function drawStone(g, cx, cy) {
+    var x = cx * S, y = cy * S;
+
+    // the bed: the whole cell a step lighter or darker than its neighbours
+    var t = cellNoise(cx, cy, 1);
+    g.fillStyle = t < 0.55
+      ? 'rgba(0,0,0,' + (0.04 + t * 0.30).toFixed(3) + ')'
+      : 'rgba(255,238,212,' + ((t - 0.55) * 0.30).toFixed(3) + ')';
+    g.fillRect(x, y, S, S);
+
+    // a seam across it, on roughly a third of cells
+    if (cellNoise(cx, cy, 2) < 0.34) {
+      g.fillStyle = 'rgba(0,0,0,0.26)';
+      g.fillRect(x, y + Math.floor(cellNoise(cx, cy, 3) * (S - 5)) + 2, S, 2);
+    }
+
+    // and two chips, one catching the light and one not
+    var w = Math.max(2, Math.round(S * 0.16));
+    g.fillStyle = 'rgba(255,240,216,0.14)';
+    g.fillRect(x + Math.floor(cellNoise(cx, cy, 4) * (S - w - 3)) + 2,
+               y + Math.floor(cellNoise(cx, cy, 5) * (S - w - 3)) + 2, w, w - 1);
+    g.fillStyle = 'rgba(0,0,0,0.22)';
+    g.fillRect(x + Math.floor(cellNoise(cx, cy, 6) * (S - w - 3)) + 2,
+               y + Math.floor(cellNoise(cx, cy, 7) * (S - w - 3)) + 2, w - 1, w - 1);
+  }
+
   function eachWall(fn) {
     for (var cy = 0; cy < T.rows; cy++) {
       for (var cx = 0; cx < T.cols; cx++) {
@@ -264,6 +313,7 @@
     // Walls, in two passes: every solid is filled flat first, then the
     // emblems are painted over the flat fill, then the lit edges go on top -
     // so the faces that make the blocks read as raised survive the livery.
+    var stone = !!(T.theme && T.theme.rock);
     eachWall(function (cx, cy, kind) {
       // Four kinds of solid: the islands inside the circuit, the ground
       // outside it, the chicane blocks, and lava - whose cooled crust is
@@ -271,6 +321,7 @@
       g.fillStyle = kind === 3 ? colorOf('jog')
                   : (kind === 2 || kind === 4) ? colorOf('wall') : colorOf('outer');
       g.fillRect(cx * S, cy * S, S, S);
+      if (stone) drawStone(g, cx, cy);
     });
 
     drawEmblems(g);
