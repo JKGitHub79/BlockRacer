@@ -165,7 +165,6 @@ canvas { display: block; touch-action: none; }
 .panel.wide { width: min(520px, 92%); }
 
 .panel h2 { margin: 0 0 12px; letter-spacing: 5px; font-size: 24px; }
-.blurb { color: var(--dim); font-size: 13px; margin: 0 0 18px; }
 .lapline { font-size: 12px; letter-spacing: 2px; color: var(--dim); margin: 0 0 8px; }
 .lapline b { color: var(--accent); }
 
@@ -183,12 +182,6 @@ canvas { display: block; touch-action: none; }
   background: var(--accent);
 }
 
-.trackblurb {
-  margin: 0 0 16px;
-  font-size: 11px;
-  color: var(--dim);
-  min-height: 2em;
-}
 /* Four levels with words as long as INTERMEDIATE will not sit in one row at
  * any readable size, so they go two by two. */
 .speeds {
@@ -197,10 +190,6 @@ canvas { display: block; touch-action: none; }
   gap: 8px;
 }
 
-/* Four across keeps seven tracks to two rows; three across made three rows,
-   which pushed START off the bottom of a 720-tall laptop. */
-.tracks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.tracks button { font-size: 11px; padding: 10px 2px; }
 
 .laps button {
   flex: 1;
@@ -275,15 +264,6 @@ button.secondary:hover { border-color: var(--accent); }
 .hint { color: var(--dim); font-size: 11px; margin: 12px 0 0; }
 
 /* Only worth saying on a phone held the wrong way up for a landscape game. */
-.rotate { display: none; }
-@media (max-width: 820px) and (orientation: portrait) {
-  .rotate {
-    display: block;
-    margin: 0 0 12px;
-    font-size: 11px;
-    color: var(--accent);
-  }
-}
 .slide-hint { margin: 6px 0 16px; line-height: 1.6; }
 .sub { color: var(--dim); font-size: 11px; letter-spacing: 0; }
 
@@ -410,25 +390,18 @@ code { color: var(--accent); }
   .keys { display: none; }
 }
 
-/* The menu has grown a row of controls at a time, and on a laptop-height
- * screen it had outgrown the window - START was off the bottom. The intro
- * paragraph is the first thing to go; the controls are the point. */
-@media (max-height: 840px) {
-  .blurb { display: none; }
-  .trackblurb { min-height: 0; }
-}
-
-/* Lower again and the slide hint - three lines of it - is what stands between
- * the title and the top of the window. The slider still says what it is set
- * to; the caveats are in the README. */
-@media (max-height: 760px) {
-  .slide-hint { display: none; }
+/* The options screen lays its controls out in columns, so it no longer runs
+ * off the bottom of a laptop the way the old single-column panel did. What is
+ * left is the hint copy, which is the first thing to go when there is no room
+ * for it. */
+@media (max-height: 700px) {
+  .opt .hint { display: none; }
 }
 
 /* Narrow enough that prose wraps into many lines and pushes the controls off
  * the bottom. The explanatory copy goes; the controls are the point. */
 @media (max-width: 430px) {
-  .blurb, .slide-hint { display: none; }
+  .slide-hint { display: none; }
   .panel { padding: 16px; }
   .laps button { font-size: 11px; padding: 9px 2px; }
   .panel h2 { font-size: 19px; letter-spacing: 3px; }
@@ -449,7 +422,7 @@ code { color: var(--accent); }
   .overlay { padding: 4px; }
   .panel { padding: 12px; width: min(380px, 100%); }
   .panel h2 { font-size: 16px; margin-bottom: 4px; letter-spacing: 3px; }
-  .blurb, .slide-hint { display: none; }
+  .slide-hint { display: none; }
   .lapline { margin-bottom: 3px; }
   .laps { margin-bottom: 6px; }
   /* Every other row of buttons drops to 10px here; the lap row had been left
@@ -462,13 +435,10 @@ code { color: var(--accent); }
   /* A short screen is a wide one, so the four levels fit across in one row -
    * and the row they save is what keeps START on screen. */
   .speeds { grid-template-columns: repeat(4, 1fr); }
-  .tracks { grid-template-columns: repeat(4, 1fr); gap: 5px; }
-  .tracks button { font-size: 10px; padding: 5px 1px; }
   .speeds button { font-size: 10px; letter-spacing: 0; padding: 5px 2px; }
   #menu .hint { display: none; }
   button.primary { padding: 9px; }
   .lapline { margin-bottom: 4px; }
-  .trackblurb { display: none; }
   .hint { margin-top: 6px; }
   .results td, .results th { padding: 4px 0; }
 }
@@ -486,3 +456,303 @@ code { color: var(--accent); }
 }
 
 .slider { touch-action: none; }
+
+/* ======================================================================
+ * SCREENS
+ *
+ * The three things in front of the race. Each fills the window; the painted
+ * landscape sits behind all of them and in front of the race view, so the
+ * race view never has to leave the layout - a canvas measured while its
+ * container is display:none comes back zero-sized, and Renderer.fit reads
+ * exactly that container.
+ * ==================================================================== */
+
+#backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+body.in-race #backdrop { display: none; }
+
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.screen.on { display: flex; }
+
+.screen-inner {
+  width: 100%;
+  max-width: 1040px;
+  margin: auto;
+  text-align: center;
+}
+
+.screen-title {
+  margin: 0 0 22px;
+  font-size: 26px;
+  letter-spacing: 6px;
+}
+
+.screen-foot {
+  margin: 20px 0 0;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--dim);
+}
+.screen-foot b { color: var(--text); }
+
+/* Back out of a screen. Parked in the corner rather than in the flow, so it
+   never takes a row from the content. */
+.back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  padding: 9px 16px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--text);
+  background: rgba(10, 16, 28, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+.back:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- the front door ------------------------------------------------- */
+
+.wordmark {
+  margin: 0;
+  font-size: clamp(34px, 8vw, 68px);
+  letter-spacing: clamp(6px, 2vw, 16px);
+  text-shadow: 0 6px 40px rgba(0, 0, 0, 0.7);
+}
+.wordmark span { color: var(--accent); }
+
+.wordmark-sub {
+  margin: 10px 0 0;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--dim);
+}
+
+/* Three doors across, always across: stacking them would bury the middle one
+   and the middle one is the game. */
+.doors {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: clamp(24px, 6vh, 56px);
+}
+
+.door {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: clamp(110px, 22vh, 190px);
+  padding: 18px 10px;
+  font: inherit;
+  color: var(--text);
+  background: rgba(14, 21, 36, 0.82);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s, background 0.12s;
+  backdrop-filter: blur(6px);
+}
+.door:hover { transform: translateY(-3px); border-color: var(--accent); }
+.door-mark { font-size: 22px; color: var(--accent); line-height: 1; }
+.door-name { font-size: clamp(14px, 2.4vw, 20px); letter-spacing: 4px; }
+.door-sub { font-size: 11px; letter-spacing: 1px; color: var(--dim); }
+
+/* PLAY is the one you came for, so it is the one that looks like it. */
+.door-main {
+  background: rgba(94, 242, 255, 0.10);
+  border-color: rgba(94, 242, 255, 0.55);
+}
+.door-main .door-name { color: var(--accent); }
+
+/* The shop is not built. Showing it as a live button that opens nothing is
+   worse than showing it as what it is. */
+.door-locked { opacity: 0.42; cursor: not-allowed; }
+.door-locked:hover { transform: none; border-color: var(--line); }
+.door-locked .door-mark { color: var(--dim); }
+
+/* ---- track select ---------------------------------------------------- */
+
+.theme-head h2 {
+  margin: 0;
+  font-size: clamp(26px, 6vw, 48px);
+  letter-spacing: clamp(5px, 1.6vw, 14px);
+  color: var(--theme, var(--accent));
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.75);
+}
+.theme-head p {
+  margin: 8px 0 0;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #cfdbe9;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.carousel {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 2vw, 18px);
+  margin-top: clamp(16px, 4vh, 34px);
+}
+
+.arrow {
+  flex: 0 0 auto;
+  width: clamp(38px, 5vw, 52px);
+  height: clamp(66px, 12vh, 104px);
+  font: inherit;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--text);
+  background: rgba(10, 16, 28, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+.arrow:hover { border-color: var(--theme, var(--accent)); color: var(--theme, var(--accent)); }
+
+.cards {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(8px, 1.6vw, 16px);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  font: inherit;
+  color: var(--text);
+  background: rgba(10, 16, 28, 0.78);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s;
+  backdrop-filter: blur(6px);
+}
+.card:hover { transform: translateY(-4px); border-color: var(--theme, var(--accent)); }
+
+/* The picture is the track, rendered from its own data rather than shipped as
+   an image, so it can never be a stale picture of a track since edited. */
+.card-art {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #05070c;
+  overflow: hidden;
+  line-height: 0;
+}
+.card-art canvas { width: 100%; height: auto; display: block; }
+
+.card-name { font-size: clamp(12px, 1.6vw, 16px); letter-spacing: 3px; }
+.card-grade {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--theme, var(--accent));
+}
+
+.card.soon { opacity: 0.45; cursor: not-allowed; }
+.card.soon:hover { transform: none; border-color: var(--line); }
+.card.soon .card-grade { color: var(--dim); }
+/* Nothing to show yet, so the art box holds its shape rather than collapsing
+   and leaving three cards of different heights. */
+.card.soon .card-art {
+  aspect-ratio: 40 / 28;
+  background: repeating-linear-gradient(-45deg,
+    #0b1220 0 8px, #0e1728 8px 16px);
+}
+
+/* ---- options --------------------------------------------------------- */
+
+.opt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  text-align: left;
+}
+
+.opt {
+  padding: 14px;
+  background: rgba(14, 21, 36, 0.82);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+}
+.opt .lapline { margin-bottom: 8px; }
+.opt .hint { margin: 10px 0 0; }
+.opt .slider { margin-top: 2px; }
+.opt .laps { margin-bottom: 0; }
+.opt .swatches { margin-left: 0; }
+
+.wide-btn { width: 100%; padding: 10px; }
+
+/* The legacy list is folded away until asked for: it is seven buttons of
+   tracks that are being replaced, and it should not be the biggest thing on
+   the options screen. */
+.legacy-list { display: none; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 10px; }
+.options.show-legacy .legacy-list { display: grid; }
+.legacy-list button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 8px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: #1b2438;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.legacy-list button:hover { border-color: var(--accent); }
+.legacy-list b { font-size: 12px; letter-spacing: 2px; }
+.legacy-list span { font-size: 10px; letter-spacing: 1px; color: var(--dim); }
+
+/* ---- small screens --------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .doors { gap: 8px; }
+  .door { min-height: 96px; padding: 12px 6px; }
+  .door-sub { display: none; }
+  .cards { gap: 6px; }
+  .card { padding: 6px; }
+  .card-name { letter-spacing: 1px; }
+}
+
+/* Short means a phone on its side, where the screen is all width and no
+   height: the copy goes and everything closes up. */
+@media (max-height: 520px) {
+  .screen { padding: 10px; }
+  .wordmark-sub, .theme-head p, .opt .hint { display: none; }
+  .doors { margin-top: 14px; }
+  .door { min-height: 84px; }
+  .carousel { margin-top: 12px; }
+  .screen-foot { margin-top: 10px; }
+  .screen-title { margin-bottom: 12px; }
+  .opt { padding: 10px; }
+  .back { top: 8px; left: 8px; padding: 6px 12px; }
+}

@@ -10,6 +10,7 @@
   var CONFIG = {
     /* ---- Race rules ------------------------------------------------- */
     track: 0,             // which entry of js/tracks.js. ?track=N or the menu.
+    deepLink: false,      // set when the URL named a track, which starts it
     laps: 5,              // race length. Override with ?laps=N or the menu.
     minLaps: 1,
     maxLaps: 20,
@@ -170,6 +171,10 @@
   var track = /[?&]track=(\d+)/.exec(search);
   if (track) {
     CONFIG.track = Math.max(0, Math.min(global.TRACKS.length - 1, parseInt(track[1], 10) - 1));
+    // Naming a track in the URL means you want to race it. Before the menus
+    // were screens this only preselected it, because the one menu was one
+    // click from starting; now it would be three, through a legacy list.
+    CONFIG.deepLink = true;
   }
   var road = /[?&]road=(\d+)/.exec(search);
   if (road) {

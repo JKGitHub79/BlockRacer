@@ -232,11 +232,12 @@
   /* ---- UI ----------------------------------------------------------- */
 
   Game.buildHud = function () {
-    var stamp = document.getElementById('version');
-    if (stamp && global.BR) {
+    var stamps = document.querySelectorAll('.version-stamp');
+    Array.prototype.forEach.call(stamps, function (stamp) {
+      if (!global.BR) return;
       stamp.textContent = 'v' + global.BR.version;
       stamp.title = 'built ' + global.BR.built;
-    }
+    });
     el.track = document.getElementById('hud-track');
     el.speed = document.getElementById('hud-speed');
     el.slide = document.getElementById('hud-slide');
@@ -248,13 +249,11 @@
     el.standings = document.getElementById('standings');
     el.msg = document.getElementById('message');
     el.board = document.getElementById('board');
-    el.menu = document.getElementById('menu');
     el.results = document.getElementById('results');
     el.resultsBody = document.getElementById('results-body');
     el.resultsTitle = document.getElementById('results-title');
     el.pause = document.getElementById('pause');
     el.lapButtons = document.getElementById('lap-buttons');
-    el.trackButtons = document.getElementById('track-buttons');
     el.speedButtons = document.getElementById('speed-buttons');
     el.roadButtons = document.getElementById('road-buttons');
     el.slideRange = document.getElementById('slide-range');
@@ -328,12 +327,6 @@
     this.trackIndex = index;
     T.load(index);
     Renderer.setTrack();
-    Array.prototype.forEach.call(el.trackButtons.children, function (b) {
-      b.classList.toggle('on', parseInt(b.dataset.track, 10) === index);
-    });
-    document.getElementById('menu-track').textContent = T.name;
-    document.getElementById('menu-grade').textContent = T.data.grade;
-    document.getElementById('menu-blurb').textContent = T.data.blurb;
     // A different track grids a different number, so the field label is stale
     // the moment the track changes. setCars resets and re-enters the menu.
     this.setCars(C.cars);
@@ -399,35 +392,39 @@
     document.getElementById('menu-laps').textContent = this.laps;
   };
 
-  /* Back to the start menu. Without this the only way out of the results
-   * screen is another race at the same settings, so changing track, speed or
-   * race length meant reloading the page. */
-  Game.openMenu = function () {
+  /* Out of the race and back to wherever it was started from - the track
+   * carousel, or the legacy list on the options screen. Without this the only
+   * way out of the results screen is another race at the same settings. */
+  Game.leaveRace = function () {
     el.results.classList.remove('show');
     el.pause.classList.remove('show');
     this.reset();
     this.state = 'menu';
-    el.menu.classList.add('show');
-    Input.clear();
+    global.Screens.show(global.Screens.from);
   };
 
   Game.startRace = function () {
-    el.menu.classList.remove('show');
     el.results.classList.remove('show');
     el.pause.classList.remove('show');
+    global.Screens.show('race');
     Sound.unlock();
     this.reset();
   };
 
   Game.command = function (name) {
+    // Everything here is a race control. On a menu screen the keys belong to
+    // the screen, not to a race that is not running.
+    var racing = global.Screens.current === 'race';
     if (name === 'start') {
-      if (this.state === 'menu' || this.state === 'finished') this.startRace();
-      else if (this.state === 'paused') this.command('pause');
+      if (racing && this.state === 'finished') this.startRace();
+      else if (racing && this.state === 'paused') this.command('pause');
     } else if (name === 'restart') {
-      if (this.state !== 'menu') this.startRace();
+      if (racing) this.startRace();
     } else if (name === 'menu') {
-      if (this.state !== 'menu') this.openMenu();
+      if (racing) this.leaveRace();
+      else if (global.Screens.current !== 'main') global.Screens.show('main');
     } else if (name === 'pause') {
+      if (!racing) return;
       if (this.state === 'racing') {
         this.state = 'paused';
         el.pause.classList.add('show');
@@ -448,13 +445,20 @@
 
   Game.boot = function () {
     Renderer.init(document.getElementById('game'));
+    global.Backdrop.init(document.getElementById('backdrop'));
     this.buildHud();
+    global.Screens.init();
     this.setLaps(C.laps);
     this.setSlide(C.slide);
     this.setSpeed(C.speedLevel);
     this.setRoad(C.roadTint);
     this.setTrack(C.track);   // also sets the field, which depends on the track
-    el.menu.classList.add('show');
+    if (C.deepLink) {
+      global.Screens.from = 'options';
+      this.startRace();
+    } else {
+      global.Screens.show('main');
+    }
 
     Input.onCommand = function (n) { Game.command(n); };
 
@@ -462,12 +466,6 @@
       b.addEventListener('click', function (e) {
         e.stopPropagation();
         Game.setLaps(parseInt(b.dataset.laps, 10));
-      });
-    });
-    Array.prototype.forEach.call(el.trackButtons.children, function (b) {
-      b.addEventListener('click', function (e) {
-        e.stopPropagation();
-        Game.setTrack(parseInt(b.dataset.track, 10));
       });
     });
     el.slideRange.addEventListener('input', function (e) {
@@ -490,28 +488,34 @@
         Game.setRoad(parseInt(b.dataset.road, 10));
       });
     });
-    document.getElementById('btn-start').addEventListener('click', function (e) {
-      e.stopPropagation();
-      Game.startRace();
-    });
     document.getElementById('btn-again').addEventListener('click', function (e) {
       e.stopPropagation();
       Game.startRace();
     });
-    document.getElementById('btn-menu').addEventListener('click', function (e) {
+    document.getElementById('btn-quit').addEventListener('click', function (e) {
       e.stopPropagation();
-      Game.openMenu();
+      Game.leaveRace();
     });
 
-    var acc = 0, last = performance.now();
+    var acc = 0, last = performance.now(), clock = 0;
     function frame(now) {
       var delta = Math.min((now - last) / 1000, C.maxFrame);
       last = now;
+      clock += delta;
+      requestAnimationFrame(frame);
+
+      // On a menu screen the board is hidden behind the scenery, so neither
+      // the physics nor the track is worth a frame: paint the landscape and
+      // stop there.
+      if (global.Screens.current !== 'race') {
+        acc = 0;
+        global.Backdrop.draw(clock);
+        return;
+      }
       acc += delta;
       while (acc >= C.dt) { Game.step(C.dt); acc -= C.dt; }
       Renderer.draw(Game);
       Game.drawHud();
-      requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
   };

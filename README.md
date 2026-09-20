@@ -12,6 +12,86 @@ stylesheet URL, so a deploy is never served from a stale cache. Bump it when
 you push, and the number on screen tells you whether what you are playing is
 what you pushed.
 
+## Screens
+
+Four of them, and the race is only one.
+
+**Front door.** Three doors across: OPTIONS, PLAY, SHOP. The shop is not built,
+so it is shown as what it is - dimmed and marked - rather than as a live button
+that opens nothing.
+
+**Play.** One theme at a time, three tracks across, arrows either side and the
+left/right keys doing the same. The theme's landscape is behind it. Themes come
+from `js/themes.js` and the screen is built entirely from that list, so a fourth
+theme is a data entry and no screen code changes.
+
+**Options.** Everything that configures a race - slide, field size, game speed,
+race length, road colour - plus the legacy tracks.
+
+**Race.** Unchanged.
+
+`Screens.show(name)` is the whole router. Screens are full-bleed and opaque
+rather than panels over the board, because a phone in landscape leaves the board
+barely 360px wide and a settings screen will never fit inside that however hard
+it is squeezed. The race view is never taken out of the layout to hide it - the
+painted backdrop covers it instead - because `Renderer.fit` measures that
+container, and a container measured while it is `display:none` comes back
+zero-sized.
+
+## Themes and tracks
+
+Three themes, ascending in difficulty, three tracks each:
+
+| Theme | Tracks | |
+| --- | --- | --- |
+| Forest | Pinefall, Hollow, Canopy | easiest |
+| Desert | Duneline, Salt Flats, Canyon Run | harder |
+| Snow | Frostline, Glacier, Whiteout | harder again |
+
+**These nine tracks are not built yet.** They are named in `js/themes.js` and
+show on the cards as still to come. A theme's track is matched to `js/tracks.js`
+by id; a name with no track behind it renders as a placeholder rather than being
+hidden, so the shape of what is being built stays visible while it is built.
+
+The seven circuits that came first - Crossover, Snowdrift, Mesa, Wildwood,
+Catalunya, Caldera, Staircase - are the **legacy tracks**, on the options
+screen. They are being replaced rather than removed, and they stay raceable.
+
+### The card pictures
+
+Rendered from track data at the moment the card is drawn, not shipped as
+images. `Renderer.thumbnail` deliberately does not go through `T.load` and
+`bakeTrack`: loading mutates the one live TRACK in place, and drawing a menu
+must not disturb the track the game is holding. The cost is a second, much
+simpler painter - road, solids, racing line, finish. The gain is that a
+thumbnail can never be a stale picture of a track that has since been edited,
+the way a folder of PNGs would be within a week.
+
+### The landscapes
+
+Painted in code - `js/backdrop.js` - from rectangles, triangles and gradients,
+in the same flat idiom as the track itself, so the menus and the game look like
+one thing. Shapes are laid out from a seeded generator, so a scene is identical
+every time it is drawn and across a resize; a ridge line that reshuffled itself
+when you turned your phone would read as a glitch. Only the weather moves, and
+it moves on the clock rather than on a stored position, so nothing accumulates
+and nothing has to be reset.
+
+Three things learned the hard way getting them to read:
+
+- **Depth is value, not size.** Three bands of the same green is one flat wall
+  of trees. The far band has to be hazed almost to the colour of the sky behind
+  it and the near band nearly black.
+- **A light source is a gradient, not a circle.** A flat-alpha disc reads as a
+  pale sticker stuck on the sky.
+- **A mountain range needs many more peaks than you think.** Seven points across
+  the screen gives slabs. The step is 4.5% of the width, and the heights are
+  skewed so most of the range is low and the occasional one stands out of it.
+
+Scenes also keep their horizon and their landmarks out of the middle third of
+the screen, where the cards are, so the scenery is seen rather than half-hidden
+behind them.
+
 ## Controls
 
 | Key | Action |
@@ -282,9 +362,12 @@ would otherwise put the drift on screen for about three frames.
 
 Five laps on Crossover at Easy by default. All three are set the same way:
 
-1. the buttons on the start menu,
+1. the options screen,
 2. URL parameters - `index.html?track=2&laps=7&speed=3&slide=0.4&road=3&cars=8`
-   (tracks and speeds are 1-based, laps 1-20, road 0-5, cars 2-16),
+   (tracks and speeds are 1-based, laps 1-20, road 0-5, cars 2-16). Naming a
+   track **starts that race straight away**: before the menus were screens the
+   parameter only preselected it, because the one menu was a click from
+   starting, and now it would be three clicks through a legacy list,
 3. `track`, `laps`, `speedLevel`, `slide`, `roadTint` and `cars` in
    `js/config.js`.
 
@@ -304,7 +387,7 @@ road, how hard it tries - live with the track in `js/tracks.js`.
 
 ## How many cars
 
-Four by default - you and three - and anything from 2 to 16 on the start menu.
+Four by default - you and three - and anything from 2 to 16 on the options screen.
 The number includes you, and you keep third on the grid whatever the field size.
 
 A track declares four grid slots, and at four or fewer those four are used
@@ -406,13 +489,16 @@ midpoint is where the width probe starts.
 
 | File | What it holds |
 | --- | --- |
-| `js/tracks.js` | the two tracks, as pure data |
+| `js/tracks.js` | every track, as pure data |
+| `js/themes.js` | the themes, and which tracks belong to each |
 | `js/config.js` | every tunable number |
-| `js/track.js` | loads a track: wall grid, racing line, lap rule, race positions |
+| `js/track.js` | loads a track: wall grid, racing line, lap rule, start grid, positions |
 | `js/car.js` | movement, swept wall collision, car-to-car shoving |
 | `js/ai.js` | opponent drivers |
 | `js/input.js` | keyboard and touch |
-| `js/render.js` | canvas drawing |
+| `js/backdrop.js` | the painted landscapes behind the menus |
+| `js/render.js` | canvas drawing, including the track thumbnails |
+| `js/screens.js` | which screen is up: front door, play, options |
 | `js/game.js` | race loop, rules, HUD |
 | `js/audio.js` | WebAudio blips, no asset files |
 

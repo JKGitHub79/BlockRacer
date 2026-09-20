@@ -1,0 +1,54 @@
+/* Block Racer - themes.
+ *
+ * A theme is a band of difficulty with a look attached: a name, a backdrop for
+ * the track-select screen, and three tracks. The play screen is built entirely
+ * from this list, so adding a fourth theme is adding an entry here - no screen
+ * code knows how many there are.
+ *
+ * A theme's tracks are named up front and matched to js/tracks.js by id. A
+ * track named here that does not exist there yet shows on the card as still to
+ * come, rather than being hidden: the shape of what is being built stays
+ * visible while it is being built.
+ */
+(function (global) {
+  'use strict';
+
+  global.THEMES = [
+    {
+      id: 'forest',
+      name: 'FOREST',
+      tagline: 'Wide lanes under the canopy. Where you learn the car.',
+      scene: 'forest',
+      accent: '#5fd08a',
+      tracks: [
+        { id: 'pinefall', name: 'PINEFALL', grade: 'EASY' },
+        { id: 'hollow',   name: 'HOLLOW',   grade: 'EASY' },
+        { id: 'canopy',   name: 'CANOPY',   grade: 'MODERATE' }
+      ]
+    },
+    {
+      id: 'desert',
+      name: 'DESERT',
+      tagline: 'Long straights, hard corners, nowhere to hide a mistake.',
+      scene: 'desert',
+      accent: '#e8a23c',
+      tracks: [
+        { id: 'duneline',  name: 'DUNELINE',  grade: 'MODERATE' },
+        { id: 'saltflats', name: 'SALT FLATS', grade: 'MODERATE' },
+        { id: 'canyonrun', name: 'CANYON RUN', grade: 'HARD' }
+      ]
+    },
+    {
+      id: 'snow',
+      name: 'SNOW',
+      tagline: 'Narrower every lap. The last one does not forgive.',
+      scene: 'snow',
+      accent: '#8fd3ff',
+      tracks: [
+        { id: 'frostline', name: 'FROSTLINE', grade: 'HARD' },
+        { id: 'glacier',   name: 'GLACIER',   grade: 'HARD' },
+        { id: 'whiteout',  name: 'WHITEOUT',  grade: 'BRUTAL' }
+      ]
+    }
+  ];
+})(typeof window !== 'undefined' ? window : globalThis);

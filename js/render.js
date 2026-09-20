@@ -406,6 +406,62 @@
 
   /* Bake the current track's scenery and size the board to it. Called on boot
    * and whenever the track changes - tracks are not all the same shape. */
+  /* A card-sized picture of a track, painted straight from its entry in
+   * js/tracks.js. It deliberately does NOT go through T.load and bakeTrack:
+   * loading mutates the one live TRACK in place, and drawing a menu must not
+   * disturb the track the game is holding. The cost of that is a second,
+   * much simpler painter - road, solids, racing line - and the gain is that
+   * a thumbnail can never be a stale picture of a track that has since been
+   * edited, the way a shipped PNG would be. */
+  Renderer.thumbnail = function (index, host) {
+    var data = global.TRACKS[index];
+    if (!data || !host) return;
+    var tint = C.roadColors();
+    var pick = function (name) {
+      return (tint && tint[name]) || (data.theme && data.theme[name]) || C.colors[name];
+    };
+
+    var box = 4;                        // the border the card draws around it
+    var cw = 240, ch = Math.round(cw * data.rows / data.cols);
+    var cv = document.createElement('canvas');
+    cv.width = cw;
+    cv.height = ch;
+    var g = cv.getContext('2d');
+    var s = cw / data.cols;
+
+    g.fillStyle = pick('road');
+    g.fillRect(0, 0, cw, ch);
+
+    data.walls.forEach(function (w) {
+      var kind = w.kind;
+      g.fillStyle = kind === 'jog' ? pick('jog')
+                  : kind === 'lava' ? pick('wall')
+                  : kind === 'infield' ? pick('wall') : pick('outer');
+      g.fillRect(w.x0 * s, w.y0 * s, (w.x1 - w.x0 + 1) * s, (w.y1 - w.y0 + 1) * s);
+    });
+
+    g.strokeStyle = pick('startLine');
+    g.globalAlpha = 0.5;
+    g.lineWidth = Math.max(1, s * 0.5);
+    g.lineJoin = 'round';
+    g.beginPath();
+    data.route.forEach(function (p, i) {
+      if (i === 0) g.moveTo(p.x * s, p.y * s); else g.lineTo(p.x * s, p.y * s);
+    });
+    g.closePath();
+    g.stroke();
+    g.globalAlpha = 1;
+
+    var f = data.finish;
+    g.fillStyle = pick('startLine');
+    g.fillRect(f.x0 * s, f.y0 * s, Math.max(2, (f.x1 - f.x0) * s), (f.y1 - f.y0) * s);
+
+    host.innerHTML = '';
+    host.style.setProperty('--art-ratio', (data.cols / data.rows).toFixed(3));
+    cv.style.padding = box + 'px';
+    host.appendChild(cv);
+  };
+
   Renderer.setTrack = function () {
     bakeTrack();
     this.fit();

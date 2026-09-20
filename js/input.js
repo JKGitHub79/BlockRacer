@@ -45,8 +45,10 @@
 
   // Touch / mouse: tap the left or right half of the screen.
   global.addEventListener('pointerdown', function (e) {
-    // menus and buttons are not the track
-    if (e.target && e.target.closest && e.target.closest('button, .overlay')) return;
+    // menus, screens and buttons are not the track
+    if (e.target && e.target.closest &&
+        e.target.closest('button, input, .overlay, .screen')) return;
+    if (global.Screens && global.Screens.current !== 'race') return;
     Input.turns.push(e.clientX < global.innerWidth / 2 ? -1 : 1);
   });
 
