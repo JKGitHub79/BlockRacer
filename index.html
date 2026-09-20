@@ -11,7 +11,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.23.0', built: '2026-09-20' };
+window.BR = { version: '0.24.0', built: '2026-09-20' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -77,10 +77,10 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 
     <aside class="hud">
       <div class="stat"><span>TRACK</span><b id="hud-track">CROSSOVER</b></div>
-      <div class="stat"><span>SPEED</span><b id="hud-speed">BEGINNER</b></div>
-      <div class="stat"><span>SLIDE</span><b id="hud-slide">0.80</b></div>
+      <div class="stat"><span>SPEED</span><b id="hud-speed">SWEAT</b></div>
+      <div class="stat"><span>SLIDE</span><b id="hud-slide">3.00</b></div>
       <div class="stat"><span>LAP</span><b id="hud-lap">1 / 5</b></div>
-      <div class="stat race-only"><span>POSITION</span><b id="hud-pos">1 / 4</b></div>
+      <div class="stat race-only"><span>POSITION</span><b id="hud-pos">1 / 6</b></div>
       <div class="stat"><span id="hud-time-label">RACE TIME</span><b id="hud-time">0:00.00</b></div>
       <div class="stat"><span>LAST LAP</span><b id="hud-last">--:--.--</b></div>
       <div class="stat"><span>BEST LAP</span><b id="hud-best">--:--.--</b></div>
@@ -172,18 +172,18 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 
     <div class="opt-grid">
       <div class="opt">
-        <p class="lapline">SLIDE &middot; <b id="menu-slide">0.80</b> CELLS
+        <p class="lapline">SLIDE &middot; <b id="menu-slide">3.00</b> CELLS
           <span class="sub" id="menu-slide-cw"></span></p>
-        <input id="slide-range" class="slider" type="range" min="0" step="0.05" value="0.8">
+        <input id="slide-range" class="slider" type="range" min="0" step="0.05" value="3">
         <p class="hint slide-hint">0 turns slide off entirely. Staircase clips its
           chicanes above 0.47; much past 3 the arc is wider than the road on any
           track. <code>[</code> and <code>]</code> step it by 0.05, mid-race included.</p>
       </div>
 
       <div class="opt">
-        <p class="lapline">CARS &middot; <b id="menu-cars">4</b>
+        <p class="lapline">CARS &middot; <b id="menu-cars">6</b>
           <span class="sub" id="menu-cars-note"></span></p>
-        <input id="cars-range" class="slider" type="range" min="2" max="16" step="1" value="4">
+        <input id="cars-range" class="slider" type="range" min="2" max="16" step="1" value="6">
         <p class="hint">You and up to fifteen others. A track grids as many as its
           road holds, and says so when that is fewer.</p>
       </div>
@@ -199,7 +199,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       </div>
 
       <div class="opt">
-        <p class="lapline">GAME SPEED &middot; <b id="menu-speed">BEGINNER</b></p>
+        <p class="lapline">GAME SPEED &middot; <b id="menu-speed">SWEAT</b></p>
         <div id="speed-buttons" class="laps speeds">
           <button data-speed="0">BEGINNER</button>
           <button data-speed="1">INTERMEDIATE</button>

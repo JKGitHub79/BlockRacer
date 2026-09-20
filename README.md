@@ -675,7 +675,7 @@ would otherwise put the drift on screen for about three frames.
 
 ## Race length, track and speed
 
-Five laps on Crossover at Easy by default. All three are set the same way:
+Five laps on Pinefall at Sweat by default, six cars, slide 3.0, AI level 5. All three are set the same way:
 
 1. the options screen,
 2. URL parameters - `index.html?track=2&laps=7&speed=3&slide=0.4&road=3&cars=8&ai=9`

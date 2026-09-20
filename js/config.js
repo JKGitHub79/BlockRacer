@@ -40,13 +40,13 @@
      * [ and ] adjust it mid-race, because it is the number worth prototyping
      * with. Every car reads it live, player and AI alike.
      *
-     * The default is one car width. Note that is past the 0.47 that
-     * Staircase's chicanes clear: there the arc cuts the corner far enough to
-     * clip the block it is stepping around, on the lines the AI cars drive
-     * slightly off-centre. Crossover has room for 2.0. `npm run check` drives
-     * every corner of every track at a given radius and says which ones stop
-     * fitting: `node tools/validate-track.js 1.2`. */
-    slide: CAR_WIDTH,
+     * The default is 3.0 - deliberately near the top of what any track can
+     * take, because a long arc is what the game is for. It is well past the
+     * 0.47 that Staircase's chicanes clear and past the 2.0 Crossover has
+     * room for, so expect the tighter circuits to punish it. `npm run check`
+     * drives every corner of every track at a given radius and says which
+     * ones stop fitting: `node tools/validate-track.js 1.2`. */
+    slide: 3.0,
     /* Top of the slider. Far past anything drivable - a radius wider than the
      * road means the car cannot get round a corner without meeting a wall -
      * but this is a prototyping control, and seeing where it stops working is
@@ -82,7 +82,7 @@
 
     /* ---- Game speed --------------------------------------------------- */
     /* Picked on the start menu. Scales every car, player and AI alike. */
-    speedLevel: 0,
+    speedLevel: 3,        // SWEAT
     speedLevels: [
       { name: 'BEGINNER',     mul: 1.0 },
       { name: 'INTERMEDIATE', mul: 1.2 },
@@ -122,11 +122,11 @@
     ],
 
     /* ---- Field size ---------------------------------------------------
-     * Four - you and three - unless the start menu says otherwise. A track
+     * Six - you and five - unless the start menu says otherwise. A track
      * only grids as many as its road holds, so the number asked for here is
      * a ceiling rather than a promise: Staircase's four-cell corridor tops
      * out at nine, and js/track.js reports what actually fit. */
-    cars: 4,
+    cars: 6,
     minCars: 2,
     maxCars: 16,
 
