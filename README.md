@@ -200,19 +200,24 @@ laps, two and a half times the snow three. Each lane change on this track is
 worth about a third of the crash count on its own, because the folds already
 are the difficulty. Lanes B and C and the middle link are clean on purpose.
 
+**Overhang** is two tracks in one lap. One end is the fastest thing in the
+game - a thirty-nine cell straight, a long climb, a thirty-nine cell run
+back. The other folds back on itself twice between six- and seven-cell
+ledges. You arrive at the tight end carrying everything the straight gave
+you.
+
+**Overhang is graded below Quarry although it measures above it**, and that
+is deliberate. See **Where the numbers and the driving disagree** below.
+
 **Quarry** is a plus, not a rectangle. The road is the gap between a
 plus-shaped map and a smaller plus-shaped island, so the lap runs out along
 one side of each arm, round its tip and back down the other. Twelve corners,
 and **four of them are re-entrant**: you turn around the outside of an armpit
 rather than the inside of an island, which nothing else in the game asks for.
 It is the corner that catches people, because the wall you are turning away
-from is behind you and there is nothing to aim at.
-
-**Overhang** is two tracks in one lap. The right two thirds is the fastest
-thing in the game - a thirty-nine cell straight, a long climb, a thirty-nine
-cell run back. The left third folds back on itself twice between six- and
-seven-cell ledges. You arrive at the tight end carrying everything the
-straight gave you.
+from is behind you and there is nothing to aim at - and it is why this is the
+hardest track in the theme to drive even though it is not the hardest to
+simulate.
 
 ### The ladder
 
@@ -224,16 +229,17 @@ slide 0.8, four cars (see **A note on the numbers** below):
 | --- | --- | --- | --- |
 | Forest | 58 | 88 | 124 |
 | Desert | 69 | 144 | 190 |
-| Snow | 294 | 318 | 450 |
-| Cliffs | 375 | 408 | 617 |
+| Snow | 197 | 318 | 450 |
+| Cliffs | 430 | 617 | 467 |
 
-In order: 58, 69, 88, 124, 144, 190, 294, 318, 375, 408, 450, 617. Forest and
+In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 617. Forest and
 Desert interleave, so the first track of the desert is easier than the last of
-the forest and a new theme reads as a new theme rather than a wall. Snow steps
-clear of the desert and stays there. Cliffs interleaves with Snow the way
-Desert does with Forest - each cliffs track is above its snow counterpart, but
-the first two sit under Whiteout, so arriving at a harder theme is a step
-rather than a cliff.
+the forest and a new theme reads as a new theme rather than a wall. Snow and
+Cliffs interleave the same way, so arriving at a harder theme is a step rather
+than a cliff.
+
+The two numbers that are out of order are Snow's first and Cliffs' last, and
+both are explained under **Where the numbers and the driving disagree**.
 
 Three levers, in order of how much they are worth:
 
@@ -246,6 +252,31 @@ Three levers, in order of how much they are worth:
 3. **Runoff past a turn-in** - eight cells to five is worth around 10-20 per
    cent. The fine adjustment, and how each theme's three tracks were levelled
    against one another.
+
+### Where the numbers and the driving disagree
+
+Every figure in the table is **crashes per thousand laps of AI racing**, and
+it is a proxy. Two things about it are worth knowing before leaning on it:
+
+**It is not mirror-symmetric, and it should be.** Turning the eight clockwise
+circuits round (below) reflects them left to right, which cannot change how
+hard a track is to drive - it is the same geometry seen in a mirror, and a
+driver is symmetric. The measured numbers moved anyway, by up to a third:
+Frostline 294 to 197, Caldera 413 to 331, Scree 375 to 430. The cause is that
+the AI field is not symmetric even though its racing-line offsets are: the
+fastest opponent always runs the `+0.3` line, so a mirror puts the quick car
+on the other side of the road, and on a circuit where one side is tighter
+than the other that is worth real crashes. **Treat these numbers as good to
+about a quarter, not to the digit.** Averaging each track over a run with the
+offsets negated would fix it and has not been done.
+
+**It measures an AI, and an AI follows a line.** Quarry is graded above
+Overhang on the strength of actually playing them, against a metric that puts
+Overhang 150 crashes higher. That is believable rather than embarrassing:
+Quarry's difficulty is its four re-entrant corners, where you turn around the
+outside of an armpit and the wall you are turning away from is behind you. A
+human has to find that corner. A waypoint-follower is already pointed at the
+next waypoint and the corner costs it nothing. The grade follows the driving.
 
 ### A note on the numbers
 
@@ -273,6 +304,30 @@ as Frostline's and crashes are counted per lap rather than per cell.
 The seven circuits that came first - Crossover, Snowdrift, Mesa, Wildwood,
 Catalunya, Caldera, Staircase - are the **legacy tracks**, on the options
 screen. They are being replaced rather than removed, and they stay raceable.
+
+### Direction
+
+**Every circuit runs anticlockwise.** Eight were drawn clockwise, and a set
+where some go one way and some the other is not a set of tracks, it is a set
+of surprises: you learn to read a corner and the next track reads it back at
+you mirrored.
+
+They are turned round by **reflecting them left to right**, not by driving the
+same layout backwards. A reflection is exact - the gate margins, the run-ins,
+the runoff past every turn-in survive untouched, because it is the same
+geometry seen in a mirror. Driving a track backwards is a different track: a
+stand that pushed you out of a corner now pushes you into one, and every
+number would have to be measured again.
+
+The flip lives at the bottom of `js/tracks.js` and is applied as the data
+leaves the file, so the layouts stay as they were drawn and the diagrams in
+their comments still describe them. Everything downstream - the game, the
+thumbnails, the validator, `tools/map.js` - sees only the turned-round
+version. A track opts in with `mirror: true`.
+
+**Crossover and Glacier are not flipped and cannot be.** They are figures of
+eight: one way round one lobe and the other way round the other. Their left
+and right turns come out exactly even, which is what a figure of eight is.
 
 ### The card pictures
 

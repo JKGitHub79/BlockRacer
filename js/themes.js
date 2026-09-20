@@ -58,8 +58,8 @@
       accent: '#d9884a',
       tracks: [
         { id: 'scree',    name: 'SCREE',    grade: 'CHALLENGING' },
-        { id: 'quarry',   name: 'QUARRY',   grade: 'CHALLENGING +' },
-        { id: 'overhang', name: 'OVERHANG', grade: 'CHALLENGING ++' }
+        { id: 'overhang', name: 'OVERHANG', grade: 'CHALLENGING +' },
+        { id: 'quarry',   name: 'QUARRY',   grade: 'CHALLENGING ++' }
       ]
     }
   ];

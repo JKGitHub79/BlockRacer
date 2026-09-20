@@ -107,6 +107,7 @@
    * ------------------------------------------------------------------ */
   var SNOWDRIFT = {
     id: 'snowdrift',
+    mirror: true,        // drawn clockwise; see DIRECTION below
     name: 'SNOWDRIFT',
     blurb: 'An L-shaped circuit. Wide open, with an S-bend half way round.',
     grade: 'BEGINNER',
@@ -179,6 +180,7 @@
    * ------------------------------------------------------------------ */
   var MESA = {
     id: 'mesa',
+    mirror: true,        // drawn clockwise; see DIRECTION below
     name: 'MESA',
     blurb: 'A Z across the desert. Eight wide turns, two step-overs.',
     grade: 'BEGINNER',
@@ -258,6 +260,7 @@
    * ------------------------------------------------------------------ */
   var WILDWOOD = {
     id: 'wildwood',
+    mirror: true,        // drawn clockwise; see DIRECTION below
     name: 'WILDWOOD',
     blurb: 'Five corners through the trees, each running into the next.',
     grade: 'MODERATE',
@@ -437,6 +440,7 @@
    * ------------------------------------------------------------------ */
   var CALDERA = {
     id: 'caldera',
+    mirror: true,        // drawn clockwise; see DIRECTION below
     name: 'CALDERA',
     blurb: 'Ring road round a lava lake. Two flows to thread.',
     grade: 'MODERATE',
@@ -511,6 +515,7 @@
    * ------------------------------------------------------------------ */
   var STAIRCASE = {
     id: 'staircase',
+    mirror: true,        // drawn clockwise; see DIRECTION below
     name: 'STAIRCASE',
     blurb: 'Eight chicanes. No straight can be driven in one lane.',
     grade: 'HARD',
@@ -1023,6 +1028,7 @@
    * -------------------------------------------------------------------- */
   var FROSTLINE = {
     id: 'frostline',
+    mirror: true,        // drawn clockwise; see DIRECTION below
     name: 'FROSTLINE',
     blurb: 'A switchback. The middle of the map is a corridor, not an island.',
     grade: 'MODERATE',
@@ -1261,6 +1267,7 @@
    * -------------------------------------------------------------------- */
   var SCREE = {
     id: 'scree',
+    mirror: true,        // drawn clockwise; see DIRECTION below
     name: 'SCREE',
     blurb: 'A serpentine. Four lanes folded end to end, and no island at all.',
     grade: 'CHALLENGING',
@@ -1347,9 +1354,10 @@
    * -------------------------------------------------------------------- */
   var QUARRY = {
     id: 'quarry',
+    mirror: true,        // drawn clockwise; see DIRECTION below
     name: 'QUARRY',
     blurb: 'A plus-shaped pit. Four arms, and four corners that turn outward.',
-    grade: 'CHALLENGING +',
+    grade: 'CHALLENGING ++',
     cols: 44,
     rows: 40,
     aiPace: 0.95,
@@ -1465,7 +1473,7 @@
     id: 'overhang',
     name: 'OVERHANG',
     blurb: 'A long fast ledge, then a double-back under the rock.',
-    grade: 'CHALLENGING ++',
+    grade: 'CHALLENGING +',
     cols: 49,
     rows: 36,
     aiPace: 0.95,
@@ -1519,13 +1527,78 @@
     ]
   };
 
+  /* ------------------------------------------------------------------ *
+   * DIRECTION
+   *
+   * Every circuit runs anticlockwise. Eight of them were drawn clockwise,
+   * and a set of tracks where some go one way and some the other is not a
+   * set of tracks, it is a set of surprises: you learn to read a corner and
+   * then the next track reads it back at you mirrored.
+   *
+   * They are turned round by REFLECTING them left to right, not by driving
+   * the same layout backwards. A reflection is exact - the gate margins, the
+   * run-ins, the runoff past every turn-in and therefore every crash count
+   * measured against the ladder survive it untouched, because the geometry
+   * is the same geometry seen in a mirror. Driving a track backwards is a
+   * different track: a stand that pushed you out of a corner now pushes you
+   * into one, and every number would have to be measured again.
+   *
+   * The flip is applied here, at the point the data leaves this file, so the
+   * layouts above stay as they were drawn and the diagrams in their comments
+   * still describe them. Everything downstream - the game, the thumbnails,
+   * the validator, tools/map.js - sees only the turned-round version.
+   *
+   * Crossover and Glacier are NOT flipped and cannot be: they are figures of
+   * eight, which run one way round one lobe and the other way round the
+   * other. Their left and right turns come out exactly even, which is what a
+   * figure of eight is.
+   * ------------------------------------------------------------------ */
+  function flipX(t) {
+    var C = t.cols;
+    var copy = function (o) {
+      var q = {};
+      for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) q[k] = o[k];
+      return q;
+    };
+    // A point is a position on the continuous grid.
+    var point = function (p) { var q = copy(p); q.x = C - p.x; return q; };
+    // A wall is INCLUSIVE CELL INDICES, so cell c maps to cell C-1-c and the
+    // two ends of the range swap.
+    var cells = function (r) {
+      var q = copy(r);
+      q.x0 = C - 1 - r.x1;
+      q.x1 = C - 1 - r.x0;
+      return q;
+    };
+    // A checkpoint, a finish line and an emblem are continuous spans, where
+    // cell c runs from c to c+1 - a different transform by exactly one.
+    var span = function (r) {
+      var q = copy(r);
+      q.x0 = C - r.x1;
+      q.x1 = C - r.x0;
+      return q;
+    };
+
+    var out = copy(t);
+    out.walls = t.walls.map(cells);
+    out.route = t.route.map(point);
+    out.checkpoints = t.checkpoints.map(span);
+    out.startGrid = t.startGrid.map(point);
+    out.finish = span(t.finish);
+    out.finish.dir = { x: -t.finish.dir.x, y: t.finish.dir.y };
+    if (t.emblems) out.emblems = t.emblems.map(span);
+    /* startLeg, and the order of the checkpoints, and each grid slot's
+     * waypoint are all untouched: reflecting a lap does not renumber it. */
+    return out;
+  }
+
   global.TRACKS = [
     // the themed circuits, in the order the play screen offers them
     PINEFALL, HOLLOW, CANOPY,
     DUNELINE, SALTFLATS, CANYONRUN,
     FROSTLINE, GLACIER, WHITEOUT,
-    SCREE, QUARRY, OVERHANG,
+    SCREE, OVERHANG, QUARRY,
     // and the seven built before the themes, kept raceable under LEGACY
     CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE
-  ];
+  ].map(function (t) { return t.mirror ? flipX(t) : t; });
 })(typeof window !== 'undefined' ? window : globalThis);
