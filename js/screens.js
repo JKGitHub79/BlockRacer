@@ -53,6 +53,71 @@
 
   var MEDALS = ['', 'gold', 'silver', 'bronze'];
 
+  /* Which tracks exist, in the order the play screen offers them. Themed
+   * entries with no track behind them yet are skipped, so NEXT TRACK never
+   * lands on a placeholder. */
+  function themeOrder() {
+    var out = [];
+    THEMES.forEach(function (theme) {
+      theme.tracks.forEach(function (entry) {
+        var found = trackData(entry.id);
+        if (found) out.push(found.index);
+      });
+    });
+    return out;
+  }
+
+  /* And the legacy list, in its own order. */
+  function legacyOrder() {
+    var claimed = {};
+    THEMES.forEach(function (theme) {
+      theme.tracks.forEach(function (t) { claimed[t.id] = true; });
+    });
+    var out = [];
+    global.TRACKS.forEach(function (t, i) { if (!claimed[t.id]) out.push(i); });
+    return out;
+  }
+
+  /* Keep the carousel on whichever theme a track belongs to, so backing out
+   * of a race started by NEXT TRACK lands on the right page. */
+  function followTheme(index) {
+    var id = global.TRACKS[index] && global.TRACKS[index].id;
+    THEMES.forEach(function (theme, t) {
+      theme.tracks.forEach(function (entry) {
+        if (entry.id === id) Screens.theme = t;
+      });
+    });
+  }
+
+  Screens.race = function (index, from) {
+    Screens.from = from || Screens.from;
+    if (Screens.from === 'play') followTheme(index);
+    global.Game.setTrack(index);
+    Screens.show('race');
+    global.Game.startRace();
+  };
+
+  /* The track after this one: the next in the theme, then the first of the
+   * next theme, wrapping round at the end so the button is never dead.
+   * Returns null when there is nowhere else to go. */
+  Screens.nextTrack = function () {
+    var cur = global.Game.trackIndex;
+    var themed = themeOrder(), legacy = legacyOrder();
+    var order = this.from === 'options' ? legacy : themed;
+    // A URL can start a themed track without the carousel being involved, so
+    // where the race came from is a hint rather than an answer: if this track
+    // is not in that list, it is in the other one.
+    if (order.indexOf(cur) < 0) order = (order === legacy) ? themed : legacy;
+    var here = order.indexOf(cur);
+    if (here < 0 || order.length < 2) return null;
+    return order[(here + 1) % order.length];
+  };
+
+  /* Which screen a given track belongs behind. */
+  Screens.homeFor = function (index) {
+    return themeOrder().indexOf(index) >= 0 ? 'play' : 'options';
+  };
+
   Screens.paintCards = function () {
     var theme = THEMES[this.theme];
     el.themeName.textContent = theme.name;
@@ -75,12 +140,7 @@
         '<span class="card-grade">' + (found ? entry.grade : 'COMING SOON') + '</span>';
       if (found) {
         global.Renderer.thumbnail(found.index, card.querySelector('.card-art'));
-        card.addEventListener('click', function () {
-          Screens.from = 'play';
-          global.Game.setTrack(found.index);
-          Screens.show('race');
-          global.Game.startRace();
-        });
+        card.addEventListener('click', function () { Screens.race(found.index, 'play'); });
       } else {
         card.disabled = true;
       }
@@ -114,12 +174,7 @@
       b.className = medal ? 'medal medal-' + MEDALS[medal] : '';
       b.innerHTML = '<b>' + t.name + '</b><span>' + t.grade +
         (medal ? ' &middot; P' + medal : '') + '</span>';
-      b.addEventListener('click', function () {
-        Screens.from = 'options';
-        global.Game.setTrack(i);
-        Screens.show('race');
-        global.Game.startRace();
-      });
+      b.addEventListener('click', function () { Screens.race(i, 'options'); });
       el.legacyList.appendChild(b);
     });
   };
@@ -153,6 +208,32 @@
     });
     document.getElementById('legacy-open').addEventListener('click', function () {
       el.options.classList.toggle('show-legacy');
+    });
+
+    /* Wiping the medals is not undoable, so it takes two presses. The armed
+     * state times out rather than sticking, so a stray press left on the
+     * screen cannot be finished off by an accidental second one later. */
+    var reset = document.getElementById('btn-reset');
+    var armed = 0;
+    var disarm = function () {
+      armed = 0;
+      reset.textContent = 'RESET DATA';
+      reset.classList.remove('danger');
+    };
+    reset.addEventListener('click', function () {
+      if (!armed) {
+        armed = setTimeout(disarm, 5000);
+        reset.textContent = 'PRESS AGAIN TO WIPE';
+        reset.classList.add('danger');
+        return;
+      }
+      clearTimeout(armed);
+      global.Progress.clear();
+      Screens.buildLegacy();
+      reset.textContent = 'DATA RESET';
+      reset.classList.remove('danger');
+      armed = 0;
+      setTimeout(disarm, 1800);
     });
 
     global.addEventListener('keydown', function (e) {

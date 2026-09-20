@@ -28,7 +28,9 @@ theme is a data entry and no screen code changes.
 **Options.** Everything that configures a race - slide, field size, game speed,
 race length, road colour - plus the legacy tracks.
 
-**Race.** Unchanged.
+**Race.** A HOME button sits at the top left. It pauses and offers HOME or
+CONTINUE, and `ESC` does the same. Leaving a race used to be one keystroke with
+no way back.
 
 `Screens.show(name)` is the whole router. Screens are full-bleed and opaque
 rather than panels over the board, because a phone in landscape leaves the board
@@ -109,6 +111,18 @@ simpler painter - road, solids, racing line, finish. The gain is that a
 thumbnail can never be a stale picture of a track that has since been edited,
 the way a folder of PNGs would be within a week.
 
+## Finishing a race
+
+The result panel offers **BACK**, **RACE AGAIN** and **NEXT TRACK**. Next track
+means the next one in the theme, then the first of the theme after it, wrapping
+round at the end so the button is never dead; a legacy race walks the legacy
+list instead. Themed entries with no track behind them yet are skipped, so it
+never lands on a placeholder.
+
+Where a race was started from is a hint rather than an answer - a URL can start
+a themed track without the carousel being involved - so if the current track is
+not in the list that hint points at, the other list is used.
+
 ## Medals
 
 Finish a track on the podium and the track-select card keeps a border for good:
@@ -122,6 +136,11 @@ is unmedalled, bronze or gold. Tinting the name to match the medal is the
 obvious thing to do and the first thing to become unreadable - a gold name on a
 gold-lit card is the worst of the three, and silver on a light card is not much
 better.
+
+**RESET DATA** on the options screen wipes them. It takes two presses, because
+it cannot be undone, and the armed state times out after five seconds rather
+than sticking - a stray press left on screen should not be finishable by an
+accidental second one later.
 
 Stored in `localStorage` under one key, which is allowed to be missing, full,
 or to throw on read in a private window or with site data blocked. Every access
@@ -208,6 +227,12 @@ them.
 - A lap only counts if you collect all four checkpoints in order and then cross
   the start/finish line heading the right way. Reversing over the line does
   nothing.
+- **Every checkpoint spans the whole road**, not the lane the racing line
+  happens to take, so any way round counts. Six tracks shipped with checkpoints
+  sized to the line instead - and Caldera's finish line too - which meant a
+  player driving a wider line silently lost the lap. Nothing in the AI ever
+  found it, because the AI drives the line the checkpoints were drawn around.
+  `npm run check` now fails any zone narrower than the road it crosses.
 
 ## The tracks
 
@@ -568,10 +593,10 @@ midpoint is where the width probe starts.
 | `js/car.js` | movement, swept wall collision, car-to-car shoving |
 | `js/ai.js` | opponent drivers |
 | `js/input.js` | keyboard and touch |
+| `js/screens.js` | which screen is up, and what NEXT TRACK means from here |
 | `js/progress.js` | the medals, and the one localStorage key they live in |
 | `js/backdrop.js` | the painted landscapes behind the menus |
 | `js/render.js` | canvas drawing, including the track thumbnails |
-| `js/screens.js` | which screen is up: front door, play, options |
 | `js/game.js` | race loop, rules, HUD |
 | `js/audio.js` | WebAudio blips, no asset files |
 

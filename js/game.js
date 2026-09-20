@@ -253,6 +253,7 @@
     el.resultsBody = document.getElementById('results-body');
     el.resultsTitle = document.getElementById('results-title');
     el.resultsNote = document.getElementById('results-note');
+    el.btnNext = document.getElementById('btn-next');
     el.pause = document.getElementById('pause');
     el.lapButtons = document.getElementById('lap-buttons');
     el.speedButtons = document.getElementById('speed-buttons');
@@ -330,6 +331,9 @@
     });
     el.resultsBody.innerHTML = rows;
     el.resultsBody.parentNode.classList.toggle('dense', all.length > 8);
+    var next = global.Screens.nextTrack();
+    el.btnNext.style.display = next === null ? 'none' : '';
+    if (next !== null) el.btnNext.textContent = global.TRACKS[next].name + ' \u2192';
     el.results.classList.add('show');
   };
 
@@ -413,6 +417,19 @@
     global.Screens.show(global.Screens.from);
   };
 
+  Game.pauseRace = function () {
+    if (this.state !== 'racing') return;
+    this.state = 'paused';
+    el.pause.classList.add('show');
+  };
+
+  Game.resumeRace = function () {
+    if (this.state !== 'paused') return;
+    this.state = 'racing';
+    el.pause.classList.remove('show');
+    Input.clear();
+  };
+
   Game.startRace = function () {
     el.results.classList.remove('show');
     el.pause.classList.remove('show');
@@ -431,18 +448,12 @@
     } else if (name === 'restart') {
       if (racing) this.startRace();
     } else if (name === 'menu') {
-      if (racing) this.leaveRace();
+      if (racing) { if (this.state === 'racing') this.pauseRace(); }
       else if (global.Screens.current !== 'main') global.Screens.show('main');
     } else if (name === 'pause') {
       if (!racing) return;
-      if (this.state === 'racing') {
-        this.state = 'paused';
-        el.pause.classList.add('show');
-      } else if (this.state === 'paused') {
-        this.state = 'racing';
-        el.pause.classList.remove('show');
-        Input.clear();
-      }
+      if (this.state === 'racing') this.pauseRace();
+      else if (this.state === 'paused') this.resumeRace();
     } else if (name === 'slide+' || name === 'slide-') {
       this.setSlide(C.slide + (name === 'slide+' ? 0.05 : -0.05));
     } else if (name === 'mute') {
@@ -464,7 +475,7 @@
     this.setRoad(C.roadTint);
     this.setTrack(C.track);   // also sets the field, which depends on the track
     if (C.deepLink) {
-      global.Screens.from = 'options';
+      global.Screens.from = global.Screens.homeFor(C.track);
       this.startRace();
     } else {
       global.Screens.show('main');
@@ -505,6 +516,26 @@
     document.getElementById('btn-quit').addEventListener('click', function (e) {
       e.stopPropagation();
       Game.leaveRace();
+    });
+    document.getElementById('btn-next').addEventListener('click', function (e) {
+      e.stopPropagation();
+      var next = global.Screens.nextTrack();
+      if (next !== null) global.Screens.race(next);
+    });
+    document.getElementById('btn-home').addEventListener('click', function (e) {
+      e.stopPropagation();
+      Game.pauseRace();
+    });
+    document.getElementById('btn-pause-go').addEventListener('click', function (e) {
+      e.stopPropagation();
+      Game.resumeRace();
+    });
+    document.getElementById('btn-pause-home').addEventListener('click', function (e) {
+      e.stopPropagation();
+      el.pause.classList.remove('show');
+      Game.reset();
+      Game.state = 'menu';
+      global.Screens.show('main');
     });
 
     var acc = 0, last = performance.now(), clock = 0;

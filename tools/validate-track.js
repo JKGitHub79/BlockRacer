@@ -141,6 +141,34 @@ for (let ti = 0; ti < TRACKS.length; ti++) {
   });
   report();
 
+  /* A checkpoint has to span the WHOLE road it crosses, not just the lane the
+   * racing line happens to take. Six tracks shipped with checkpoints sized to
+   * the line instead, and a player driving a wider line through one of them
+   * simply lost the lap - the checkpoint was never collected and the finish
+   * did nothing. Nothing in the AI ever found it, because the AI drives the
+   * line the checkpoint was drawn around. */
+  console.log('  checkpoints span the road:');
+  TRACK.CHECKPOINTS.concat([TRACK.FINISH]).forEach((z, zi) => {
+    const w = z.x1 - z.x0, h = z.y1 - z.y0;
+    const acrossX = w > h;                  // the long axis lies across the road
+    const mid = acrossX ? (z.y0 + z.y1) / 2 : (z.x0 + z.x1) / 2;
+    const lo0 = acrossX ? z.x0 : z.y0;
+    const hi0 = acrossX ? z.x1 : z.y1;
+    const free = (v) => {
+      const x = acrossX ? v : mid, y = acrossX ? mid : v;
+      return !TRACK.isWall(Math.floor(x), Math.floor(y));
+    };
+    let lo = (lo0 + hi0) / 2, hi = lo;
+    if (!free(lo)) return;                  // centred on scenery: nothing to span
+    while (free(lo - 0.25)) lo -= 0.25;
+    while (free(hi + 0.25)) hi += 0.25;
+    if (lo0 > lo + 0.01 || hi0 < hi - 0.26) {
+      fail(`zone ${zi} covers ${lo0}..${hi0} of a road running ` +
+        `${lo.toFixed(2)}..${(hi + 0.25).toFixed(2)} - a car outside that misses it`);
+    }
+  });
+  report();
+
     const last = TRACK.ROUTE[TRACK.ROUTE.length - 1], first = TRACK.ROUTE[0];
     if (last.x !== first.x && last.y !== first.y) fail('closing leg is not axis aligned');
     console.log('  ' + TRACK.length.toFixed(0) + ' cells per lap, ' +

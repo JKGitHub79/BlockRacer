@@ -11,7 +11,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.18.0', built: '2026-09-20' };
+window.BR = { version: '0.19.0', built: '2026-09-20' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -26,6 +26,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 <!-- ============================ the race ============================ -->
 <div class="shell">
   <header class="topbar">
+    <button id="btn-home" class="homebtn" title="Pause and go home">&#8962; HOME</button>
     <h1>BLOCK<span>RACER</span><em class="version-stamp">&nbsp;</em></h1>
     <div class="keys">
       <kbd>&larr;</kbd><kbd>A</kbd> turn left
@@ -43,7 +44,14 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       <div id="message" class="message"></div>
 
       <div id="pause" class="overlay">
-        <div class="panel"><h2>PAUSED</h2><p class="hint">press P to continue</p></div>
+        <div class="panel">
+          <h2>PAUSED</h2>
+          <div class="row">
+            <button id="btn-pause-home" class="secondary">HOME</button>
+            <button id="btn-pause-go" class="primary">CONTINUE</button>
+          </div>
+          <p class="hint">P also continues</p>
+        </div>
       </div>
 
       <div id="results" class="overlay">
@@ -58,9 +66,10 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           </div>
           <div class="row">
             <button id="btn-quit" class="secondary">BACK</button>
-            <button id="btn-again" class="primary">RACE AGAIN</button>
+            <button id="btn-again" class="secondary">RACE AGAIN</button>
+            <button id="btn-next" class="primary">NEXT TRACK &rarr;</button>
           </div>
-          <p class="hint">R races again &middot; ESC to go back</p>
+          <p class="hint">R races again &middot; ESC pauses</p>
         </div>
       </div>
      </div>
@@ -185,6 +194,13 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
         </div>
         <p class="hint">For trying colour schemes. It changes nothing about the
           racing.</p>
+      </div>
+
+      <div class="opt">
+        <p class="lapline">YOUR DATA</p>
+        <p class="hint">The medals on the track cards, and nothing else. Resetting
+          them cannot be undone.</p>
+        <button id="btn-reset" class="secondary wide-btn">RESET DATA</button>
       </div>
 
       <div class="opt opt-legacy">

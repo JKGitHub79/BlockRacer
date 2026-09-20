@@ -308,8 +308,8 @@
     checkpoints: [
       { x0: 14, y0: 1,  x1: 15, y1: 7  },   // top straight
       { x0: 33, y0: 12, x1: 39, y1: 13 },   // right road
-      { x0: 29, y0: 19, x1: 30, y1: 23 },   // into the trees
-      { x0: 8,  y0: 23, x1: 9,  y1: 27 }    // out of them
+      { x0: 29, y0: 19, x1: 30, y1: 27 },   // into the trees
+      { x0: 8,  y0: 21, x1: 9,  y1: 27 }    // out of them
     ],
     finish: { x0: 1, y0: 15.6, x1: 7, y1: 16.4, dir: { x: 0, y: -1 } },
     startGrid: [
@@ -401,8 +401,8 @@
     startLeg: 0,
     checkpoints: [
       { x0: 20, y0: 19, x1: 21, y1: 27 },   // main straight
-      { x0: 31, y0: 9,  x1: 35, y1: 10 },   // out of the chicane
-      { x0: 12, y0: 5,  x1: 13, y1: 9  },   // out of the top sequence
+      { x0: 31, y0: 9,  x1: 39, y1: 10 },   // out of the chicane
+      { x0: 12, y0: 1,  x1: 13, y1: 9  },   // out of the top sequence
       { x0: 1,  y0: 15, x1: 9,  y1: 16 }    // down the left
     ],
     finish: { x0: 9.6, y0: 19, x1: 10.4, y1: 27, dir: { x: 1, y: 0 } },
@@ -481,12 +481,12 @@
     ],
     startLeg: 0,
     checkpoints: [
-      { x0: 31.5, y0: 1,  x1: 32.5, y1: 4  },   // end of the top straight
+      { x0: 31.5, y0: 1,  x1: 32.5, y1: 7  },   // end of the top straight
       { x0: 33,   y0: 13, x1: 39,   y1: 14 },   // right road
-      { x0: 8,    y0: 21, x1: 9,    y1: 24 },   // bottom straight
+      { x0: 8,    y0: 21, x1: 9,    y1: 27 },   // bottom straight
       { x0: 1,    y0: 12, x1: 7,    y1: 13 }    // left road
     ],
-    finish: { x0: 8.6, y0: 4, x1: 9.4, y1: 7, dir: { x: 1, y: 0 } },
+    finish: { x0: 8.6, y0: 1, x1: 9.4, y1: 7, dir: { x: 1, y: 0 } },
     startGrid: [
       { x: 6.9, y: 4.8, wp: 1 },
       { x: 6.9, y: 6.2, wp: 1 },
@@ -640,7 +640,7 @@
     ],
     startLeg: 0,
     checkpoints: [
-      { x0: 28, y0: 18, x1: 29, y1: 23 },   // out of the S
+      { x0: 28, y0: 18, x1: 29, y1: 27 },   // out of the S
       { x0: 30, y0: 13, x1: 39, y1: 14 },   // up the right
       { x0: 20, y0: 1,  x1: 21, y1: 10 },   // along the top
       { x0: 1,  y0: 16, x1: 10, y1: 17 }    // down the left
@@ -694,9 +694,9 @@
     ],
     startLeg: 0,
     checkpoints: [
-      { x0: 34, y0: 18, x1: 35, y1: 23 },   // out of the bottom S
-      { x0: 40, y0: 15, x1: 45, y1: 16 },   // climbing the right
-      { x0: 12, y0: 1,  x1: 13, y1: 6  },   // out of the top S
+      { x0: 34, y0: 18, x1: 35, y1: 27 },   // out of the bottom S
+      { x0: 36, y0: 15, x1: 45, y1: 16 },   // climbing the right
+      { x0: 12, y0: 1,  x1: 13, y1: 10 },   // out of the top S
       { x0: 1,  y0: 16, x1: 10, y1: 17 }    // down the left
     ],
     finish: { x0: 9.6, y0: 18, x1: 10.4, y1: 27, dir: { x: 1, y: 0 } },
@@ -753,10 +753,10 @@
     ],
     startLeg: 0,
     checkpoints: [
-      { x0: 28, y0: 18, x1: 29, y1: 23 },   // out of the bottom S
-      { x0: 30, y0: 8,  x1: 35, y1: 9  },   // out of the right-hand S
-      { x0: 11, y0: 1,  x1: 12, y1: 6  },   // out of the top S
-      { x0: 1,  y0: 20, x1: 6,  y1: 21 }    // down the left
+      { x0: 28, y0: 18, x1: 29, y1: 27 },   // out of the bottom S
+      { x0: 30, y0: 16, x1: 39, y1: 17 },   // up the right-hand straight
+      { x0: 11, y0: 1,  x1: 12, y1: 10 },   // out of the top S
+      { x0: 1,  y0: 20, x1: 11, y1: 21 }    // down the left
     ],
     finish: { x0: 8.6, y0: 18, x1: 9.4, y1: 27, dir: { x: 1, y: 0 } },
     startGrid: [
