@@ -660,6 +660,7 @@ body.in-race #backdrop { display: none; }
    an image, so it can never be a stale picture of a track since edited. */
 .card-art {
   display: block;
+  aspect-ratio: 260 / 168;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: #05070c;
@@ -681,7 +682,6 @@ body.in-race #backdrop { display: none; }
 /* Nothing to show yet, so the art box holds its shape rather than collapsing
    and leaving three cards of different heights. */
 .card.soon .card-art {
-  aspect-ratio: 40 / 28;
   background: repeating-linear-gradient(-45deg,
     #0b1220 0 8px, #0e1728 8px 16px);
 }
@@ -755,4 +755,76 @@ body.in-race #backdrop { display: none; }
   .screen-title { margin-bottom: 12px; }
   .opt { padding: 10px; }
   .back { top: 8px; left: 8px; padding: 6px 12px; }
+}
+
+/* ======================================================================
+ * MEDALS
+ *
+ * A permanent record of the best podium finish on each track: bronze for a
+ * third, silver for a second, gold for a win.
+ *
+ * The medal colour goes on the border and on a corner badge, and NOWHERE
+ * ELSE. The track name stays the same near-white it always was, on the same
+ * dark card, so it reads identically whether the card is unmedalled, bronze
+ * or gold - a gold name on a gold-lit card is the obvious thing to do and
+ * the first thing to become unreadable.
+ * ==================================================================== */
+
+.medal-gold   { --medal: #ffc94d; --medal-dim: rgba(255, 201, 77, 0.22); }
+.medal-silver { --medal: #cfd9e6; --medal-dim: rgba(207, 217, 230, 0.20); }
+.medal-bronze { --medal: #d98f5a; --medal-dim: rgba(217, 143, 90, 0.20); }
+
+.card.medal {
+  border-color: var(--medal);
+  box-shadow: 0 0 0 1px var(--medal), 0 6px 22px var(--medal-dim);
+}
+.card.medal:hover { border-color: var(--medal); }
+/* The name and its background are deliberately untouched by the medal. */
+.card.medal .card-name { color: var(--text); }
+.card.medal .card-grade { color: var(--medal); }
+
+/* The badge sits over the top-right of the picture, on its own dark plate so
+   it is legible against whatever the track happens to look like there. */
+.card { position: relative; }
+.card-medal {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  min-width: 26px;
+  padding: 2px 7px;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  color: var(--medal);
+  background: rgba(6, 10, 18, 0.88);
+  border: 1px solid var(--medal);
+  border-radius: 999px;
+}
+.card-medal sup { font-size: 8px; letter-spacing: 0; }
+
+/* Legacy rows get the same treatment at row scale: a left edge and the
+   place, with the name left alone. */
+.legacy-list button.medal {
+  border-color: var(--medal);
+  border-left-width: 4px;
+}
+.legacy-list button.medal span { color: var(--medal); }
+
+/* The result screen says which medal was won, once, and only when it was an
+   improvement - a line that appears every race is a line nobody reads. */
+.results-note {
+  margin: -6px 0 14px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: var(--medal, var(--accent));
+}
+#results-title.podium.p1 { --medal: #ffc94d; color: #ffc94d; }
+#results-title.podium.p2 { --medal: #cfd9e6; color: #cfd9e6; }
+#results-title.podium.p3 { --medal: #d98f5a; color: #d98f5a; }
+#results-title.podium.p1 + .results-note { --medal: #ffc94d; }
+#results-title.podium.p2 + .results-note { --medal: #cfd9e6; }
+#results-title.podium.p3 + .results-note { --medal: #d98f5a; }
+
+@media (max-height: 520px) {
+  .card-medal { top: 10px; right: 10px; padding: 1px 5px; font-size: 10px; }
 }

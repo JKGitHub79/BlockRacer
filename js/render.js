@@ -421,16 +421,23 @@
       return (tint && tint[name]) || (data.theme && data.theme[name]) || C.colors[name];
     };
 
-    var box = 4;                        // the border the card draws around it
-    var cw = 240, ch = Math.round(cw * data.rows / data.cols);
+    /* Every thumbnail is the same shape, whatever shape the track is, and the
+     * track is letterboxed inside it. Cards sized to their own map put a
+     * 46-cell circuit next to a 40-cell one and left the row uneven. */
+    var cw = 260, ch = 168, pad = 8;
     var cv = document.createElement('canvas');
     cv.width = cw;
     cv.height = ch;
     var g = cv.getContext('2d');
-    var s = cw / data.cols;
+    var s = Math.min((cw - pad * 2) / data.cols, (ch - pad * 2) / data.rows);
+    var ox = (cw - data.cols * s) / 2;
+    var oy = (ch - data.rows * s) / 2;
 
-    g.fillStyle = pick('road');
+    g.fillStyle = '#05070c';
     g.fillRect(0, 0, cw, ch);
+    g.translate(ox, oy);
+    g.fillStyle = pick('road');
+    g.fillRect(0, 0, data.cols * s, data.rows * s);
 
     data.walls.forEach(function (w) {
       var kind = w.kind;
@@ -457,8 +464,6 @@
     g.fillRect(f.x0 * s, f.y0 * s, Math.max(2, (f.x1 - f.x0) * s), (f.y1 - f.y0) * s);
 
     host.innerHTML = '';
-    host.style.setProperty('--art-ratio', (data.cols / data.rows).toFixed(3));
-    cv.style.padding = box + 'px';
     host.appendChild(cv);
   };
 

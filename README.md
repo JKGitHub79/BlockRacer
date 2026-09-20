@@ -42,16 +42,58 @@ zero-sized.
 
 Three themes, ascending in difficulty, three tracks each:
 
-| Theme | Tracks | |
-| --- | --- | --- |
-| Forest | Pinefall, Hollow, Canopy | easiest |
-| Desert | Duneline, Salt Flats, Canyon Run | harder |
-| Snow | Frostline, Glacier, Whiteout | harder again |
+| Theme | Tracks | | |
+| --- | --- | --- | --- |
+| Forest | Pinefall, Hollow, Canopy | easiest | **built** |
+| Desert | Duneline, Salt Flats, Canyon Run | harder | to come |
+| Snow | Frostline, Glacier, Whiteout | harder again | to come |
 
-**These nine tracks are not built yet.** They are named in `js/themes.js` and
-show on the cards as still to come. A theme's track is matched to `js/tracks.js`
-by id; a name with no track behind it renders as a placeholder rather than being
+Forest is built. Desert and Snow are named in `js/themes.js` and show on the
+cards as still to come: a theme's track is matched to `js/tracks.js` by id, and
+a name with no track behind it renders as a placeholder rather than being
 hidden, so the shape of what is being built stays visible while it is built.
+
+### The forest three
+
+All nine cells wide - wider than anything built before - and all three below
+the previous easiest track in the game. They share a palette and a shape
+language: a rectangular ring with pine stands set into the straights, and every
+stand three cells thick, which leaves a **six-cell gate with the racing line
+down the middle**. That is 3.0 cells of margin once the turn arc and the car's
+own width are paid for, against Catalunya's 2.0 and Staircase's 0.4.
+
+| | Corners | Lane changes | Crashes |
+| --- | --- | --- | --- |
+| Pinefall | 6 | 1 | 58 |
+| Hollow | 10 | 3 | 88 |
+| Canopy | 12 | 4 | 125 |
+| *Snowdrift, the easiest before these* | *6* | *0* | *135* |
+
+They differ only in how often the road asks you to move and how much straight
+there is in between. Nothing is narrowed and no gate is tightened.
+
+Getting there took three goes, and the third one is the lesson.
+
+| | Pinefall | Hollow | Canopy |
+| --- | --- | --- | --- |
+| four-cell stands, five cells between each pair | 124 | 396 | 530 |
+| eight cells between each pair | 113 | 333 | 352 |
+| **three-cell stands** | **58** | **88** | **125** |
+
+The first cut put two of the three supposedly easy tracks in the same band as
+Wildwood and Caldera. Giving a late turn-in somewhere to go - eight cells
+between paired stands instead of five - helped, but not nearly enough.
+
+**Taking one cell off the thickness of every stand did it**, better than
+halving the count. A cell off the stand is a cell onto the gate *and* a cell
+off the lane change, and the two compound. When a lane change is expensive, the
+thickness of the thing forcing it is the first place to look, ahead of how far
+apart things are.
+
+One thing deliberately *not* done: the AI's late-turn mistake rate was left
+alone. Turning it down halves the crash count on any track, but it makes the
+opposition tidier rather than the track kinder, and the count is only useful as
+a measure of the geometry while the drivers stay the same.
 
 The seven circuits that came first - Crossover, Snowdrift, Mesa, Wildwood,
 Catalunya, Caldera, Staircase - are the **legacy tracks**, on the options
@@ -66,6 +108,32 @@ must not disturb the track the game is holding. The cost is a second, much
 simpler painter - road, solids, racing line, finish. The gain is that a
 thumbnail can never be a stale picture of a track that has since been edited,
 the way a folder of PNGs would be within a week.
+
+## Medals
+
+Finish a track on the podium and the track-select card keeps a border for good:
+bronze for a third, silver for a second, gold for a win. Only an improvement is
+written, so finishing fourth after a win does not take the win away, and
+neither does finishing second.
+
+**The medal colour goes on the border and on a corner badge, and nowhere else.**
+The track name stays the same near-white on the same dark card whether the card
+is unmedalled, bronze or gold. Tinting the name to match the medal is the
+obvious thing to do and the first thing to become unreadable - a gold name on a
+gold-lit card is the worst of the three, and silver on a light card is not much
+better.
+
+Stored in `localStorage` under one key, which is allowed to be missing, full,
+or to throw on read in a private window or with site data blocked. Every access
+is wrapped; a failure means the medals do not persist, never that the game
+stops, and the in-memory copy still shows what was won in the session. What
+comes back out of storage is filtered to values that are still a podium place,
+because it was put there by an older version of the file or by hand.
+
+**A loophole worth knowing about:** a medal is recorded for any podium finish
+at whatever settings the race was run at, exactly as specified. With the field
+set to two cars you are first or second by definition, so silver is free. Say
+the word and a medal can require a field of at least four.
 
 ### The landscapes
 
@@ -272,6 +340,9 @@ through.
 
 | Track | Crashes | Scrapes |
 | --- | --- | --- |
+| Pinefall | 58 | 623 |
+| Hollow | 88 | 1416 |
+| Canopy | 125 | 1942 |
 | Snowdrift | 135 | 1673 |
 | Crossover | 150 | 1576 |
 | Mesa | 196 | 1990 |
@@ -280,7 +351,8 @@ through.
 | Caldera | 433 | 1547 |
 | Staircase | 2408 | 11962 |
 
-Three clear bands: an easy three, three moderates that are within six per cent
+Four clear bands: the forest three, then the easy three that came before them,
+three moderates that are within six per cent
 of one another and are not meaningfully orderable between themselves, and
 Staircase on its own at nearly six times the moderates. Catalunya's high scrape
 count against its crash count is the eight-cell roads doing their job - you pay
@@ -496,6 +568,7 @@ midpoint is where the width probe starts.
 | `js/car.js` | movement, swept wall collision, car-to-car shoving |
 | `js/ai.js` | opponent drivers |
 | `js/input.js` | keyboard and touch |
+| `js/progress.js` | the medals, and the one localStorage key they live in |
 | `js/backdrop.js` | the painted landscapes behind the menus |
 | `js/render.js` | canvas drawing, including the track thumbnails |
 | `js/screens.js` | which screen is up: front door, play, options |

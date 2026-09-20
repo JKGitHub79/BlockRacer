@@ -252,6 +252,7 @@
     el.results = document.getElementById('results');
     el.resultsBody = document.getElementById('results-body');
     el.resultsTitle = document.getElementById('results-title');
+    el.resultsNote = document.getElementById('results-note');
     el.pause = document.getElementById('pause');
     el.lapButtons = document.getElementById('lap-buttons');
     el.speedButtons = document.getElementById('speed-buttons');
@@ -306,8 +307,17 @@
     var all = finished.concat(rest);
     var placeOfPlayer = all.indexOf(this.player) + 1;
 
+    // A podium is kept for good. Progress.record only writes an improvement,
+    // so finishing fourth after a win does not take the win away.
+    var won = global.Progress.record(T.data.id, placeOfPlayer);
+
     el.resultsTitle.textContent =
       placeOfPlayer === 1 ? 'YOU WIN' : 'P' + placeOfPlayer + ' OF ' + all.length;
+    el.resultsTitle.className = placeOfPlayer <= 3 ? 'podium p' + placeOfPlayer : '';
+    el.resultsNote.textContent = won
+      ? (placeOfPlayer === 1 ? 'GOLD' : placeOfPlayer === 2 ? 'SILVER' : 'BRONZE') +
+        ' \u2013 a new best on ' + T.name
+      : '';
 
     var rows = '';
     all.forEach(function (car, i) {

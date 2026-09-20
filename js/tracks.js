@@ -561,5 +561,216 @@
     ]
   };
 
-  global.TRACKS = [CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE];
+
+  /* ---- The forest theme ------------------------------------------------
+   * Three tracks that share a palette and a shape language: a rectangular
+   * ring with nine-cell roads - wider than anything built before - and pine
+   * stands set into the straights to make the car change lane.
+   *
+   * Every gate between a stand and the far side of the road is five cells
+   * with the racing line down the middle, which leaves 2.5 cells of margin
+   * once the turn arc and the car's own width are paid for. Catalunya's
+   * chicanes leave 2.0 and Staircase's leave 0.4. This is the most forgiving
+   * geometry in the game, deliberately: the forest is where the car is
+   * learned.
+   *
+   * The three differ only in how many times the road asks you to move and
+   * how long the straights between are. Pinefall asks once, Hollow four
+   * times, Canopy five, and the straights shorten as they go.
+   * -------------------------------------------------------------------- */
+  var FOREST = {
+    bg:         '#040b08',
+    /* The road has to be near black, as it is on every other track. The first
+     * cut had it a dark green and the trees a mid green, four steps apart:
+     * on screen the circuit disappeared into the wood and you could not see
+     * where the road went. Tarmac is the dark thing; everything else is
+     * lighter than it. */
+    road:       '#0b120e',   // packed needles, in deep shade
+    roadLine:   '#141e17',
+    wall:       '#245c37',   // the standing wood
+    wallTop:    '#3f9058',
+    outer:      '#18401f',   // deeper forest, off the map
+    outerTop:   '#2c7040',
+    jog:        '#4d3319',   // the pine stands out on the road
+    jogTop:     '#8a6530',
+    racingLine: 'rgba(190,235,180,0.24)',
+    check:      'rgba(150,230,160,0.06)',
+    checkNext:  'rgba(150,230,160,0.24)',
+    startLine:  '#e8f2e0'
+  };
+
+  /* ---- Forest 1: PINEFALL ---------------------------------------------
+   *
+   *        0        10        20        30       39
+   *      0 +--------------------------------------+
+   *        |            top road, rows 1-9        |   9 cells
+   *     10 |        +--------------------+        |
+   *        |  left  |      infield       | right  |   both 9 cells
+   *     18 |        +--------------------+        |
+   *        |  ##A###         ###B###              |   bottom road, rows 18-26
+   *     27 +--------------------------------------+
+   *
+   * One S, on the main straight, and nothing else: six corners a lap. The
+   * easiest thing in the game.
+   * -------------------------------------------------------------------- */
+  var PINEFALL = {
+    id: 'pinefall',
+    name: 'PINEFALL',
+    blurb: 'A wide ring through the pines, with one lane change on the straight.',
+    grade: 'BEGINNER',
+    cols: 40,
+    rows: 28,
+    aiPace: 0.95,
+    aiOffsetScale: 3,
+    aiMistakeScale: 1,
+    weather: 'leaves',
+    theme: FOREST,
+    walls: border(40, 28).concat([
+      { x0: 10, y0: 10, x1: 29, y1: 17, kind: 'infield' },
+      { x0: 11, y0: 18, x1: 16, y1: 20, kind: 'jog' },   // stand A, pushes you low
+      { x0: 25, y0: 24, x1: 30, y1: 26, kind: 'jog' }    // stand B, pushes you back up
+    ]),
+    route: [
+      { x: 5.5,  y: 24   },   // 0  onto the main straight, low lane
+      { x: 21,   y: 24   },   // 1  clear of stand A
+      { x: 21,   y: 21   },   // 2  the lane change
+      { x: 34.5, y: 21   },   // 3  over stand B and into the right road
+      { x: 34.5, y: 5.5  },   // 4  up the right side
+      { x: 5.5,  y: 5.5  }    // 5  along the top, then down the left to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 28, y0: 18, x1: 29, y1: 23 },   // out of the S
+      { x0: 30, y0: 13, x1: 39, y1: 14 },   // up the right
+      { x0: 20, y0: 1,  x1: 21, y1: 10 },   // along the top
+      { x0: 1,  y0: 16, x1: 10, y1: 17 }    // down the left
+    ],
+    finish: { x0: 9.6, y0: 18, x1: 10.4, y1: 27, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 8.0, y: 22.8, wp: 1 },
+      { x: 8.0, y: 25.2, wp: 1 },
+      { x: 6.1, y: 22.8, wp: 1 },
+      { x: 6.1, y: 25.2, wp: 1 }
+    ]
+  };
+
+  /* ---- Forest 2: HOLLOW ------------------------------------------------
+   * A longer map, so the main straight runs twenty-one cells, and three lane
+   * changes rather than one: the S on the bottom, another climbing the
+   * right-hand side, a third along the top. Ten corners a lap.
+   * -------------------------------------------------------------------- */
+  var HOLLOW = {
+    id: 'hollow',
+    name: 'HOLLOW',
+    blurb: 'A long main straight, then three changes of lane on the way back.',
+    grade: 'BEGINNER',
+    cols: 46,
+    rows: 28,
+    aiPace: 0.95,
+    aiOffsetScale: 2,
+    aiMistakeScale: 1,
+    weather: 'leaves',
+    theme: FOREST,
+    walls: border(46, 28).concat([
+      { x0: 10, y0: 10, x1: 35, y1: 17, kind: 'infield' },
+      { x0: 12, y0: 18, x1: 17, y1: 20, kind: 'jog' },   // the bottom S
+      { x0: 26, y0: 24, x1: 31, y1: 26, kind: 'jog' },
+      { x0: 36, y0: 14, x1: 38, y1: 17, kind: 'jog' },   // climbing the right
+      { x0: 42, y0: 3,  x1: 44, y1: 6,  kind: 'jog' },
+      { x0: 30, y0: 1,  x1: 35, y1: 3,  kind: 'jog' },   // along the top
+      { x0: 14, y0: 7,  x1: 19, y1: 9,  kind: 'jog' }
+    ]),
+    route: [
+      { x: 5.5,  y: 24   },   // 0  the main straight, low lane
+      { x: 22,   y: 24   },   // 1
+      { x: 22,   y: 21   },   // 2  lane change
+      { x: 42,   y: 21   },   // 3  into the right road, outside lane
+      { x: 42,   y: 10.5 },   // 4
+      { x: 39,   y: 10.5 },   // 5  lane change
+      { x: 39,   y: 7    },   // 6  into the top road, low lane
+      { x: 25,   y: 7    },   // 7
+      { x: 25,   y: 4    },   // 8  lane change
+      { x: 5.5,  y: 4    }    // 9  along the top, then down the left to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 34, y0: 18, x1: 35, y1: 23 },   // out of the bottom S
+      { x0: 40, y0: 15, x1: 45, y1: 16 },   // climbing the right
+      { x0: 12, y0: 1,  x1: 13, y1: 6  },   // out of the top S
+      { x0: 1,  y0: 16, x1: 10, y1: 17 }    // down the left
+    ],
+    finish: { x0: 9.6, y0: 18, x1: 10.4, y1: 27, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 8.0, y: 22.8, wp: 1 },
+      { x: 8.0, y: 25.2, wp: 1 },
+      { x: 6.1, y: 22.8, wp: 1 },
+      { x: 6.1, y: 25.2, wp: 1 }
+    ]
+  };
+
+  /* ---- Forest 3: CANOPY ------------------------------------------------
+   * Back to the compact map, so the straights are shorter, and stands on all
+   * four sides: every straight asks you to move. Twelve corners a lap with
+   * five of them running into the next. Still nine cells wide and still
+   * long runoffs - the forest never punishes, it only asks more often.
+   * -------------------------------------------------------------------- */
+  var CANOPY = {
+    id: 'canopy',
+    name: 'CANOPY',
+    blurb: 'Every straight asks you to move. Five corners run into the next.',
+    grade: 'BEGINNER',
+    cols: 40,
+    rows: 28,
+    aiPace: 0.95,
+    aiOffsetScale: 2,
+    aiMistakeScale: 1,
+    weather: 'leaves',
+    theme: FOREST,
+    walls: border(40, 28).concat([
+      { x0: 10, y0: 10, x1: 29, y1: 17, kind: 'infield' },
+      { x0: 11, y0: 18, x1: 16, y1: 20, kind: 'jog' },   // the bottom S
+      { x0: 25, y0: 24, x1: 30, y1: 26, kind: 'jog' },
+      { x0: 30, y0: 14, x1: 32, y1: 17, kind: 'jog' },   // up the right
+      { x0: 36, y0: 3,  x1: 38, y1: 6,  kind: 'jog' },
+      { x0: 23, y0: 1,  x1: 28, y1: 3,  kind: 'jog' },   // along the top
+      { x0: 10, y0: 7,  x1: 15, y1: 9,  kind: 'jog' },
+      { x0: 1,  y0: 2,  x1: 3,  y1: 5,  kind: 'jog' },   // down the left
+      { x0: 7,  y0: 13, x1: 9,  y1: 17, kind: 'jog' }
+    ]),
+    route: [
+      { x: 4,    y: 24   },   // 0  the main straight, low lane
+      { x: 21,   y: 24   },   // 1
+      { x: 21,   y: 21   },   // 2  lane change
+      { x: 36,   y: 21   },   // 3  into the right road, outside lane
+      { x: 36,   y: 10.5 },   // 4
+      { x: 33,   y: 10.5 },   // 5  lane change
+      { x: 33,   y: 7    },   // 6  into the top road, low lane
+      { x: 19.5, y: 7    },   // 7
+      { x: 19.5, y: 4    },   // 8  lane change
+      { x: 7,    y: 4    },   // 9  into the left road, inside lane
+      { x: 7,    y: 9.5  },   // 10
+      { x: 4,    y: 9.5  }    // 11 lane change, then down the left to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 28, y0: 18, x1: 29, y1: 23 },   // out of the bottom S
+      { x0: 30, y0: 8,  x1: 35, y1: 9  },   // out of the right-hand S
+      { x0: 11, y0: 1,  x1: 12, y1: 6  },   // out of the top S
+      { x0: 1,  y0: 20, x1: 6,  y1: 21 }    // down the left
+    ],
+    finish: { x0: 8.6, y0: 18, x1: 9.4, y1: 27, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 7.4, y: 22.8, wp: 1 },
+      { x: 7.4, y: 25.2, wp: 1 },
+      { x: 5.5, y: 22.8, wp: 1 },
+      { x: 5.5, y: 25.2, wp: 1 }
+    ]
+  };
+
+  global.TRACKS = [
+    // the themed circuits, in the order the play screen offers them
+    PINEFALL, HOLLOW, CANOPY,
+    // and the seven built before the themes, kept raceable under LEGACY
+    CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE
+  ];
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -35,6 +35,7 @@
     document.body.classList.toggle('in-race', name === 'race');
     Backdrop.set(name === 'play' ? THEMES[Screens.theme].scene : SCENE_FOR[name] || 'night');
     if (name === 'play') this.paintCards();
+    if (name === 'options') this.buildLegacy();
     global.Input.clear();
   };
 
@@ -50,6 +51,8 @@
     return null;
   }
 
+  var MEDALS = ['', 'gold', 'silver', 'bronze'];
+
   Screens.paintCards = function () {
     var theme = THEMES[this.theme];
     el.themeName.textContent = theme.name;
@@ -60,10 +63,14 @@
     el.cards.innerHTML = '';
     theme.tracks.forEach(function (entry) {
       var found = trackData(entry.id);
+      var medal = global.Progress.medal(entry.id);
       var card = document.createElement('button');
-      card.className = 'card' + (found ? '' : ' soon');
+      card.className = 'card' + (found ? '' : ' soon') +
+                       (medal ? ' medal medal-' + MEDALS[medal] : '');
       card.innerHTML =
         '<span class="card-art"></span>' +
+        (medal ? '<span class="card-medal">' + medal + '<sup>' +
+                 (medal === 1 ? 'st' : medal === 2 ? 'nd' : 'rd') + '</sup></span>' : '') +
         '<span class="card-name">' + entry.name + '</span>' +
         '<span class="card-grade">' + (found ? entry.grade : 'COMING SOON') + '</span>';
       if (found) {
@@ -92,9 +99,21 @@
    * screen rather than in the carousel: they are being replaced rather than
    * offered, and the carousel is for what the game is becoming. */
   Screens.buildLegacy = function () {
+    // Legacy is whatever no theme has claimed, worked out rather than listed,
+    // so a track promoted into a theme leaves this list by itself.
+    var claimed = {};
+    THEMES.forEach(function (theme) {
+      theme.tracks.forEach(function (t) { claimed[t.id] = true; });
+    });
+
+    el.legacyList.innerHTML = '';
     global.TRACKS.forEach(function (t, i) {
+      if (claimed[t.id]) return;
+      var medal = global.Progress.medal(t.id);
       var b = document.createElement('button');
-      b.innerHTML = '<b>' + t.name + '</b><span>' + t.grade + '</span>';
+      b.className = medal ? 'medal medal-' + MEDALS[medal] : '';
+      b.innerHTML = '<b>' + t.name + '</b><span>' + t.grade +
+        (medal ? ' &middot; P' + medal : '') + '</span>';
       b.addEventListener('click', function () {
         Screens.from = 'options';
         global.Game.setTrack(i);
@@ -121,7 +140,7 @@
       Screens.show('play');
     });
     document.getElementById('btn-options').addEventListener('click', function () {
-      Screens.show('options');
+      Screens.show('options');   // which rebuilds the legacy rows
     });
     document.getElementById('theme-prev').addEventListener('click', function () {
       Screens.stepTheme(-1);

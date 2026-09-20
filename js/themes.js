@@ -21,9 +21,9 @@
       scene: 'forest',
       accent: '#5fd08a',
       tracks: [
-        { id: 'pinefall', name: 'PINEFALL', grade: 'EASY' },
-        { id: 'hollow',   name: 'HOLLOW',   grade: 'EASY' },
-        { id: 'canopy',   name: 'CANOPY',   grade: 'MODERATE' }
+        { id: 'pinefall', name: 'PINEFALL', grade: 'BEGINNER' },
+        { id: 'hollow',   name: 'HOLLOW',   grade: 'BEGINNER +' },
+        { id: 'canopy',   name: 'CANOPY',   grade: 'BEGINNER ++' }
       ]
     },
     {
