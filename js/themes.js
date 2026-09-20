@@ -41,7 +41,7 @@
     {
       id: 'snow',
       name: 'SNOW',
-      tagline: 'Narrower ice, and it asks the same questions twice as often.',
+      tagline: 'Three shapes no other theme has. A switchback, a crossing, an L.',
       scene: 'snow',
       accent: '#8fd3ff',
       tracks: [

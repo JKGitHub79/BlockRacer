@@ -134,27 +134,45 @@ how tight the ask is.
 
 ### The snow three
 
-Moderate: the band Wildwood, Catalunya and Caldera sit in. The step from the
-desert is the one thing the desert deliberately held still - **the roads come
-down from nine cells to eight**, so a three-cell stand leaves a five-cell gate
-and 2.5 cells of margin rather than 3.0.
+Moderate, and - unlike the forest and the desert, which are the same
+rectangular ring three times each - **three different shapes**. The first cut
+of this theme was the desert layouts one cell narrower, which is a palette
+swap rather than a theme, and it was rightly rejected.
 
-That half a cell is the whole of the difficulty step, and it is enough. It is
-also the same eight cells Catalunya is, and wider than every track built before
-the themes except Crossover's six.
+| | Shape | Corners | Lane changes | Crashes |
+| --- | --- | --- | --- | --- |
+| Frostline | switchback | 12 | 3 | 294 |
+| Glacier | figure of eight | 12 | 3 | 318 |
+| Whiteout | L-shaped | 16 | 5 | 450 |
 
-| | Corners | Lane changes | Crashes |
-| --- | --- | --- | --- |
-| Frostline | 8 | 2 | 231 |
-| Glacier | 12 | 4 | 339 |
-| Whiteout | 16 | 6 | 464 |
+**Frostline has no island.** The middle of the map is a corridor walled on
+both sides with exactly one way in and one way out, so the lap is a
+switchback: down the right, west along the bottom, up a link at the far left,
+east along the middle, up a climb, east along the top, back into the right.
+The walls force the lap rather than the racing line describing it.
 
-What does **not** change is the thing that makes them fun: lane changes are
-still three cells, the legs between them still short enough that one corner
-runs into the next - Whiteout links six of its sixteen - and the runoff past a
-turn-in is six to eight cells. Whiteout is the only themed track above the
-legacy moderates, and it gets there by asking six times a lap rather than by
-tightening any single ask.
+**Glacier crosses itself.** Two lobes meet at an eight-by-eight junction in
+the middle of the map and the route goes through it twice a lap - once
+northbound out of the main straight, once westbound along the middle. That
+changes the racing rather than the geometry: the field arrives at one square
+from two directions.
+
+**Whiteout is an L.** The top right of the map is solid ground, so the lap
+runs round a corner the circuit does not have, and the elbow is a wide open
+sweep instead of a corner. It carries the longest straight in the game with a
+double-S in it.
+
+The roads are eight cells rather than the desert's nine, worth roughly double
+on its own, but the shapes are the point.
+
+**Frostline and Glacier are within eight per cent of each other** and are not
+meaningfully orderable, the same way the three legacy moderates are not. They
+are different shapes rather than different difficulties, and four passes at
+moving stands around Frostline did not separate them - twice the change went
+the wrong way, because on a switchback moving a stand changes its distance to
+a *corner*, and that matters more than the runoff either side of it. That is a
+fourth lever, and one that behaves differently per shape rather than
+uniformly, which is why it is not in the list below.
 
 ### The ladder
 
@@ -164,12 +182,13 @@ Nine tracks, one continuous curve:
 | --- | --- | --- | --- |
 | Forest | 58 | 88 | 124 |
 | Desert | 69 | 144 | 190 |
-| Snow | 231 | 339 | 464 |
+| Snow | 294 | 318 | 450 |
 
-In order: 58, 69, 88, 124, 144, 190, 231, 339, 464 - every step between 16 and
-47 per cent, so playing them front to back is a rising curve rather than three
-clumps. Each theme also starts below where the last one ended, which is what
-makes the first track of a new theme feel like a new theme rather than a wall.
+In order: 58, 69, 88, 124, 144, 190, 294, 318, 450. Forest and Desert
+interleave, so the first track of the desert is easier than the last of the
+forest and a new theme reads as a new theme rather than a wall. Snow does not
+interleave - it steps clear of the desert and stays there, because it is the
+moderate band.
 
 Three levers, in order of how much they are worth:
 
@@ -459,12 +478,12 @@ through.
 | Crossover | 150 | 1576 |
 | Canyon Run | 190 | 2632 |
 | Mesa | 196 | 1990 |
-| Frostline | 231 | 1855 |
-| Glacier | 339 | 2679 |
+| Frostline | 294 | 2048 |
+| Glacier | 318 | 2559 |
 | Catalunya | 407 | 2564 |
 | Wildwood | 417 | 1995 |
 | Caldera | 433 | 1547 |
-| Whiteout | 464 | 3904 |
+| Whiteout | 450 | 4340 |
 | Staircase | 2408 | 11962 |
 
 The nine themed tracks and the six that came before them interleave into one
