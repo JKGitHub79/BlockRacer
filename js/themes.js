@@ -41,13 +41,13 @@
     {
       id: 'snow',
       name: 'SNOW',
-      tagline: 'Narrower every lap. The last one does not forgive.',
+      tagline: 'Narrower ice, and it asks the same questions twice as often.',
       scene: 'snow',
       accent: '#8fd3ff',
       tracks: [
-        { id: 'frostline', name: 'FROSTLINE', grade: 'HARD' },
-        { id: 'glacier',   name: 'GLACIER',   grade: 'HARD' },
-        { id: 'whiteout',  name: 'WHITEOUT',  grade: 'BRUTAL' }
+        { id: 'frostline', name: 'FROSTLINE', grade: 'MODERATE' },
+        { id: 'glacier',   name: 'GLACIER',   grade: 'MODERATE +' },
+        { id: 'whiteout',  name: 'WHITEOUT',  grade: 'MODERATE ++' }
       ]
     }
   ];

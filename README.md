@@ -48,12 +48,11 @@ Three themes, ascending in difficulty, three tracks each:
 | --- | --- | --- | --- |
 | Forest | Pinefall, Hollow, Canopy | easiest | **built** |
 | Desert | Duneline, Salt Flats, Canyon Run | harder | **built** |
-| Snow | Frostline, Glacier, Whiteout | harder again | to come |
+| Snow | Frostline, Glacier, Whiteout | moderate | **built** |
 
-Forest and Desert are built. Snow is named in `js/themes.js` and shows on the
-cards as still to come: a theme's track is matched to `js/tracks.js` by id, and
-a name with no track behind it renders as a placeholder rather than being
-hidden, so the shape of what is being built stays visible while it is built.
+All nine are built. A theme's track is matched to `js/tracks.js` by id, and a
+name with no track behind it renders as a placeholder rather than being hidden,
+so a fourth theme can be sketched in `js/themes.js` and filled in later.
 
 ### The forest three
 
@@ -133,9 +132,55 @@ every other term, which is why it is now the one thing held still across a
 theme and the difficulty step comes from how *often* the road asks, not from
 how tight the ask is.
 
-Across both themes the ladder comes out monotonic - 58, 69, 88, 124, 144, 190
-- in steps of between 16 and 41 per cent, so playing Forest 1 through Desert 3
-in order is a continuously rising curve rather than six tracks in two clumps.
+### The snow three
+
+Moderate: the band Wildwood, Catalunya and Caldera sit in. The step from the
+desert is the one thing the desert deliberately held still - **the roads come
+down from nine cells to eight**, so a three-cell stand leaves a five-cell gate
+and 2.5 cells of margin rather than 3.0.
+
+That half a cell is the whole of the difficulty step, and it is enough. It is
+also the same eight cells Catalunya is, and wider than every track built before
+the themes except Crossover's six.
+
+| | Corners | Lane changes | Crashes |
+| --- | --- | --- | --- |
+| Frostline | 8 | 2 | 231 |
+| Glacier | 12 | 4 | 339 |
+| Whiteout | 16 | 6 | 464 |
+
+What does **not** change is the thing that makes them fun: lane changes are
+still three cells, the legs between them still short enough that one corner
+runs into the next - Whiteout links six of its sixteen - and the runoff past a
+turn-in is six to eight cells. Whiteout is the only themed track above the
+legacy moderates, and it gets there by asking six times a lap rather than by
+tightening any single ask.
+
+### The ladder
+
+Nine tracks, one continuous curve:
+
+| | 1 | 2 | 3 |
+| --- | --- | --- | --- |
+| Forest | 58 | 88 | 124 |
+| Desert | 69 | 144 | 190 |
+| Snow | 231 | 339 | 464 |
+
+In order: 58, 69, 88, 124, 144, 190, 231, 339, 464 - every step between 16 and
+47 per cent, so playing them front to back is a rising curve rather than three
+clumps. Each theme also starts below where the last one ended, which is what
+makes the first track of a new theme feel like a new theme rather than a wall.
+
+Three levers, in order of how much they are worth:
+
+1. **Gate margin** - the road width minus the stand. 3.0 cells to 2.5 is worth
+   roughly double the crash count. Held still within a theme, changed only
+   between them.
+2. **How often the road asks** - one more lane change per track is worth
+   somewhere around a fifth to a third.
+3. **Runoff past a turn-in** - eight cells to five is worth around 10-20 per
+   cent. The fine adjustment, and how each theme's three tracks were levelled
+   against one another.
 
 The seven circuits that came first - Crossover, Snowdrift, Mesa, Wildwood,
 Catalunya, Caldera, Staircase - are the **legacy tracks**, on the options
@@ -414,15 +459,17 @@ through.
 | Crossover | 150 | 1576 |
 | Canyon Run | 190 | 2632 |
 | Mesa | 196 | 1990 |
+| Frostline | 231 | 1855 |
+| Glacier | 339 | 2679 |
 | Catalunya | 407 | 2564 |
 | Wildwood | 417 | 1995 |
 | Caldera | 433 | 1547 |
+| Whiteout | 464 | 3904 |
 | Staircase | 2408 | 11962 |
 
-The six themed tracks and the easy three now interleave into one smooth run
-from 58 to 196, then there are three moderates that are within six per cent
-of one another and are not meaningfully orderable between themselves, and
-Staircase on its own at nearly six times the moderates. Catalunya's high scrape
+The nine themed tracks and the six that came before them interleave into one
+run from 58 to 464 with no gap in it, and Staircase on its own at five times
+the top of that. Catalunya's high scrape
 count against its crash count is the eight-cell roads doing their job - you pay
 for a mistake there by losing a tenth down a wall rather than by stopping.
 

@@ -971,10 +971,214 @@
     ]
   };
 
+
+  /* ---- The snow theme --------------------------------------------------
+   * Moderate: the band Wildwood, Catalunya and Caldera sit in. The step from
+   * the desert is the one thing the desert deliberately held still - the
+   * roads come down from nine cells to eight, so a three-cell stand leaves a
+   * five-cell gate and 2.5 cells of margin rather than 3.0.
+   *
+   * That half a cell is worth roughly twice the crash count, measured: the
+   * desert layouts scored 69 / 144 / 190 at nine cells and 156 / 373 / 417
+   * at eight, on identical geometry. It is the whole of the difficulty step
+   * here, and it is enough.
+   *
+   * What does NOT change is the thing that makes these fun. Lane changes are
+   * still three cells, the legs between them still short enough that one
+   * corner runs into the next, and the runoff past a turn-in is still six
+   * cells. Eight is also what Catalunya is, and wider than every track built
+   * before the themes bar Crossover's six.
+   * -------------------------------------------------------------------- */
+  var SNOW = {
+    bg:         '#060a12',
+    road:       '#0f1721',   // packed ice, dark under a grey sky
+    roadLine:   '#17212d',
+    wall:       '#dbe7f4',   // the banks either side
+    wallTop:    '#ffffff',
+    outer:      '#b0c4da',   // deeper drifts, off the map
+    outerTop:   '#dde9f6',
+    jog:        '#7d94ae',   // ice blocks out on the road
+    jogTop:     '#b6cae0',
+    racingLine: 'rgba(180,220,255,0.30)',
+    check:      'rgba(150,220,255,0.07)',
+    checkNext:  'rgba(150,220,255,0.28)',
+    startLine:  '#f4f9ff'
+  };
+
+  /* ---- Snow 1: FROSTLINE -----------------------------------------------
+   * The same shape as the gentlest tracks - a ring with one change of lane
+   * on each long straight - on eight-cell roads. Eight corners a lap.
+   * -------------------------------------------------------------------- */
+  var FROSTLINE = {
+    id: 'frostline',
+    name: 'FROSTLINE',
+    blurb: 'A plain ring on narrower ice. One change of lane on each straight.',
+    grade: 'MODERATE',
+    cols: 44,
+    rows: 28,
+    aiPace: 0.95,
+    aiOffsetScale: 2,
+    aiMistakeScale: 1,
+    weather: 'snow',
+    theme: SNOW,
+    walls: border(44, 28).concat([
+      { x0: 9,  y0: 9,  x1: 34, y1: 18, kind: 'infield' },
+      { x0: 11, y0: 19, x1: 16, y1: 21, kind: 'jog' },   // the bottom straight
+      { x0: 22, y0: 24, x1: 27, y1: 26, kind: 'jog' },
+      { x0: 25, y0: 1,  x1: 30, y1: 3,  kind: 'jog' },   // the top straight
+      { x0: 14, y0: 6,  x1: 19, y1: 8,  kind: 'jog' }
+    ]),
+    route: [
+      { x: 5,  y: 24.5 },   // 0  the main straight, low lane
+      { x: 19.5, y: 24.5 },   // 1
+      { x: 19.5, y: 21.5 },   // 2  lane change
+      { x: 39, y: 21.5 },   // 3  into the right road
+      { x: 39, y: 6.5  },   // 4  along the top, low lane
+      { x: 22.5, y: 6.5 },   // 5
+      { x: 22.5, y: 3.5 },   // 6  lane change
+      { x: 5,  y: 3.5  }    // 7  into the left road, then down to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 33, y0: 19, x1: 34, y1: 27 },   // out of the bottom change
+      { x0: 35, y0: 13, x1: 43, y1: 14 },   // up the right
+      { x0: 10, y0: 1,  x1: 11, y1: 9  },   // out of the top change
+      { x0: 1,  y0: 13, x1: 9,  y1: 14 }    // down the left
+    ],
+    finish: { x0: 9.1, y0: 19, x1: 9.9, y1: 27, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 8.0, y: 23.3, wp: 1 },
+      { x: 8.0, y: 25.7, wp: 1 },
+      { x: 6.1, y: 23.3, wp: 1 },
+      { x: 6.1, y: 25.7, wp: 1 }
+    ]
+  };
+
+  /* ---- Snow 2: GLACIER -------------------------------------------------
+   * Tall, and a change of lane on every side. Twelve corners a lap.
+   * -------------------------------------------------------------------- */
+  var GLACIER = {
+    id: 'glacier',
+    name: 'GLACIER',
+    blurb: 'Four changes of lane between walls of ice, one on every side.',
+    grade: 'MODERATE +',
+    cols: 42,
+    rows: 34,
+    aiPace: 0.95,
+    aiOffsetScale: 2,
+    aiMistakeScale: 1,
+    weather: 'snow',
+    theme: SNOW,
+    walls: border(42, 34).concat([
+      { x0: 9,  y0: 9,  x1: 32, y1: 24, kind: 'infield' },
+      { x0: 11, y0: 25, x1: 16, y1: 27, kind: 'jog' },   // the bottom
+      { x0: 24, y0: 30, x1: 29, y1: 32, kind: 'jog' },
+      { x0: 33, y0: 18, x1: 35, y1: 22, kind: 'jog' },   // up the right
+      { x0: 38, y0: 6,  x1: 40, y1: 10, kind: 'jog' },
+      { x0: 23, y0: 1,  x1: 28, y1: 3,  kind: 'jog' },   // along the top
+      { x0: 10, y0: 6,  x1: 15, y1: 8,  kind: 'jog' },
+      { x0: 1,  y0: 8,  x1: 3,  y1: 12, kind: 'jog' },   // down the left
+      { x0: 6,  y0: 20, x1: 8,  y1: 24, kind: 'jog' }
+    ]),
+    route: [
+      { x: 3.5,  y: 30.5 },   // 0  the main straight, low lane
+      { x: 20.5, y: 30.5 },   // 1
+      { x: 20.5, y: 27.5 },   // 2  lane change
+      { x: 38.5, y: 27.5 },   // 3  into the right road, outside lane
+      { x: 38.5, y: 14.5 },   // 4
+      { x: 35.5, y: 14.5 },   // 5  lane change
+      { x: 35.5, y: 6.5  },   // 6  into the top road, low lane
+      { x: 19.5, y: 6.5  },   // 7
+      { x: 19.5, y: 3.5  },   // 8  lane change
+      { x: 6.5,  y: 3.5  },   // 9  into the left road, inside lane
+      { x: 6.5,  y: 16.5 },   // 10
+      { x: 3.5,  y: 16.5 }    // 11 lane change, then down the left to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 31, y0: 25, x1: 32, y1: 33 },   // out of the bottom change
+      { x0: 33, y0: 13, x1: 41, y1: 14 },   // out of the right-hand change
+      { x0: 12, y0: 1,  x1: 13, y1: 6  },   // out of the top change
+      { x0: 1,  y0: 21, x1: 6,  y1: 22 }    // down the left
+    ],
+    finish: { x0: 8.1, y0: 25, x1: 8.9, y1: 33, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 6.9, y: 29.3, wp: 1 },
+      { x: 6.9, y: 31.7, wp: 1 },
+      { x: 5.0, y: 29.3, wp: 1 },
+      { x: 5.0, y: 31.7, wp: 1 }
+    ]
+  };
+
+  /* ---- Snow 3: WHITEOUT ------------------------------------------------
+   * The hardest thing in the themed set. A double-S down the main straight
+   * AND another along the top, plus a change on each of the other two
+   * sides: six changes and sixteen corners a lap.
+   * -------------------------------------------------------------------- */
+  var WHITEOUT = {
+    id: 'whiteout',
+    name: 'WHITEOUT',
+    blurb: 'A double-S on the straight, another along the top. Six in all.',
+    grade: 'MODERATE ++',
+    cols: 50,
+    rows: 28,
+    aiPace: 0.95,
+    aiOffsetScale: 2,
+    aiMistakeScale: 1,
+    weather: 'snow',
+    theme: SNOW,
+    walls: border(50, 28).concat([
+      { x0: 9,  y0: 9,  x1: 40, y1: 18, kind: 'infield' },
+      { x0: 10, y0: 19, x1: 15, y1: 21, kind: 'jog' },   // the bottom double-S
+      { x0: 24, y0: 24, x1: 29, y1: 26, kind: 'jog' },
+      { x0: 38, y0: 19, x1: 43, y1: 21, kind: 'jog' },
+      { x0: 41, y0: 16, x1: 43, y1: 18, kind: 'jog' },   // up the right
+      { x0: 46, y0: 5,  x1: 48, y1: 7,  kind: 'jog' },
+      { x0: 35, y0: 1,  x1: 40, y1: 3,  kind: 'jog' },   // the top double-S
+      { x0: 21, y0: 6,  x1: 26, y1: 8,  kind: 'jog' },
+      { x0: 8,  y0: 1,  x1: 13, y1: 3,  kind: 'jog' },
+      { x0: 1,  y0: 6,  x1: 3,  y1: 8,  kind: 'jog' },   // down the left
+      { x0: 6,  y0: 17, x1: 8,  y1: 19, kind: 'jog' }
+    ]),
+    route: [
+      { x: 3.5,  y: 24.5 },   // 0  the main straight, low lane
+      { x: 20,   y: 24.5 },   // 1
+      { x: 20,   y: 21.5 },   // 2  out
+      { x: 34,   y: 21.5 },   // 3
+      { x: 34,   y: 24.5 },   // 4  and back
+      { x: 46.5, y: 24.5 },   // 5  into the right road, outside lane
+      { x: 46.5, y: 12   },   // 6
+      { x: 43.5, y: 12   },   // 7  lane change
+      { x: 43.5, y: 6.5  },   // 8  into the top road, low lane
+      { x: 31,   y: 6.5  },   // 9
+      { x: 31,   y: 3.5  },   // 10 up
+      { x: 17.5, y: 3.5  },   // 11
+      { x: 17.5, y: 6.5  },   // 12 and back down
+      { x: 6.5,  y: 6.5  },   // 13 into the left road, inside lane
+      { x: 6.5,  y: 13   },   // 14
+      { x: 3.5,  y: 13   }    // 15 lane change, then down the left to 0
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 32, y0: 19, x1: 33, y1: 27 },   // out of the bottom double-S
+      { x0: 41, y0: 9,  x1: 49, y1: 10 },   // out of the right-hand change
+      { x0: 16, y0: 1,  x1: 17, y1: 9  },   // out of the top double-S
+      { x0: 1,  y0: 15, x1: 9,  y1: 16 }    // down the left
+    ],
+    finish: { x0: 8.6, y0: 19, x1: 9.4, y1: 27, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 7.4, y: 23.3, wp: 1 },
+      { x: 7.4, y: 25.7, wp: 1 },
+      { x: 5.5, y: 23.3, wp: 1 },
+      { x: 5.5, y: 25.7, wp: 1 }
+    ]
+  };
+
   global.TRACKS = [
     // the themed circuits, in the order the play screen offers them
     PINEFALL, HOLLOW, CANOPY,
     DUNELINE, SALTFLATS, CANYONRUN,
+    FROSTLINE, GLACIER, WHITEOUT,
     // and the seven built before the themes, kept raceable under LEGACY
     CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE
   ];
