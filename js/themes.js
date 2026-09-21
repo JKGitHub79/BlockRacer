@@ -121,6 +121,18 @@
         { id: 'driftfield', name: 'DRIFT FIELD', grade: 'NIGHTMARE +' },
         { id: 'horizon',  name: 'EVENT HORIZON', grade: 'NIGHTMARE ++' }
       ]
+    },
+    {
+      id: 'alien',
+      name: 'ALIEN',
+      tagline: 'Something landed here and grew. Mind the thing overhead.',
+      scene: 'alien',
+      accent: '#7cff5a',
+      tracks: [
+        { id: 'landfall',   name: 'LANDFALL',   grade: 'IMPOSSIBLE' },
+        { id: 'hive',       name: 'HIVE',       grade: 'IMPOSSIBLE +' },
+        { id: 'mothership', name: 'MOTHERSHIP', grade: 'IMPOSSIBLE ++' }
+      ]
     }
   ];
 })(typeof window !== 'undefined' ? window : globalThis);

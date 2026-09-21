@@ -49,7 +49,7 @@ zero-sized.
 
 ## Themes and tracks
 
-Nine themes, ascending in difficulty, three tracks each:
+Ten themes, ascending in difficulty, three tracks each:
 
 | Theme | Tracks | | |
 | --- | --- | --- | --- |
@@ -62,10 +62,11 @@ Nine themes, ascending in difficulty, three tracks each:
 | Ancient Ruins | Sanctum, Colonnade, Labyrinth | expert | **built** |
 | Volcano | Basalt, Fissure, Crater | insane | **built** |
 | Space | Orbital, Drift Field, Event Horizon | nightmare | **built** |
+| Alien | Landfall, Hive, Mothership | impossible | **built** |
 
-All twenty-seven are built. A theme's track is matched to `js/tracks.js` by id,
+All thirty are built. A theme's track is matched to `js/tracks.js` by id,
 and a name with no track behind it renders as a placeholder rather than being
-hidden, so a tenth theme can be sketched in `js/themes.js` and filled in later.
+hidden, so an eleventh theme can be sketched in `js/themes.js` and filled in later.
 
 ### The forest three
 
@@ -421,9 +422,58 @@ of its four sides, so it turns twelve times without ever doubling back and
 winds round a core with a hole cut clean through it. That core is the one
 place on the map you can see out of, and nothing drives near it.
 
+### The alien three
+
+The gate here is an **egg cluster**, and it needed no new engine at all -
+`kind: 'jog'` has meant "the block that forces a turn" since Staircase and
+collides like any other solid, so it only wanted a painter. It is the one
+thing on these tracks that is not green, because on a map this green the
+thing you must not hit should not be the colour of everything else.
+
+**These three are the argument the whole ladder has been building to.** The
+measurement that came out of Space says a change of lane costs about 170
+crashes a thousand laps and a gate about 39 - four to one - and that a change
+of lane needs a straight to happen on. Follow that honestly and the shapes
+have to get *simpler* as the difficulty goes up, which is the opposite of
+what every theme before this one did:
+
+| | corners | changes of lane | crashes |
+| --- | --- | --- | --- |
+| Landfall | 10 | 6 | 1857 |
+| Hive | 16 | 5 | 2315 |
+| Mothership | **4** | **8** | **2531** |
+
+**Landfall** is where it came down: the ring round the site with one shaft
+driven up into the middle of it from the bottom.
+
+**Hive** is two chambers driven in from opposite decks, facing each other
+across a five-cell spine - sixteen corners, the most of anything here, and
+the only track in the theme whose difficulty is mostly its shape.
+
+**Mothership** is a plain rectangle. Four corners, four straights, and eight
+changes of lane, which is more than any other track in the game has room for.
+It is the simplest thing in the set and the hardest, and that is not a joke
+at the player's expense - it is what the numbers said to build.
+
+### Something is overhead
+
+Every 3.4 seconds a saucer crosses the board, fast, strafing as it goes, and
+then the sky is empty again. It flies over the track, it is drawn after the
+cars, and **nothing in the physics or the collision grid has ever heard of
+it**. The lasers cannot hurt you either. That is deliberate and not laziness:
+a race decided by something arriving on a fixed timer from off screen, that
+the player can neither read nor avoid, is the one thing this game has never
+done to anyone.
+
+It holds no state. Which pass this is, how far through it, and where the
+saucer was when each bolt left it are all read off the clock - so nothing is
+ever spawned or retired, nothing drifts out of step with itself, and pausing
+and resuming cannot desynchronise it. The same construction runs on the
+track-select backdrop, seen edge on there rather than from above.
+
 ### The ladder
 
-Twenty-seven tracks, one continuous curve. Crashes per thousand laps of AI
+Thirty tracks, one continuous curve. Crashes per thousand laps of AI
 racing, measured the way the whole ladder has always been measured - beginner
 speed, slide 0.8, four cars (see **A note on the numbers** below):
 
@@ -438,9 +488,11 @@ speed, slide 0.8, four cars (see **A note on the numbers** below):
 | Ancient Ruins | 734 | 755 | 729 |
 | Volcano | 803 | 878 | 1020 |
 | Space | 1010 | 1196 | 1481 |
+| Alien | 1857 | 2315 | 2531 |
 
 In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 588, 617, 623,
-684, 729, 734, 755, 803, 816, 878, 968, 970, 1010, 1020, 1196, 1481. Forest and Desert
+684, 729, 734, 755, 803, 816, 878, 968, 970, 1010, 1020, 1196, 1481, 1857,
+2315, 2531. Forest and Desert
 interleave, so the first track of the
 desert is easier than the last of the forest and a new theme reads as a new
 theme rather than a wall. Snow, Cliffs and City interleave the same way, so
@@ -455,6 +507,11 @@ ladder where two themes touch, and the right place for it, because arriving at
 the last theme should not be a wall. At the settings the game actually ships
 with - sweat, six cars - the order holds: 688, 805, 1075 against the volcano's
 689, 646, 764.
+
+Alien is the one theme that does **not** hand over gently, and is not meant
+to. Its first track is 376 crashes above Space's last, which is the largest
+step anywhere on the curve, and the grade says IMPOSSIBLE on the card before
+you press anything. At the shipped settings it reads 1173, 1559, 1765.
 
 Pipeworks and Refinery measure the same: 970 and 968 is two crashes in twelve
 hundred laps, well inside this metric's noise, so on the ladder they are tied.
@@ -844,6 +901,24 @@ Three things learned the hard way getting them to read:
   weather over the top already says the scene is alive. Baked, space is the
   cheapest theme in the game rather than the dearest: 48fps where the volcano
   gets 36.
+- **A saucer is an ellipse with a dome, and the dome is the read.** `saucer`
+  draws a flattened ellipse for the hull, a half-ellipse dome sitting on it,
+  a row of running lights along the rim and, on the one that is working, a
+  tractor beam: a cone of light widening downwards and faded out at the
+  bottom so it lands on the ground rather than stopping in mid air. Seen from
+  above in the race view it is the same object drawn as a disc instead, with
+  a shadow offset under it - the shadow is what says it is flying rather than
+  lying on the road.
+- **A visitor is a head that is too big.** `visitors` puts two of them on the
+  ridge in silhouette. At seventy pixels tall no detail survives, so the
+  proportions carry the whole thing: a head a third of the height, arms too
+  long, and two lit eyes which are the only part of them that is not black.
+- **Growth is a wall painter that joins up.** `drawHive` gives each alien
+  solid one vein straight through it, edge to edge, so a cell whose neighbour
+  drew the same axis continues the same line and a block ends up threaded
+  rather than speckled - the same trick `drawPipes` uses in the works, for
+  the same reason. Then a node where the vein swells, a pod lit from inside
+  about one node in three, and spore specks so the surface is never flat.
 - **A fountain is a plume that glows.** The volcano's eruption is a column of
   seventy hot blobs that widen and cool as they rise, the same construction
   the city's smoke uses. A smooth tapering wedge was tried first and read as
@@ -1478,7 +1553,10 @@ Optional per-track settings: `theme` for the palette, `aiPace` for how hard the
 opposition tries, `aiOffsetScale` for how far they spread across the road, and
 `aiMistakeScale` for how often they turn in late - worth turning down on a track
 whose legs are short enough that a late turn means a wall rather than a wide
-line. Marking a wall rectangle `kind: 'lava'` makes it molten and animated, and it
+line. `kind: 'jog'` marks the blocks that force a turn; every theme's wall painter
+decides what one looks like, and in the alien theme it is an egg cluster,
+which is how that theme got its gates without any new engine.
+Marking a wall rectangle `kind: 'lava'` makes it molten and animated, and it
 collides exactly like any other wall; it is painted live over the baked track
 rather than into it. `kind: 'void'` says a solid is a hole in the deck rather
 than a spar, which on a `vacuum` theme - where every solid is open space

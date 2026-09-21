@@ -684,6 +684,166 @@
     g.fillRect(0, y, W, 1);
   }
 
+  /* ---- alien ----------------------------------------------------------
+   *
+   * Seen from the ground this time, so the saucer is an ellipse edge on with
+   * a dome on top rather than the disc the race view draws. */
+  function saucer(g, cx, cy, r, beam, seed) {
+    var rnd = rng(seed);
+    if (beam) {
+      // the tractor beam: a cone of light widening downwards, faded out at
+      // the bottom so it lands on the ground instead of stopping in mid air
+      var bh = beam;
+      var bg = g.createLinearGradient(0, cy, 0, cy + bh);
+      bg.addColorStop(0, 'rgba(150,255,120,0.30)');
+      bg.addColorStop(1, 'rgba(150,255,120,0)');
+      g.fillStyle = bg;
+      g.beginPath();
+      g.moveTo(cx - r * 0.30, cy);
+      g.lineTo(cx + r * 0.30, cy);
+      g.lineTo(cx + r * 1.15, cy + bh);
+      g.lineTo(cx - r * 1.15, cy + bh);
+      g.closePath();
+      g.fill();
+    }
+    var glow = g.createRadialGradient(cx, cy, 0, cx, cy, r * 2.4);
+    glow.addColorStop(0, 'rgba(124,255,90,0.26)');
+    glow.addColorStop(1, 'rgba(124,255,90,0)');
+    g.fillStyle = glow;
+    g.fillRect(cx - r * 2.4, cy - r * 2.4, r * 4.8, r * 4.8);
+
+    // dome first, so the hull edge cuts across its foot
+    g.fillStyle = '#2f6b48';
+    g.beginPath();
+    g.ellipse(cx, cy - r * 0.16, r * 0.42, r * 0.34, 0, Math.PI, Math.PI * 2);
+    g.fill();
+    g.fillStyle = 'rgba(190,255,170,0.55)';
+    g.beginPath();
+    g.ellipse(cx - r * 0.12, cy - r * 0.26, r * 0.14, r * 0.12, 0, 0, Math.PI * 2);
+    g.fill();
+
+    g.fillStyle = '#15301f';
+    g.beginPath();
+    g.ellipse(cx, cy, r, r * 0.22, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = 'rgba(120,200,150,0.35)';
+    g.beginPath();
+    g.ellipse(cx, cy - r * 0.05, r * 0.92, r * 0.12, 0, Math.PI, Math.PI * 2);
+    g.fill();
+    for (var i = 0; i < 6; i++) {
+      var lx = cx - r * 0.8 + (r * 1.6) * (i / 5);
+      g.fillStyle = rnd() < 0.5 ? 'rgba(124,255,90,0.9)' : 'rgba(255,110,110,0.85)';
+      g.fillRect(lx - r * 0.035, cy + r * 0.07, r * 0.07, r * 0.07);
+    }
+  }
+
+  /* Two of them on a ridge, in silhouette with the light behind: a head far
+   * too big for the body is the whole of the read, so the proportions do the
+   * work and no detail is needed at this size. */
+  function visitors(g, x, y, hgt, seed) {
+    var rnd = rng(seed);
+    for (var i = 0; i < 2; i++) {
+      var s = hgt * (0.8 + rnd() * 0.45);
+      var bx = x + i * hgt * 1.15;
+      var by = y;
+      var glow = g.createRadialGradient(bx, by - s * 0.8, 0, bx, by - s * 0.8, s * 1.4);
+      glow.addColorStop(0, 'rgba(124,255,90,0.18)');
+      glow.addColorStop(1, 'rgba(124,255,90,0)');
+      g.fillStyle = glow;
+      g.fillRect(bx - s * 1.4, by - s * 2.2, s * 2.8, s * 2.8);
+
+      g.fillStyle = '#0b2415';
+      // legs, body, arms
+      g.fillRect(bx - s * 0.16, by - s * 0.42, s * 0.10, s * 0.42);
+      g.fillRect(bx + s * 0.06, by - s * 0.42, s * 0.10, s * 0.42);
+      g.fillRect(bx - s * 0.17, by - s * 0.78, s * 0.34, s * 0.38);
+      g.fillRect(bx - s * 0.30, by - s * 0.74, s * 0.13, s * 0.26);
+      g.fillRect(bx + s * 0.17, by - s * 0.74, s * 0.13, s * 0.26);
+      // the head, deliberately too big
+      g.beginPath();
+      g.ellipse(bx, by - s * 0.92, s * 0.26, s * 0.22, 0, 0, Math.PI * 2);
+      g.fill();
+      // and the eyes, which are the only lit thing on it
+      g.fillStyle = 'rgba(190,255,150,0.85)';
+      g.beginPath();
+      g.ellipse(bx - s * 0.10, by - s * 0.94, s * 0.07, s * 0.05, -0.4, 0, Math.PI * 2);
+      g.fill();
+      g.beginPath();
+      g.ellipse(bx + s * 0.10, by - s * 0.94, s * 0.07, s * 0.05, 0.4, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+
+  /* The ground: overgrown, and lit from underneath by whatever is in it. */
+  function growth(g, y, seed) {
+    var rnd = rng(seed);
+    var d = H - y;
+    g.fillStyle = '#071a0f';
+    g.fillRect(0, y, W, d);
+    for (var i = 0; i < 40; i++) {
+      var gx = rnd() * W, gy = y + rnd() * d;
+      var gr = d * (0.10 + rnd() * 0.30);
+      var pg = g.createRadialGradient(gx, gy, 0, gx, gy, gr);
+      pg.addColorStop(0, 'rgba(110,235,90,' + (0.05 + rnd() * 0.10).toFixed(3) + ')');
+      pg.addColorStop(1, 'rgba(110,235,90,0)');
+      g.fillStyle = pg;
+      g.fillRect(gx - gr, gy - gr, gr * 2, gr * 2);
+    }
+    var lip = g.createLinearGradient(0, y, 0, y + d * 0.3);
+    lip.addColorStop(0, 'rgba(140,255,120,0.20)');
+    lip.addColorStop(1, 'rgba(140,255,120,0)');
+    g.fillStyle = lip;
+    g.fillRect(0, y, W, d * 0.3);
+  }
+
+  /* The one that does not hang about. Every few seconds it crosses the
+   * screen, fast, strafing as it goes, and then the sky is empty again. It
+   * carries no state: which pass this is, how far through it, and where it
+   * was when each bolt left it are all read off the clock, so it never needs
+   * spawning or retiring and never drifts out of step with itself. */
+  var UFO_PERIOD = 3.4, UFO_CROSS = 0.22, UFO_BOLTS = 14, UFO_GAP = 0.06;
+
+  function ufoHash(k, salt) {
+    var h = Math.imul(k | 0, 2654435761) ^ Math.imul(salt, 40503);
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+
+  function ufoAt(k, u, r) {
+    var span = UFO_PERIOD * UFO_CROSS;
+    if (u < 0 || u > span) return null;
+    var f = u / span;
+    var dir = (k & 1) ? -1 : 1;
+    return {
+      x: dir > 0 ? -r * 3 + (W + r * 6) * f : W + r * 3 - (W + r * 6) * f,
+      y: H * (0.06 + ufoHash(k, 7) * 0.20) + Math.sin(f * Math.PI) * H * 0.03,
+      dir: dir
+    };
+  }
+
+  function flyby(g, t) {
+    var r = H * 0.055;
+    var k = Math.floor(t / UFO_PERIOD);
+    var u = t - k * UFO_PERIOD;
+    var here = ufoAt(k, u, r);
+    if (!here) return;
+    for (var i = UFO_BOLTS; i >= 1; i--) {
+      var from = ufoAt(k, u - i * UFO_GAP, r);
+      if (!from) continue;
+      var age = i * UFO_GAP;
+      var bx = from.x + from.dir * r * 5 * age;
+      var by = from.y + H * 0.80 * age;
+      if (by > H) continue;
+      g.globalAlpha = Math.max(0, 1 - age / (UFO_BOLTS * UFO_GAP)) * 0.95;
+      g.fillStyle = '#ff2a2a';
+      g.fillRect(bx - 1.5, by - r * 0.30, 3, r * 0.60);
+      g.fillStyle = 'rgba(255,180,180,0.9)';
+      g.fillRect(bx - 0.5, by - r * 0.24, 1, r * 0.48);
+    }
+    g.globalAlpha = 1;
+    saucer(g, here.x, here.y, r, 0, 97);
+  }
+
   function recede(g) {
     g.fillStyle = 'rgba(4,8,14,0.18)';
     g.fillRect(0, 0, W, H);
@@ -893,6 +1053,36 @@
       }
     },
 
+    /* Green from the ground up, because whatever is lighting this place is
+     * in the ground rather than in the sky. Two saucers hang over the ridge
+     * either side of the cards, one of them working, and a third crosses the
+     * screen every few seconds - that one is painted live, on top. */
+    alien: {
+      weather: 'spores',
+      flyby: true,
+      paint: function (g) {
+        sky(g, [[0, '#030a08'], [0.34, '#07200f'], [0.64, '#0d3b1c'], [1, '#1d6b33']]);
+        var moon = g.createRadialGradient(W * 0.18, H * 0.16, 0, W * 0.18, H * 0.16, H * 0.26);
+        moon.addColorStop(0, 'rgba(180,255,150,0.20)');
+        moon.addColorStop(1, 'rgba(180,255,150,0)');
+        g.fillStyle = moon;
+        g.fillRect(0, 0, W, H);
+        g.fillStyle = '#9fe7a0';
+        g.beginPath(); g.arc(W * 0.18, H * 0.16, H * 0.045, 0, Math.PI * 2); g.fill();
+        g.fillStyle = 'rgba(40,90,55,0.55)';
+        g.beginPath(); g.arc(W * 0.205, H * 0.145, H * 0.040, 0, Math.PI * 2); g.fill();
+
+        crest(g, H * (HORIZON + 0.02), H * 0.030, '#10391d', 23);
+        saucer(g, W * 0.80, H * 0.20, H * 0.085, H * 0.62, 47);
+        saucer(g, W * 0.11, H * 0.33, H * 0.045, 0, 71);
+        crest(g, H * (HORIZON + 0.12), H * 0.044, '#0a2615', 37);
+        visitors(g, W * 0.615, H * 0.855, H * 0.070, 53);
+        crest(g, H * (HORIZON + 0.24), H * 0.058, '#051409', 59);
+        growth(g, H * 0.93, 131);
+        recede(g);
+      }
+    },
+
     /* The front screen sits on its own night sky rather than borrowing a
      * theme's, so arriving at the game does not imply a theme. */
     night: {
@@ -945,7 +1135,10 @@
     // the course it was already on, which is the one thing that looks wrong
     // about every other weather in the game if you use it out here.
     drift:  { n: 55, color: '#cfe4ff', r: [0.5, 1.6], vx: [-18, -70], vy: [-40, 40],
-              sway: 0, rate: 0.1, alpha: [0.10, 0.44], wide: 1 }
+              sway: 0, rate: 0.1, alpha: [0.10, 0.44], wide: 1 },
+    // Spores rise off the growth, slowly, swaying further than anything else.
+    spores: { n: 50, color: '#a6ff86', r: [0.8, 2.2], vx: [-10, -32], vy: [-70, -18],
+              sway: 26, rate: 0.5, alpha: [0.10, 0.40], wide: 1 }
   };
 
   function ensureMotes(kind) {
@@ -1008,9 +1201,9 @@
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(baked, 0, 0);
-    if (!spec.weather) return;
-
     ctx.scale(dpr, dpr);
+    if (spec.flyby) flyby(ctx, t);
+    if (!spec.weather) { ctx.setTransform(1, 0, 0, 1, 0, 0); return; }
     ensureMotes(spec.weather);
     var w = WEATHER[spec.weather];
     ctx.fillStyle = w.color;

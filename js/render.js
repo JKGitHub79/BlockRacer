@@ -122,7 +122,12 @@
     // weather in the game with no sway at all and a vy that is as likely to
     // be up as down: each speck holds the course it was already on.
     drift:  { per: 3400, color: '#cfe4ff', r: [0.5, 1.7], vx: [-16, -60],
-              vy: [-26, 26], sway: 0, swayRate: 0.1, alpha: [0.14, 0.52], smear: 1 }
+              vy: [-26, 26], sway: 0, swayRate: 0.1, alpha: [0.14, 0.52], smear: 1 },
+    // Spores come off the growth rather than out of the sky: they RISE, like
+    // the volcano's embers, but slowly and with a long lazy sway, because
+    // nothing is pushing them but the thing that let them go.
+    spores: { per: 3000, color: '#a6ff86', r: [0.9, 2.4], vx: [-7, -22],
+              vy: [-30, -8], sway: 17, swayRate: 0.5, alpha: [0.14, 0.46], smear: 1 }
   };
 
   function ensureMotes() {
@@ -544,6 +549,81 @@
     }
   }
 
+  /* ---- hive -----------------------------------------------------------
+   *
+   * Growth, not building and not geology. The idiom is still rectangles on
+   * the cell grid, so the organic reading has to come from what the shapes
+   * DO rather than from their outlines: a vein that runs edge to edge so it
+   * joins up with its neighbours into a run across the whole block, a
+   * thickening where two veins cross, and pods that glow.
+   *
+   * The gate cells - the jog kind - are an egg cluster in a colour nothing
+   * else on the track uses. On a green map the one thing you must not drive
+   * into should not also be green. */
+  function drawHive(g, cx, cy, kind) {
+    var x = cx * S, y = cy * S;
+
+    var t = cellNoise(cx, cy, 301);
+    g.fillStyle = t < 0.5
+      ? 'rgba(0,0,0,' + (0.06 + t * 0.34).toFixed(3) + ')'
+      : 'rgba(150,255,140,' + ((t - 0.5) * 0.20).toFixed(3) + ')';
+    g.fillRect(x, y, S, S);
+
+    if (kind === 3) {
+      // an egg cluster: three pods, lit from inside
+      for (var e = 0; e < 3; e++) {
+        var ex = x + S * (0.26 + (e % 2) * 0.42);
+        var ey = y + S * (0.24 + e * 0.22);
+        var er = S * 0.15;
+        var eg = g.createRadialGradient(ex, ey, 0, ex, ey, er * 2.4);
+        eg.addColorStop(0, 'rgba(226,150,255,0.55)');
+        eg.addColorStop(1, 'rgba(226,150,255,0)');
+        g.fillStyle = eg;
+        g.fillRect(ex - er * 2.4, ey - er * 2.4, er * 4.8, er * 4.8);
+        g.fillStyle = 'rgba(247,214,255,0.85)';
+        g.beginPath(); g.arc(ex, ey, er, 0, Math.PI * 2); g.fill();
+      }
+      return;
+    }
+
+    /* The veins. Each cell carries one straight through it, edge to edge, so
+     * a cell whose neighbour drew the same axis continues the same line and
+     * a solid ends up threaded rather than speckled. */
+    var vert = cellNoise(cx, cy, 302) < 0.5;
+    var off = Math.round(cellNoise(cx, cy, 303) * (S - 8)) + 4;
+    var th = Math.max(2, Math.round(S * 0.09));
+    g.fillStyle = 'rgba(0,0,0,0.34)';
+    if (vert) g.fillRect(x + off, y, th, S); else g.fillRect(x, y + off, S, th);
+    g.fillStyle = 'rgba(138,255,122,0.16)';
+    if (vert) g.fillRect(x + off, y, 1, S); else g.fillRect(x, y + off, S, 1);
+
+    // a node where the vein swells, and sometimes a pod lit from inside it
+    var nd = cellNoise(cx, cy, 304);
+    if (nd < 0.34) {
+      var px = vert ? x + off + th / 2 : x + S * (0.2 + nd);
+      var py = vert ? y + S * (0.2 + nd) : y + off + th / 2;
+      var pr = S * (0.09 + nd * 0.14);
+      g.fillStyle = 'rgba(0,0,0,0.30)';
+      g.beginPath(); g.arc(px, py, pr, 0, Math.PI * 2); g.fill();
+      if (nd < 0.14) {
+        var pg = g.createRadialGradient(px, py, 0, px, py, pr * 2.6);
+        pg.addColorStop(0, 'rgba(150,255,110,0.50)');
+        pg.addColorStop(1, 'rgba(150,255,110,0)');
+        g.fillStyle = pg;
+        g.fillRect(px - pr * 2.6, py - pr * 2.6, pr * 5.2, pr * 5.2);
+        g.fillStyle = 'rgba(214,255,190,0.80)';
+        g.beginPath(); g.arc(px, py, pr * 0.5, 0, Math.PI * 2); g.fill();
+      }
+    }
+
+    // spore specks, so the surface is never quite flat
+    if (cellNoise(cx, cy, 305) < 0.30) {
+      g.fillStyle = 'rgba(180,255,160,0.22)';
+      g.fillRect(x + Math.floor(cellNoise(cx, cy, 306) * S),
+                 y + Math.floor(cellNoise(cx, cy, 307) * S), 2, 2);
+    }
+  }
+
   function eachWall(fn) {
     for (var cy = 0; cy < T.rows; cy++) {
       for (var cx = 0; cx < T.cols; cx++) {
@@ -676,6 +756,7 @@
     var dressed = !!(T.theme && T.theme.glyphs);
     var basalt  = !!(T.theme && T.theme.crust);
     var sky     = !!(T.theme && T.theme.vacuum);
+    var grown   = !!(T.theme && T.theme.hive);
     eachWall(function (cx, cy, kind) {
       // Four kinds of solid: the islands inside the circuit, the ground
       // outside it, the chicane blocks, and lava - whose cooled crust is
@@ -690,6 +771,7 @@
       if (dressed) drawRuins(g, cx, cy, kind);
       if (basalt) drawCrust(g, cx, cy, kind);
       if (sky) drawStars(g, cx, cy);
+      if (grown) drawHive(g, cx, cy, kind);
     });
 
     drawEmblems(g);
@@ -778,6 +860,118 @@
         x, y, w, h);
     });
     g.imageSmoothingEnabled = smooth;
+  };
+
+  /* ---- the thing overhead ---------------------------------------------
+   *
+   * Every few seconds a saucer crosses the board, fast, strafing as it goes.
+   * It is scenery: it flies OVER the track, it is drawn after the cars, and
+   * nothing in the physics or the collision grid has ever heard of it. The
+   * lasers cannot hurt you either - if they could, a race would be decided
+   * by something the player has no way to read or avoid, which is the one
+   * thing this game has never done to anyone.
+   *
+   * It carries no state. Everything is a function of the clock: which pass
+   * this is, how far through it, where the saucer was when each bolt left
+   * it. A pass takes PERIOD seconds and the crossing itself takes a fifth of
+   * that, so the sky is empty most of the time and the thing arrives, is
+   * gone, and leaves you wondering whether it was there.
+   */
+  var UFO_PERIOD = 3.4;     // seconds between passes
+  var UFO_CROSS = 0.22;     // fraction of the period it is actually on screen
+  var UFO_BOLTS = 14;       // bolts kept alive behind it
+  var UFO_GAP = 0.06;       // seconds between shots
+
+  function ufoHash(k, salt) {
+    var h = Math.imul(k | 0, 2654435761) ^ Math.imul(salt, 40503);
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+
+  /* Where the saucer is at local time `u` seconds into its pass, or null if
+   * it has not arrived or has already gone. */
+  function ufoAt(k, u, w, h, r) {
+    var span = UFO_PERIOD * UFO_CROSS;
+    if (u < 0 || u > span) return null;
+    var f = u / span;
+    var dir = (k & 1) ? -1 : 1;
+    var x = dir > 0 ? -r * 2 + (w + r * 4) * f : w + r * 2 - (w + r * 4) * f;
+    var y = h * (0.12 + ufoHash(k, 7) * 0.7);
+    // a shallow rise and fall across the pass, so it is flying rather than sliding
+    y += Math.sin(f * Math.PI) * h * 0.04 * (ufoHash(k, 11) < 0.5 ? 1 : -1);
+    return { x: x, y: y, dir: dir };
+  }
+
+  /* Seen from above: a disc, a brighter dome, and a ring of lights. */
+  function drawSaucer(g, x, y, r, t) {
+    g.save();
+    // the shadow it throws on whatever is underneath it
+    g.fillStyle = 'rgba(0,0,0,0.30)';
+    g.beginPath();
+    g.ellipse(x + r * 0.22, y + r * 0.30, r * 0.95, r * 0.42, 0, 0, Math.PI * 2);
+    g.fill();
+
+    var glow = g.createRadialGradient(x, y, 0, x, y, r * 2.1);
+    glow.addColorStop(0, 'rgba(124,255,90,0.30)');
+    glow.addColorStop(1, 'rgba(124,255,90,0)');
+    g.fillStyle = glow;
+    g.fillRect(x - r * 2.1, y - r * 2.1, r * 4.2, r * 4.2);
+
+    g.fillStyle = '#10241a';
+    g.beginPath();
+    g.ellipse(x, y, r, r * 0.42, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#25543a';
+    g.beginPath();
+    g.ellipse(x, y - r * 0.06, r * 0.48, r * 0.30, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = 'rgba(190,255,170,0.85)';
+    g.beginPath();
+    g.ellipse(x, y - r * 0.10, r * 0.22, r * 0.14, 0, 0, Math.PI * 2);
+    g.fill();
+
+    // running lights round the rim, chasing
+    for (var i = 0; i < 7; i++) {
+      var a = (i / 7) * Math.PI * 2 + t * 3.4;
+      var lx = x + Math.cos(a) * r * 0.82;
+      var ly = y + Math.sin(a) * r * 0.34;
+      g.fillStyle = i % 2 ? 'rgba(124,255,90,0.90)' : 'rgba(255,90,90,0.85)';
+      g.fillRect(lx - 1.5, ly - 1.5, 3, 3);
+    }
+    g.restore();
+  }
+
+  /* One pass of the saucer, plus the bolts it has fired so far this pass.
+   * `w`/`h` are the surface it is crossing and `r` its radius on it. */
+  function drawFlyby(g, t, w, h, r) {
+    var k = Math.floor(t / UFO_PERIOD);
+    var u = t - k * UFO_PERIOD;
+    var here = ufoAt(k, u, w, h, r);
+    if (!here) return;
+
+    g.save();
+    for (var i = UFO_BOLTS; i >= 1; i--) {
+      var fired = u - i * UFO_GAP;
+      var from = ufoAt(k, fired, w, h, r);
+      if (!from) continue;
+      var age = i * UFO_GAP;
+      var bx = from.x + from.dir * r * 3.2 * age;
+      var by = from.y + h * 0.62 * age;
+      if (by > h + r) continue;
+      g.globalAlpha = Math.max(0, 1 - age / (UFO_BOLTS * UFO_GAP)) * 0.95;
+      g.fillStyle = '#ff2a2a';
+      g.fillRect(bx - 1.5, by - r * 0.22, 3, r * 0.44);
+      g.fillStyle = 'rgba(255,170,170,0.9)';
+      g.fillRect(bx - 0.5, by - r * 0.18, 1, r * 0.36);
+    }
+    g.globalAlpha = 1;
+    drawSaucer(g, here.x, here.y, r, t);
+    g.restore();
+  }
+
+  Renderer.drawFlyby = function (g, t) {
+    if (!(T.theme && T.theme.hive)) return;
+    drawFlyby(g, t, T.width, T.height, S * 1.7);
   };
 
   Renderer.init = function (canvas) {
@@ -1006,7 +1200,9 @@
     g.globalAlpha = 1;
 
     game.cars.forEach(function (car) { drawCar(g, car); });
-    Renderer.drawWeather(g, (global.performance ? performance.now() : Date.now()) / 1000);
+    // over the cars, because it is over the cars
+    Renderer.drawFlyby(g, now);
+    Renderer.drawWeather(g, now);
 
     if (game.state === 'countdown') {
       var n = Math.ceil(game.countdown);

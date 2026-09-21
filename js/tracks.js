@@ -2952,6 +2952,302 @@
     ]
   };
 
+  /* ==================================================================== *
+   * ALIEN - the tenth theme, and the last.
+   *
+   * The gate here is an EGG CLUSTER: `kind: 'jog'`, which has meant "the
+   * block that forces a turn" since Staircase and collides like any other
+   * solid. It needed no new engine at all, only a painter - and it is the
+   * one thing on these tracks that is not green, because on a map this green
+   * the thing you must not hit should not be the colour of everything else.
+   *
+   * The ladder here is the WEAVE and nothing else. Measured on Orbital: the
+   * bare ring costs 71 crashes a thousand laps, each hole about 39, and each
+   * change of lane about 170. So these three are built to carry as many
+   * changes as their straights will hold - five, six and eight - and the
+   * shapes get SIMPLER as they get harder, which is the opposite of every
+   * other theme and is the honest consequence of that measurement. A weave
+   * needs road to happen on.
+   * ==================================================================== */
+  var ALIEN = {
+    /* `hive` turns on the growth in js/render.js: veins that join up between
+     * neighbouring cells, nodes where they cross, and pods lit from inside.
+     * `flyby` is scenery and nothing else - see the note in js/render.js. */
+    hive:       true,
+    bg:         '#03110a',
+    road:       '#0a1a12',   // ground, with the growth held off it
+    roadLine:   '#16301f',
+    wall:       '#1d4a2c',   // growth
+    wallTop:    '#7cff5a',
+    outer:      '#15361f',
+    outerTop:   '#4fbf46',
+    jog:        '#3a1f4d',   // the egg clusters, and the one colour out here
+    jogTop:     '#d36bff',   // that nothing else uses
+    racingLine: 'rgba(160,255,150,0.24)',
+    check:      'rgba(124,255,90,0.07)',
+    checkNext:  'rgba(124,255,90,0.30)',
+    startLine:  '#dfffd0'
+  };
+
+  /* ---- Alien 1: LANDFALL ----------------------------------------------
+   * Where it came down: the ring round the site, and one shaft driven up
+   * into the middle of it from the bottom. Ten corners, and four sides long
+   * enough to weave on - six changes of lane a lap.
+   *
+   *        +----------------------+
+   *        |                      |
+   *        |      +-------+       |
+   *        +------+       +-------+
+   * -------------------------------------------------------------------- */
+  var LANDFALL = {
+    id: 'landfall',
+    name: 'LANDFALL',
+    blurb: 'The ring round the site, and one shaft driven up into the middle.',
+    grade: 'IMPOSSIBLE',
+    cols: 52,
+    rows: 41,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'spores',
+    theme: ALIEN,
+    walls: border(52, 41).concat([
+      { x0:  7, y0:  7, x1: 44, y1: 16, kind: 'infield' },
+      { x0:  7, y0: 17, x1: 14, y1: 33, kind: 'infield' },
+      { x0: 33, y0: 17, x1: 44, y1: 33, kind: 'infield' },
+      { x0: 21, y0: 23, x1: 26, y1: 39, kind: 'edge' },
+      // three clusters down each of the three long sides, so each side is
+      // two changes of lane, and one on each of the five short legs
+      { x0:  1, y0:  9, x1:  3, y1: 14, kind: 'jog' },
+      { x0:  4, y0: 19, x1:  6, y1: 24, kind: 'jog' },
+      { x0:  1, y0: 30, x1:  3, y1: 35, kind: 'jog' },
+      { x0: 48, y0: 30, x1: 50, y1: 34, kind: 'jog' },
+      { x0: 45, y0: 20, x1: 47, y1: 24, kind: 'jog' },
+      { x0: 48, y0: 10, x1: 50, y1: 14, kind: 'jog' },
+      { x0: 38, y0:  1, x1: 42, y1:  3, kind: 'jog' },
+      { x0: 26, y0:  4, x1: 30, y1:  6, kind: 'jog' },
+      { x0: 12, y0:  1, x1: 16, y1:  3, kind: 'jog' },
+      { x0: 10, y0: 34, x1: 14, y1: 35, kind: 'jog' },
+      { x0: 18, y0: 24, x1: 20, y1: 29, kind: 'jog' },
+      { x0: 22, y0: 20, x1: 27, y1: 22, kind: 'jog' },
+      { x0: 27, y0: 28, x1: 28, y1: 33, kind: 'jog' },
+      { x0: 37, y0: 37, x1: 41, y1: 39, kind: 'jog' }
+    ]),
+    route: [
+      { x:  5.5, y:  5.5 },   //  0 south down the west flank
+      { x:  5.5, y: 16.5 },   //  1 the first change of lane
+      { x:  2.5, y: 16.5 },   //  2
+      { x:  2.5, y: 27.5 },   //  3 and the second
+      { x:  5.5, y: 27.5 },   //  4
+      { x:  5.5, y: 38.5 },   //  5 east along the bottom, over the line
+      { x: 16.5, y: 38.5 },   //  6 north up the shaft
+      { x: 16.5, y: 18.5 },   //  7 east across the head of it
+      { x: 30.5, y: 18.5 },   //  8 south, back down
+      { x: 30.5, y: 35.5 },   //  9 east along the bottom again
+      { x: 46.5, y: 35.5 },   // 10 north up the east flank
+      { x: 46.5, y: 27.5 },   // 11 and the third
+      { x: 49.5, y: 27.5 },   // 12
+      { x: 49.5, y: 17.5 },   // 13 and the fourth
+      { x: 46.5, y: 17.5 },   // 14
+      { x: 46.5, y:  5.5 },   // 15 west along the top
+      { x: 34.5, y:  5.5 },   // 16 and the fifth
+      { x: 34.5, y:  2.5 },   // 17
+      { x: 21.0, y:  2.5 },   // 18 and the sixth
+      { x: 21.0, y:  5.5 }    // 19
+    ],
+    startLeg: 9,
+    checkpoints: [
+      { x0: 45, y0:  7, x1: 51, y1:  8 },   // north up the east flank
+      { x0: 19, y0:  1, x1: 20, y1:  7 },   // west along the top
+      { x0: 15, y0: 31, x1: 21, y1: 32 },   // north up the shaft
+      { x0: 27, y0: 26, x1: 33, y1: 27 }    // south, back down it
+    ],
+    finish: { x0: 32.6, y0: 34, x1: 33.4, y1: 40, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 31.6, y: 35.4, wp: 10 },
+      { x: 31.6, y: 38.6, wp: 10 },
+      { x: 29.5, y: 35.4, wp: 10 },
+      { x: 29.5, y: 38.6, wp: 10 }
+    ]
+  };
+
+  /* ---- Alien 2: HIVE --------------------------------------------------
+   * Two chambers driven into the middle from opposite decks, facing each
+   * other across a five-cell spine. Sixteen corners and seven changes:
+   *
+   *        +-----+  +--+  +------+
+   *        |     +--+  +--+      |
+   *        |     +--+  +--+      |
+   *        +-----+  +--+  +------+
+   * -------------------------------------------------------------------- */
+  var HIVE = {
+    id: 'hive',
+    name: 'HIVE',
+    blurb: 'Two chambers facing each other across a five-cell spine.',
+    grade: 'IMPOSSIBLE +',
+    cols: 52,
+    rows: 41,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'spores',
+    theme: ALIEN,
+    walls: border(52, 41).concat([
+      { x0: 23, y0:  1, x1: 28, y1: 11, kind: 'edge' },
+      { x0:  7, y0:  7, x1: 16, y1: 33, kind: 'infield' },
+      { x0: 35, y0:  7, x1: 44, y1: 33, kind: 'infield' },
+      { x0: 17, y0: 18, x1: 34, y1: 22, kind: 'infield' },
+      { x0: 23, y0: 29, x1: 28, y1: 39, kind: 'edge' },
+      // two changes of lane down each flank, one along the bottom, and a
+      // single cluster in each chamber and on each leg that joins them
+      { x0:  1, y0:  9, x1:  3, y1: 14, kind: 'jog' },
+      { x0:  4, y0: 19, x1:  6, y1: 24, kind: 'jog' },
+      { x0:  1, y0: 29, x1:  3, y1: 33, kind: 'jog' },
+      { x0: 48, y0: 29, x1: 50, y1: 34, kind: 'jog' },
+      { x0: 45, y0: 19, x1: 47, y1: 24, kind: 'jog' },
+      { x0: 48, y0:  9, x1: 50, y1: 14, kind: 'jog' },
+      { x0: 34, y0: 34, x1: 38, y1: 36, kind: 'jog' },
+      { x0: 43, y0: 37, x1: 47, y1: 39, kind: 'jog' },
+      { x0: 12, y0: 34, x1: 16, y1: 36, kind: 'jog' },
+      { x0: 21, y0: 30, x1: 22, y1: 35, kind: 'jog' },
+      { x0: 20, y0: 27, x1: 24, y1: 28, kind: 'jog' },
+      { x0: 33, y0: 29, x1: 34, y1: 33, kind: 'jog' },
+      { x0: 38, y0:  1, x1: 42, y1:  3, kind: 'jog' },
+      { x0: 33, y0:  7, x1: 34, y1: 12, kind: 'jog' },
+      { x0: 24, y0: 12, x1: 28, y1: 13, kind: 'jog' },
+      { x0: 17, y0:  7, x1: 18, y1: 12, kind: 'jog' },
+      { x0:  9, y0:  4, x1: 13, y1:  6, kind: 'jog' }
+    ]),
+    route: [
+      { x:  5.5, y:  2.5 },   //  0 south down the west flank
+      { x:  5.5, y: 16.5 },   //  1 the first change of lane
+      { x:  2.5, y: 16.5 },   //  2
+      { x:  2.5, y: 26.5 },   //  3 and the second
+      { x:  5.5, y: 26.5 },   //  4
+      { x:  5.5, y: 38.5 },   //  5 east along the bottom deck
+      { x: 18.5, y: 38.5 },   //  6 north into the lower chamber
+      { x: 18.5, y: 25.5 },   //  7 east across it
+      { x: 31.5, y: 25.5 },   //  8 south, back out
+      { x: 31.5, y: 38.5 },   //  9 east along the deck, over the line
+      { x: 41.0, y: 38.5 },   // 10 and the third change
+      { x: 41.0, y: 35.5 },   // 11
+      { x: 46.5, y: 35.5 },   // 12 north up the east flank
+      { x: 46.5, y: 26.5 },   // 13 and the fourth
+      { x: 49.5, y: 26.5 },   // 14
+      { x: 49.5, y: 16.5 },   // 15 and the fifth
+      { x: 46.5, y: 16.5 },   // 16
+      { x: 46.5, y:  5.5 },   // 17 west along the top deck
+      { x: 31.5, y:  5.5 },   // 18 south into the upper chamber
+      { x: 31.5, y: 15.5 },   // 19 west across it
+      { x: 20.5, y: 15.5 },   // 20 north, back out
+      { x: 20.5, y:  2.5 }    // 21 west along the top deck
+    ],
+    startLeg: 5,
+    checkpoints: [
+      { x0: 26, y0: 23, x1: 27, y1: 29 },   // east across the lower chamber
+      { x0: 45, y0: 16, x1: 51, y1: 17 },   // north up the east flank
+      { x0: 25, y0: 12, x1: 26, y1: 18 },   // west across the upper chamber
+      { x0:  1, y0: 21, x1:  7, y1: 22 }    // south down the west flank
+    ],
+    finish: { x0: 9.6, y0: 34, x1: 10.4, y1: 40, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 8.6, y: 35.4, wp: 6 },
+      { x: 8.6, y: 38.6, wp: 6 },
+      { x: 6.5, y: 35.4, wp: 6 },
+      { x: 6.5, y: 38.6, wp: 6 }
+    ]
+  };
+
+  /* ---- Alien 3: MOTHERSHIP --------------------------------------------
+   * The simplest shape in the game, and the hardest thing in it. Four
+   * corners, four straights, and EIGHT changes of lane - three on each of
+   * the long sides and one on each of the short ones. The measurement that
+   * runs this whole theme says a weave costs four times what a cluster does
+   * and a weave needs road, so the last track spends everything it has on
+   * road and nothing at all on shape.
+   *
+   *        +----------------------+
+   *        |                      |
+   *        |                      |
+   *        +----------------------+
+   * -------------------------------------------------------------------- */
+  var MOTHERSHIP = {
+    id: 'mothership',
+    name: 'MOTHERSHIP',
+    blurb: 'Four corners, four straights, and eight changes of lane.',
+    grade: 'IMPOSSIBLE ++',
+    cols: 52,
+    rows: 41,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'spores',
+    theme: ALIEN,
+    walls: border(52, 41).concat([
+      { x0:  7, y0:  7, x1: 44, y1: 33, kind: 'infield' },
+      // four clusters down each long side and three down each short one:
+      // eight changes of lane, and nothing else on the track at all
+      { x0:  1, y0: 10, x1:  3, y1: 14, kind: 'jog' },
+      { x0:  4, y0: 19, x1:  6, y1: 23, kind: 'jog' },
+      { x0:  1, y0: 28, x1:  3, y1: 32, kind: 'jog' },
+      { x0: 10, y0: 34, x1: 14, y1: 36, kind: 'jog' },
+      { x0: 20, y0: 37, x1: 24, y1: 39, kind: 'jog' },
+      { x0: 30, y0: 34, x1: 34, y1: 36, kind: 'jog' },
+      { x0: 40, y0: 37, x1: 44, y1: 39, kind: 'jog' },
+      { x0: 48, y0: 28, x1: 50, y1: 32, kind: 'jog' },
+      { x0: 45, y0: 19, x1: 47, y1: 23, kind: 'jog' },
+      { x0: 48, y0: 10, x1: 50, y1: 14, kind: 'jog' },
+      { x0: 40, y0:  1, x1: 44, y1:  3, kind: 'jog' },
+      { x0: 30, y0:  4, x1: 34, y1:  6, kind: 'jog' },
+      { x0: 20, y0:  1, x1: 24, y1:  3, kind: 'jog' },
+      { x0: 10, y0:  4, x1: 14, y1:  6, kind: 'jog' }
+    ]),
+    emblems: [
+      { x0: 12, y0: 12, x1: 40, y1: 29, kind: 'mosaic', tile: 3, density: 0.16,
+        seed: 41, alpha: 0.22, colors: ['#7cff5a', '#39a04a', '#d36bff'] }
+    ],
+    route: [
+      { x:  5.5, y:  2.5 },   //  0 south down the west flank
+      { x:  5.5, y: 17.0 },   //  1 the first change of lane
+      { x:  2.5, y: 17.0 },   //  2
+      { x:  2.5, y: 26.0 },   //  3 and the second
+      { x:  5.5, y: 26.0 },   //  4
+      { x:  5.5, y: 38.5 },   //  5 east along the bottom, over the line
+      { x: 17.0, y: 38.5 },   //  6 and the third
+      { x: 17.0, y: 35.5 },   //  7
+      { x: 27.0, y: 35.5 },   //  8 and the fourth
+      { x: 27.0, y: 38.5 },   //  9
+      { x: 37.0, y: 38.5 },   // 10 and the fifth
+      { x: 37.0, y: 35.5 },   // 11
+      { x: 46.5, y: 35.5 },   // 12 north up the east flank
+      { x: 46.5, y: 26.0 },   // 13 and the sixth
+      { x: 49.5, y: 26.0 },   // 14
+      { x: 49.5, y: 17.0 },   // 15 and the seventh
+      { x: 46.5, y: 17.0 },   // 16
+      { x: 46.5, y:  5.5 },   // 17 west along the top
+      { x: 37.0, y:  5.5 },   // 18 and the eighth
+      { x: 37.0, y:  2.5 },   // 19
+      { x: 27.0, y:  2.5 },   // 20 and the ninth
+      { x: 27.0, y:  5.5 },   // 21
+      { x: 17.0, y:  5.5 },   // 22 and the tenth
+      { x: 17.0, y:  2.5 }    // 23
+    ],
+    startLeg: 5,
+    checkpoints: [
+      { x0: 24, y0: 34, x1: 25, y1: 40 },   // east along the bottom
+      { x0: 45, y0: 30, x1: 51, y1: 31 },   // north up the east flank
+      { x0: 27, y0:  1, x1: 28, y1:  7 },   // west along the top
+      { x0:  1, y0: 22, x1:  7, y1: 23 }    // south down the west flank
+    ],
+    finish: { x0: 8.6, y0: 34, x1: 9.4, y1: 40, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 7.4, y: 35.4, wp: 6 },
+      { x: 7.4, y: 38.6, wp: 6 },
+      { x: 5.3, y: 35.4, wp: 6 },
+      { x: 5.3, y: 38.6, wp: 6 }
+    ]
+  };
+
   /* ------------------------------------------------------------------ *
    * DIRECTION
    *
@@ -3028,6 +3324,7 @@
     SANCTUM, COLONNADE, LABYRINTH,
     BASALT, FISSURE, CRATER,
     ORBITAL, DRIFTFIELD, HORIZON,
+    LANDFALL, HIVE, MOTHERSHIP,
     // and the seven built before the themes, kept raceable under LEGACY
     CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE
   ].map(function (t) { return t.mirror ? flipX(t) : t; });
