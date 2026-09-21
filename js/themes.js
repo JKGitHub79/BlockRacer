@@ -109,6 +109,18 @@
         { id: 'fissure', name: 'FISSURE', grade: 'INSANE +' },
         { id: 'crater',  name: 'CRATER',  grade: 'INSANE ++' }
       ]
+    },
+    {
+      id: 'space',
+      name: 'SPACE',
+      tagline: 'A station over a dead world. The gates here are holes in the deck.',
+      scene: 'space',
+      accent: '#5ef2ff',
+      tracks: [
+        { id: 'orbital',  name: 'ORBITAL',  grade: 'NIGHTMARE' },
+        { id: 'driftfield', name: 'DRIFT FIELD', grade: 'NIGHTMARE +' },
+        { id: 'horizon',  name: 'EVENT HORIZON', grade: 'NIGHTMARE ++' }
+      ]
     }
   ];
 })(typeof window !== 'undefined' ? window : globalThis);

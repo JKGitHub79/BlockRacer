@@ -49,7 +49,7 @@ zero-sized.
 
 ## Themes and tracks
 
-Five themes, ascending in difficulty, three tracks each:
+Nine themes, ascending in difficulty, three tracks each:
 
 | Theme | Tracks | | |
 | --- | --- | --- | --- |
@@ -61,10 +61,11 @@ Five themes, ascending in difficulty, three tracks each:
 | Industrial | Foundry, Pipeworks, Refinery | extreme | **built** |
 | Ancient Ruins | Sanctum, Colonnade, Labyrinth | expert | **built** |
 | Volcano | Basalt, Fissure, Crater | insane | **built** |
+| Space | Orbital, Drift Field, Event Horizon | nightmare | **built** |
 
-All fifteen are built. A theme's track is matched to `js/tracks.js` by id, and a
-name with no track behind it renders as a placeholder rather than being hidden,
-so a fifth theme can be sketched in `js/themes.js` and filled in later.
+All twenty-seven are built. A theme's track is matched to `js/tracks.js` by id,
+and a name with no track behind it renders as a placeholder rather than being
+hidden, so a tenth theme can be sketched in `js/themes.js` and filled in later.
 
 ### The forest three
 
@@ -359,9 +360,62 @@ fissure.
 forty-four cell run past each of them. The crater itself is a lava lake -
 twenty-two cells by sixteen, the largest single hazard in the game.
 
+### The space three
+
+The gate here is a **hole**. `kind: 'void'` is new: it collides exactly like a
+wall, and the renderer paints the sky the station is flying over through it -
+two star layers at different speeds, so the parallax says the hole goes
+somewhere rather than being a black rectangle. Driving into one is the same
+crash as driving into a spar; it just looks like a much worse idea.
+
+**These three cost a whole theory.** They were drawn on the volcano's
+assumption - that the PAIR is the difficulty lever - and built with holes
+three cells deep on a six-cell deck, so that no lane cleared both and the
+change across was compulsory rather than merely wise. Orbital came out at
+**2470** crashes a thousand laps against a target of about 900. Every fix that
+followed from the theory made it worse: shallower holes took it to 1895,
+gentler lane steps to 2352, and winding the opponents' wander down from 1.5
+cells to 1.0 took it *up* to 1925.
+
+The theory was wrong, and one measurement said so. Strip every hole off
+Orbital and it still scores **1482**. Strip the lane-change doglegs out of the
+racing line as well, so the car drives the middle of the road the whole way,
+and it scores **202**. The same test on Basalt: 803 with its gates, 714
+without them. So on both tracks the holes are worth about twenty crashes each
+and **a change of lane is worth about three hundred and fifty** - and the
+volcano's "175 a pair" was never the gates. It was the weave the gates force,
+counted once for the pair that caused it.
+
+That also settles an arithmetic question the volcano never had to ask. On a
+six-cell deck with a car 0.8 wide and a hole two cells deep, a lane that keeps
+2.0 cells off the plating leaves 1.2 from the hole, and one that keeps 2.0
+from the hole leaves 1.2 from the plating; you cannot have both, and the
+opponents wander 1.5. Both compromises were measured and both are worse than
+splitting it evenly at 1.6 and 1.6, which is what the volcano does. Only a
+one-cell hole lets a single lane sit 2.1 clear of everything, which is why
+Event Horizon's are one cell and the other two are two: the depth is set by
+how much the layout could afford, not by taste.
+
+So the holes are spread over every leg and the *weave* is the ladder: two
+changes of lane on Orbital, three on Drift Field, two on Event Horizon on top
+of four stepped corners that are worth more than a third change would be.
+
+**Orbital** is the ring round the station with one docking arm hanging into it
+off the top deck - eight corners, and a forty-three cell bottom straight that
+the lap starts on.
+
+**Drift Field** is two arms, one off each deck, pointing opposite ways, so the
+lap turns into the middle twice and comes out on the far side both times.
+Twelve corners and fourteen holes, more than any other track in the game.
+
+**Event Horizon** steps sideways by a full road width halfway along every one
+of its four sides, so it turns twelve times without ever doubling back and
+winds round a core with a hole cut clean through it. That core is the one
+place on the map you can see out of, and nothing drives near it.
+
 ### The ladder
 
-Twenty-four tracks, one continuous curve. Crashes per thousand laps of AI
+Twenty-seven tracks, one continuous curve. Crashes per thousand laps of AI
 racing, measured the way the whole ladder has always been measured - beginner
 speed, slide 0.8, four cars (see **A note on the numbers** below):
 
@@ -375,17 +429,21 @@ speed, slide 0.8, four cars (see **A note on the numbers** below):
 | Industrial | 816 | 970 | 968 |
 | Ancient Ruins | 734 | 755 | 729 |
 | Volcano | 803 | 878 | 1020 |
+| Space | 1027 | 1196 | 1422 |
 
 In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 588, 617, 623,
-684, 729, 734, 755, 803, 816, 878, 968, 970, 1020. Forest and Desert
+684, 729, 734, 755, 803, 816, 878, 968, 970, 1020, 1027, 1196, 1422. Forest and Desert
 interleave, so the first track of the
 desert is easier than the last of the forest and a new theme reads as a new
 theme rather than a wall. Snow, Cliffs and City interleave the same way, so
 arriving at a harder theme is a step rather than a cliff. Industrial does not
 interleave with City and is not meant to: EXTREME starts above where HARD
 finished. Ancient Ruins interleaves with Industrial, which is not what was
-asked for - see above. Volcano climbs cleanly and ends the ladder on the
-highest number in the themed set.
+asked for - see above. Volcano climbs cleanly. Space climbs cleanly on top of
+it, starts seven crashes above where Volcano finished, and ends the ladder on
+the highest number in the themed set. At the settings the game actually ships
+with - sweat, six cars - the same order holds: 764, 805, 1094 against the
+volcano's 689, 646, 764.
 
 Pipeworks and Refinery measure the same: 970 and 968 is two crashes in twelve
 hundred laps, well inside this metric's noise, so on the ladder they are tied.
@@ -734,6 +792,36 @@ Three things learned the hard way getting them to read:
   actually molten, and a whole map of pulsing cracks would fight it. Lava
   cells get none of it, because their crust is the flat fill and the molten
   middle goes on every frame.
+- **A planet is a disc plus a ring, and the ring is the whole job.** `planet`
+  draws latitude bands clipped to a circle, a terminator gradient that puts
+  the light on one side, and a hot limb on that side. Without a ring that
+  reads as a coloured circle; with one it reads as a planet immediately, so
+  the ring is drawn in two passes - the far half before the disc and the near
+  half after it, with the planet's own shadow cut out of the near half. A ring
+  drawn in one pass sits in front of the planet like a hoop on a stick.
+- **Stars are three passes, and the passes are the distance.** `starfield`
+  lays a dust of faint single pixels, a scatter of middling ones, and a dozen
+  bright ones with a cross and a halo. One uniform scatter reads as noise on
+  the screen rather than as depth. The first cut had fourteen bright ones with
+  a halo seven radii wide and they bloomed over the track cards, so the count
+  and the halo both came down: the scenery loses every argument it has with
+  the text in front of it.
+- **Space still needs a floor.** There is no horizon out here, which makes it
+  the one scene where the rule the others follow - keep the landmarks out of
+  the middle band, sky behind the cards and land below them - is the only
+  thing holding the picture together. `hullfloor` runs the plating of whatever
+  the camera is standing on across the bottom with a lit leading edge and a
+  row of deck lights, for the same reason `street`, `yard`, `sand` and
+  `flowfloor` exist: without a surface at the foot, everything above it
+  floats.
+- **A hull is manufactured, not weathered.** `drawHull` is the only wall
+  painter in the game that is not geology: panels with a seam on two edges of
+  every cell so the plating lines up across a solid however the rectangles
+  were declared, two rivets always in the same two corners, and here and there
+  a lit port, a run of hazard paint or a vent. The deck is then set two full
+  steps darker than the hull rather than one, because on a map this dark a
+  half step is not a difference you can read at speed - drawn at one step, the
+  first cut of Event Horizon was a pinwheel you had to trace with a finger.
 - **A fountain is a plume that glows.** The volcano's eruption is a column of
   seventy hot blobs that widen and cool as they rise, the same construction
   the city's smoke uses. A smooth tapering wedge was tried first and read as
@@ -1368,11 +1456,15 @@ Optional per-track settings: `theme` for the palette, `aiPace` for how hard the
 opposition tries, `aiOffsetScale` for how far they spread across the road, and
 `aiMistakeScale` for how often they turn in late - worth turning down on a track
 whose legs are short enough that a late turn means a wall rather than a wide
-line. Marking a wall rectangle `kind: 'lava'` makes it molten and animated, and
-`weather: 'snow'`, `'dust'` or `'leaves'` blows weather across the board - flakes that fall
-soft and fat, or grit that tears across almost flat and is smeared along its own
-direction of travel. Both wrap round the board in both directions, so nothing is
-ever spawned or retired.
+line. Marking a wall rectangle `kind: 'lava'` makes it molten and animated and
+`kind: 'void'` opens it onto the sky; both collide exactly like any other wall,
+and both are painted live over the baked track rather than into it. `weather`
+blows motes across the board - `'snow'`, `'dust'`, `'leaves'`, `'grit'`,
+`'rain'`, `'ash'`, `'motes'`, `'embers'` or `'drift'`: flakes that fall soft and
+fat, grit that tears across almost flat and is smeared along its own direction
+of travel, embers that rise, or the vacuum's drift, which is the only one with
+no sway at all and as much chance of going up as down. They all wrap round the
+board in both directions, so nothing is ever spawned or retired.
 
 `emblems` paints flat livery onto the solids. Each entry is a rectangle in cell
 coordinates plus a kind: `stripes` takes an `axis`, a `band` width in cells and

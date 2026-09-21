@@ -516,6 +516,174 @@
     g.fillRect(0, y, W, d * 0.3);
   }
 
+  /* ---- space ----------------------------------------------------------
+   *
+   * The one scene with no horizon, so the rule every other scene follows -
+   * keep the landmarks out of the middle band where the cards sit - is the
+   * only thing holding it together. The stars go everywhere, the planets go
+   * high and wide, and the foreground hull takes the bottom.
+   */
+
+  /* Stars in three passes, and the passes are the depth: a dense dust of
+   * faint single pixels, a scatter of middling ones, and a dozen bright ones
+   * with a cross through them. One uniform scatter reads as noise on the
+   * screen rather than as distance. */
+  function starfield(g, seed, density) {
+    var rnd = rng(seed);
+    var i, n = Math.round(W * H * density);
+    for (i = 0; i < n; i++) {
+      g.fillStyle = 'rgba(214,230,255,' + (0.06 + rnd() * 0.22).toFixed(3) + ')';
+      g.fillRect(rnd() * W, rnd() * H, 1, 1);
+    }
+    for (i = 0; i < Math.round(n * 0.16); i++) {
+      var warm = rnd();
+      var col = warm < 0.14 ? '255,214,170' : warm < 0.3 ? '188,212,255' : '240,246,255';
+      var r = 1 + Math.round(rnd() * 1.4);
+      g.fillStyle = 'rgba(' + col + ',' + (0.30 + rnd() * 0.45).toFixed(2) + ')';
+      g.fillRect(rnd() * W, rnd() * H, r, r);
+    }
+    for (i = 0; i < 9; i++) {
+      var bx = rnd() * W, by = rnd() * H * 0.9, br = H * (0.003 + rnd() * 0.003);
+      var halo = g.createRadialGradient(bx, by, 0, bx, by, br * 4.5);
+      halo.addColorStop(0, 'rgba(210,232,255,0.20)');
+      halo.addColorStop(1, 'rgba(210,232,255,0)');
+      g.fillStyle = halo;
+      g.fillRect(bx - br * 4.5, by - br * 4.5, br * 9, br * 9);
+      g.fillStyle = 'rgba(248,252,255,0.95)';
+      g.fillRect(bx - br / 2, by - br / 2, br, br);
+      g.fillStyle = 'rgba(248,252,255,0.40)';
+      g.fillRect(bx - br * 3, by - 0.5, br * 6, 1);
+      g.fillRect(bx - 0.5, by - br * 3, 1, br * 6);
+    }
+  }
+
+  /* A band of gas across the sky. Soft, wide and dim - it is there to keep
+   * the black from being flat, not to be looked at. */
+  function nebula(g, cx, cy, r, tint, seed) {
+    var rnd = rng(seed);
+    for (var i = 0; i < 16; i++) {
+      var px = cx + (rnd() - 0.5) * r * 2.2;
+      var py = cy + (rnd() - 0.5) * r * 0.7;
+      var pr = r * (0.25 + rnd() * 0.55);
+      var cloud = g.createRadialGradient(px, py, 0, px, py, pr);
+      cloud.addColorStop(0, 'rgba(' + tint + ',' + (0.05 + rnd() * 0.06).toFixed(3) + ')');
+      cloud.addColorStop(1, 'rgba(' + tint + ',0)');
+      g.fillStyle = cloud;
+      g.fillRect(px - pr, py - pr, pr * 2, pr * 2);
+    }
+  }
+
+  /* A planet: a banded disc, a terminator that puts the light on one side,
+   * a thin lit limb on that side, and optionally a ring drawn in two halves
+   * so the near half passes in FRONT of the planet and the far half behind.
+   * The ring is the whole reason a planet reads as a planet rather than as a
+   * circle, so it is worth the two passes. */
+  function planet(g, cx, cy, r, bands, lightX, ring, seed) {
+    var rnd = rng(seed);
+    var i;
+
+    if (ring) {
+      // far half first, behind the disc
+      g.save();
+      g.beginPath();
+      g.ellipse(cx, cy, r * 2.05, r * 0.46, ring.tilt, Math.PI, Math.PI * 2);
+      g.lineWidth = r * 0.30;
+      g.strokeStyle = ring.color;
+      g.stroke();
+      g.restore();
+    }
+
+    g.save();
+    g.beginPath();
+    g.arc(cx, cy, r, 0, Math.PI * 2);
+    g.clip();
+    g.fillStyle = bands[0];
+    g.fillRect(cx - r, cy - r, r * 2, r * 2);
+    // latitude bands, uneven widths, in the planet's own colours
+    var y = cy - r;
+    for (i = 0; y < cy + r; i++) {
+      var bh = r * (0.10 + rnd() * 0.26);
+      g.fillStyle = bands[1 + ((rnd() * (bands.length - 1)) | 0)];
+      g.globalAlpha = 0.35 + rnd() * 0.45;
+      g.fillRect(cx - r, y, r * 2, bh);
+      y += bh;
+    }
+    g.globalAlpha = 1;
+    // the night side: a gradient across the disc away from the light
+    var term = g.createLinearGradient(cx + lightX * r, cy - r, cx - lightX * r * 1.15, cy + r);
+    term.addColorStop(0, 'rgba(2,3,10,0)');
+    term.addColorStop(0.42, 'rgba(2,3,10,0.30)');
+    term.addColorStop(1, 'rgba(2,3,10,0.94)');
+    g.fillStyle = term;
+    g.fillRect(cx - r, cy - r, r * 2, r * 2);
+    // and a hot limb on the lit edge
+    g.strokeStyle = 'rgba(255,238,210,0.40)';
+    g.lineWidth = Math.max(1, r * 0.035);
+    g.beginPath();
+    g.arc(cx, cy, r * 0.985, -Math.PI * 0.42 + (lightX < 0 ? Math.PI : 0),
+          Math.PI * 0.42 + (lightX < 0 ? Math.PI : 0));
+    g.stroke();
+    g.restore();
+
+    if (ring) {
+      g.save();
+      g.beginPath();
+      g.ellipse(cx, cy, r * 2.05, r * 0.46, ring.tilt, 0, Math.PI);
+      g.lineWidth = r * 0.30;
+      g.strokeStyle = ring.color;
+      g.stroke();
+      // the shadow the planet throws across the near half of its own ring
+      g.globalCompositeOperation = 'destination-out';
+      g.beginPath();
+      g.ellipse(cx - lightX * r * 0.55, cy + r * 0.30, r * 0.72, r * 0.34, ring.tilt, 0, Math.PI * 2);
+      g.fillStyle = 'rgba(0,0,0,0.55)';
+      g.fill();
+      g.restore();
+    }
+  }
+
+  /* The floor: the hull of whatever the camera is standing on, running off
+   * the bottom of the frame. Same job as `street`, `yard`, `sand` and
+   * `flowfloor` - the foot of the scene has to be a surface rather than an
+   * edge, or everything above it floats. Plating, a run of deck lights, and
+   * a lit lip where the hull meets the sky. */
+  function hullfloor(g, y, seed) {
+    var rnd = rng(seed);
+    var d = H - y;
+    g.fillStyle = '#0a0e18';
+    g.fillRect(0, y, W, d);
+    // plating, in panels across
+    var pw = W * 0.085;
+    for (var x = 0; x < W; x += pw) {
+      g.fillStyle = 'rgba(150,175,215,' + (0.012 + rnd() * 0.026).toFixed(3) + ')';
+      g.fillRect(x, y, pw - 1, d);
+      g.fillStyle = 'rgba(0,0,0,0.45)';
+      g.fillRect(x + pw - 1, y, 1, d);
+    }
+    g.fillStyle = 'rgba(0,0,0,0.40)';
+    g.fillRect(0, y + d * 0.42, W, 1);
+    // deck lights along the leading edge
+    var step = W * 0.11;
+    for (var lx = step * 0.45; lx < W; lx += step) {
+      var gy = y + d * 0.20;
+      var glow = g.createRadialGradient(lx, gy, 0, lx, gy, d * 0.9);
+      glow.addColorStop(0, 'rgba(94,242,255,0.20)');
+      glow.addColorStop(1, 'rgba(94,242,255,0)');
+      g.fillStyle = glow;
+      g.fillRect(lx - d * 0.9, y, d * 1.8, d);
+      g.fillStyle = 'rgba(190,248,255,0.85)';
+      g.fillRect(lx - Math.max(1, H * 0.003), gy, Math.max(2, H * 0.006), Math.max(2, H * 0.003));
+    }
+    // the lit lip, so the hull has a top edge rather than just stopping
+    var lip = g.createLinearGradient(0, y, 0, y + d * 0.26);
+    lip.addColorStop(0, 'rgba(120,190,255,0.30)');
+    lip.addColorStop(1, 'rgba(120,190,255,0)');
+    g.fillStyle = lip;
+    g.fillRect(0, y, W, d * 0.26);
+    g.fillStyle = 'rgba(170,220,255,0.55)';
+    g.fillRect(0, y, W, 1);
+  }
+
   function recede(g) {
     g.fillStyle = 'rgba(4,8,14,0.18)';
     g.fillRect(0, 0, W, H);
@@ -704,6 +872,27 @@
       }
     },
 
+    /* No horizon and no ground, so the depth has to come from the stars and
+     * from what is in front of what: gas behind everything, the ringed giant
+     * high and to one side of the cards, its moon smaller and further over,
+     * and the hull of the station the camera is on across the bottom. */
+    space: {
+      weather: 'drift',
+      paint: function (g) {
+        sky(g, [[0, '#01020a'], [0.45, '#050a1b'], [0.82, '#0a1026'], [1, '#101a34']]);
+        nebula(g, W * 0.30, H * 0.30, H * 0.42, '108,86,240', 17);
+        nebula(g, W * 0.74, H * 0.16, H * 0.30, '40,140,220', 41);
+        starfield(g, 613, 0.00055);
+        planet(g, W * 0.825, H * 0.185, H * 0.150,
+               ['#3d2c55', '#7a5a8e', '#4a3466', '#9b7aa8', '#2d2040'], 1,
+               { tilt: -0.20, color: 'rgba(196,178,226,0.30)' }, 29);
+        planet(g, W * 0.150, H * 0.130, H * 0.052,
+               ['#2b4a52', '#3f7a7c', '#27424c', '#56a09a'], -1, null, 83);
+        hullfloor(g, H * 0.885, 131);
+        recede(g);
+      }
+    },
+
     /* The front screen sits on its own night sky rather than borrowing a
      * theme's, so arriving at the game does not imply a theme. */
     night: {
@@ -751,7 +940,12 @@
               sway: 18, rate: 0.32, alpha: [0.07, 0.26], wide: 1 },
     // Embers rise: the only weather here with the sign the other way round.
     embers: { n: 80, color: '#ffb066', r: [0.7, 2.0], vx: [-14, -44], vy: [-140, -40],
-              sway: 14, rate: 1.1, alpha: [0.14, 0.60], wide: 0.8 }
+              sway: 14, rate: 1.1, alpha: [0.14, 0.60], wide: 0.8 },
+    // Vacuum: no sway at all, and up is as likely as down. Every speck holds
+    // the course it was already on, which is the one thing that looks wrong
+    // about every other weather in the game if you use it out here.
+    drift:  { n: 55, color: '#cfe4ff', r: [0.5, 1.6], vx: [-18, -70], vy: [-40, 40],
+              sway: 0, rate: 0.1, alpha: [0.10, 0.44], wide: 1 }
   };
 
   function ensureMotes(kind) {

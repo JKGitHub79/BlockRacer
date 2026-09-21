@@ -2659,6 +2659,290 @@
     ]
   };
 
+  /* ==================================================================== *
+   * SPACE - the ninth theme, and the hardest.
+   *
+   * The gate here is a HOLE. `kind: 'void'` is new: it collides exactly like
+   * a wall, and the renderer paints the sky the station is flying over
+   * through it, two star layers deep so it reads as somewhere rather than as
+   * a black rectangle. Driving into one is the same crash as driving into a
+   * spar; it just looks like a much worse idea.
+   *
+   * Volcano's flows NARROW the road - a pair of them leaves two cells down
+   * the middle that clear both, and the crashes come from the cars that were
+   * not on that line. These holes CLOSE it. A pair here is three cells deep
+   * on each side of a six-cell deck, so there is no lane that clears both and
+   * the lane change is compulsory rather than merely wise. That is the whole
+   * step up from the volcano: same width of road, same radius of turn, and
+   * one fewer way through.
+   * ==================================================================== */
+  var SPACE = {
+    /* `hull` turns on the plating in js/render.js: panels, seams, rivets and
+     * the occasional lit port. Void cells get none of it - there is no
+     * plating over a hole - and the sky goes on live. */
+    hull:       true,
+    bg:         '#02040c',
+    road:       '#080c16',   // the deck you drive on, lit from nowhere
+    roadLine:   '#141d30',
+    wall:       '#2a3a55',   // hull. Two full steps lighter than the deck,
+    wallTop:    '#74a6d4',   // because on a map this dark a half step is
+    outer:      '#22304a',   // not a difference you can read at speed
+    outerTop:   '#4d719c',
+    jog:        '#1f4a5c',
+    jogTop:     '#5ef2ff',
+    racingLine: 'rgba(150,215,255,0.24)',
+    check:      'rgba(94,242,255,0.07)',
+    checkNext:  'rgba(94,242,255,0.30)',
+    startLine:  '#e8f6ff'
+  };
+
+  /* ---- Space 1: ORBITAL ------------------------------------------------
+   * The ring round the station, with one docking arm hanging into it off
+   * the top deck. Eight corners, and the longest of them is a forty-three
+   * cell bottom straight that the lap starts on:
+   *
+   *        +-----+  +--+-----+
+   *        |     |  |  |     |    the arm is the only thing between the
+   *        |     +--+  |     |    top deck and the middle of the ring, so
+   *        |           |     |    the lap has to go down it and back up
+   *        +-----------+-----+
+   * -------------------------------------------------------------------- */
+  var ORBITAL = {
+    id: 'orbital',
+    name: 'ORBITAL',
+    blurb: 'The ring round the station, and one docking arm hanging into it.',
+    grade: 'NIGHTMARE',
+    cols: 52,
+    rows: 41,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'drift',
+    theme: SPACE,
+    walls: border(52, 41).concat([
+      { x0: 23, y0:  1, x1: 30, y1: 14, kind: 'edge' },      // the arm
+      { x0:  7, y0:  7, x1: 16, y1: 33, kind: 'infield' },
+      { x0: 37, y0:  7, x1: 44, y1: 33, kind: 'infield' },
+      { x0: 17, y0: 21, x1: 36, y1: 33, kind: 'infield' },
+      // The lever on this theme is not the hole, it is the LANE CHANGE the
+      // hole forces. Measured on this layout: the bare ring costs 202
+      // crashes a thousand laps, each hole about twenty, and each change of
+      // lane about three hundred and fifty. So the holes are spread over
+      // every leg and only two of them are paired - one on the bottom, one
+      // on the east flank - which is the same count the volcano runs.
+      { x0: 16, y0: 34, x1: 20, y1: 35, kind: 'void' },
+      { x0: 28, y0: 38, x1: 32, y1: 39, kind: 'void' },
+      { x0: 49, y0: 26, x1: 50, y1: 30, kind: 'void' },
+      { x0: 45, y0: 14, x1: 46, y1: 18, kind: 'void' },
+      { x0:  1, y0: 16, x1:  1, y1: 22, kind: 'void' },
+      { x0: 38, y0:  1, x1: 42, y1:  1, kind: 'void' },
+      { x0: 31, y0:  9, x1: 32, y1: 13, kind: 'void' },
+      { x0: 25, y0: 19, x1: 29, y1: 20, kind: 'void' },
+      { x0: 17, y0:  8, x1: 18, y1: 12, kind: 'void' },
+      { x0:  9, y0:  1, x1: 13, y1:  1, kind: 'void' }
+    ]),
+    route: [
+      { x:  5.0, y:  5.0 },   //  0 south down the west flank
+      { x:  5.0, y: 38.0 },   //  1 east along the bottom, over the line
+      { x: 24.0, y: 38.0 },   //  2 the first change of lane
+      { x: 24.0, y: 36.0 },   //  3
+      { x: 47.0, y: 36.0 },   //  4 north up the east flank
+      { x: 47.0, y: 22.0 },   //  5 and the second
+      { x: 49.0, y: 22.0 },   //  6
+      { x: 49.0, y:  5.0 },   //  7 west along the top
+      { x: 35.0, y:  5.0 },   //  8 south down the arm
+      { x: 35.0, y: 17.0 },   //  9 west along the foot of it
+      { x: 21.0, y: 17.0 },   // 10 north, back out
+      { x: 21.0, y:  5.0 }    // 11 west along the top deck
+    ],
+    startLeg: 1,
+    checkpoints: [
+      { x0:  1, y0: 30, x1:  7, y1: 31 },   // south down the west flank
+      { x0: 36, y0: 34, x1: 37, y1: 40 },   // east along the bottom
+      { x0: 45, y0: 10, x1: 51, y1: 11 },   // north up the east flank
+      { x0: 23, y0: 15, x1: 24, y1: 21 }    // west along the foot of the arm
+    ],
+    finish: { x0: 12, y0: 34, x1: 12.8, y1: 40, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 10.4, y: 35.6, wp: 2 },
+      { x: 10.4, y: 38.4, wp: 2 },
+      { x:  8.3, y: 35.6, wp: 2 },
+      { x:  8.3, y: 38.4, wp: 2 }
+    ]
+  };
+
+  /* ---- Space 2: DRIFT FIELD --------------------------------------------
+   * Two arms, one off each deck, and they point opposite ways - so the lap
+   * turns into the middle twice and comes out on the far side both times.
+   * Twelve corners:
+   *
+   *        +------+  +-+-----+
+   *        |      +--+ |     |    the top arm hangs down on the right of
+   *        |    +---+  |     |    the map and the bottom arm stands up on
+   *        |    |   +--+     |    the left of it
+   *        +----+  +---------+
+   * -------------------------------------------------------------------- */
+  var DRIFTFIELD = {
+    id: 'driftfield',
+    name: 'DRIFT FIELD',
+    blurb: 'Two arms pointing opposite ways, and a hole on every run.',
+    grade: 'NIGHTMARE +',
+    cols: 52,
+    rows: 41,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'drift',
+    theme: SPACE,
+    walls: border(52, 41).concat([
+      { x0: 25, y0:  1, x1: 30, y1: 11, kind: 'edge' },      // the top arm
+      { x0:  7, y0:  7, x1: 18, y1: 22, kind: 'infield' },
+      { x0: 37, y0:  7, x1: 44, y1: 33, kind: 'infield' },
+      { x0: 19, y0: 18, x1: 36, y1: 22, kind: 'infield' },
+      { x0:  7, y0: 23, x1: 12, y1: 33, kind: 'infield' },
+      { x0: 31, y0: 23, x1: 36, y1: 33, kind: 'infield' },
+      { x0: 19, y0: 29, x1: 24, y1: 39, kind: 'edge' },      // the bottom arm
+      // Two pairs, on the two longest runs, and a single hole on each of the
+      // ten other legs - more gates than any other track in the game, and
+      // still only two changes of lane, because the change is what costs.
+      { x0: 30, y0: 34, x1: 34, y1: 36, kind: 'void' },
+      { x0: 40, y0: 37, x1: 44, y1: 39, kind: 'void' },
+      { x0: 49, y0: 26, x1: 50, y1: 30, kind: 'void' },
+      { x0: 45, y0: 14, x1: 46, y1: 18, kind: 'void' },
+      { x0:  1, y0: 12, x1:  2, y1: 17, kind: 'void' },
+      { x0:  5, y0: 24, x1:  6, y1: 29, kind: 'void' },
+      { x0:  7, y0:  5, x1: 11, y1:  6, kind: 'void' },
+      { x0: 10, y0: 34, x1: 14, y1: 35, kind: 'void' },
+      { x0: 13, y0: 30, x1: 14, y1: 34, kind: 'void' },
+      { x0: 19, y0: 23, x1: 22, y1: 24, kind: 'void' },
+      { x0: 29, y0: 30, x1: 30, y1: 34, kind: 'void' },
+      { x0: 40, y0:  1, x1: 44, y1:  2, kind: 'void' },
+      { x0: 31, y0:  7, x1: 32, y1: 11, kind: 'void' },
+      { x0: 22, y0: 16, x1: 26, y1: 17, kind: 'void' },
+      { x0: 19, y0:  7, x1: 20, y1: 11, kind: 'void' }
+    ]),
+    route: [
+      { x: 23.0, y:  3.0 },   //  0 west along the top deck, over the line
+      { x:  5.0, y:  3.0 },   //  1 south down the west flank
+      { x:  5.0, y: 20.0 },   //  2 the first change of lane
+      { x:  3.0, y: 20.0 },   //  3
+      { x:  3.0, y: 38.0 },   //  4 east along the bottom deck
+      { x: 17.0, y: 38.0 },   //  5 north into the lower arm
+      { x: 17.0, y: 27.0 },   //  6 east along the top of it
+      { x: 27.0, y: 27.0 },   //  7 south, back out
+      { x: 27.0, y: 38.0 },   //  8 east along the deck again
+      { x: 37.0, y: 38.0 },   //  9 the second
+      { x: 37.0, y: 36.0 },   // 10
+      { x: 47.0, y: 36.0 },   // 11 north up the east flank
+      { x: 47.0, y: 22.0 },   // 12 and the third
+      { x: 49.0, y: 22.0 },   // 13
+      { x: 49.0, y:  5.0 },   // 14 west along the top deck
+      { x: 35.0, y:  5.0 },   // 15 south into the upper arm
+      { x: 35.0, y: 14.0 },   // 16 west along the foot of it
+      { x: 23.0, y: 14.0 }    // 17 north, back out
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0:  1, y0: 33, x1:  7, y1: 34 },   // south down the west flank
+      { x0: 23, y0: 23, x1: 24, y1: 29 },   // east along the top of the arm
+      { x0: 45, y0: 10, x1: 51, y1: 11 },   // north up the east flank
+      { x0: 27, y0: 12, x1: 28, y1: 18 }    // west along the foot of the arm
+    ],
+    finish: { x0: 12.6, y0: 1, x1: 13.4, y1: 7, dir: { x: -1, y: 0 } },
+    startGrid: [
+      { x: 14.8, y: 2.9, wp: 1 },
+      { x: 14.8, y: 5.1, wp: 1 },
+      { x: 16.9, y: 2.9, wp: 1 },
+      { x: 16.9, y: 5.1, wp: 1 }
+    ]
+  };
+
+  /* ---- Space 3: EVENT HORIZON ------------------------------------------
+   * Every one of the four sides steps sideways by a full road width halfway
+   * along it, so the lap turns twelve times without ever doubling back, and
+   * winds round a core with a hole cut through it:
+   *
+   *        +--+  +------------+
+   *        |  +--+            |    the four steps all turn the same way,
+   *        +--+   +-------+   |    which is what makes the whole thing
+   *        |      |  []   +---+    read as turning about the middle
+   *        +------+-----------+
+   * -------------------------------------------------------------------- */
+  var HORIZON = {
+    id: 'horizon',
+    name: 'EVENT HORIZON',
+    blurb: 'Four steps round a core with a hole cut clean through it.',
+    grade: 'NIGHTMARE ++',
+    cols: 52,
+    rows: 41,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'drift',
+    theme: SPACE,
+    walls: border(52, 41).concat([
+      { x0:  1, y0:  1, x1:  6, y1: 12, kind: 'edge' },
+      { x0: 27, y0:  1, x1: 50, y1:  6, kind: 'edge' },
+      { x0: 13, y0:  7, x1: 20, y1: 27, kind: 'infield' },
+      { x0: 50, y0:  7, x1: 50, y1: 39, kind: 'edge' },
+      { x0: 21, y0: 13, x1: 43, y1: 19, kind: 'infield' },
+      { x0:  7, y0: 19, x1: 12, y1: 27, kind: 'infield' },
+      { x0: 21, y0: 20, x1: 37, y1: 27, kind: 'infield' },
+      { x0: 44, y0: 26, x1: 49, y1: 39, kind: 'edge' },
+      { x0: 23, y0: 28, x1: 37, y1: 33, kind: 'infield' },
+      { x0:  1, y0: 34, x1: 16, y1: 39, kind: 'edge' },
+      // the core, opened to the sky. Nothing drives near it: it is there so
+      // that the middle of the map is the one place you can see out of.
+      { x0: 24, y0: 21, x1: 36, y1: 27, kind: 'void' },
+      // a pair on three of the four long runs - one more change of lane than
+      // anything else in the game - and a single hole on the rest. The four
+      // steps are left clear: a step is a corner twice over already.
+      { x0:  1, y0: 14, x1:  1, y1: 18, kind: 'void' },
+      { x0:  6, y0: 23, x1:  6, y1: 27, kind: 'void' },
+      { x0: 14, y0: 33, x1: 17, y1: 33, kind: 'void' },
+      { x0: 25, y0: 34, x1: 28, y1: 34, kind: 'void' },
+      { x0: 34, y0: 39, x1: 37, y1: 39, kind: 'void' },
+      { x0: 38, y0: 12, x1: 42, y1: 12, kind: 'void' },
+      { x0: 14, y0:  6, x1: 18, y1:  6, kind: 'void' },
+      { x0:  7, y0:  7, x1:  7, y1: 11, kind: 'void' },
+      { x0: 43, y0: 29, x1: 43, y1: 33, kind: 'void' },
+      { x0: 49, y0: 14, x1: 49, y1: 18, kind: 'void' },
+      { x0: 21, y0:  4, x1: 21, y1:  8, kind: 'void' }
+    ]),
+    route: [
+      { x: 25.0, y:  3.0 },   //  0 west along the top deck
+      { x: 11.0, y:  3.0 },   //  1 south down the first step
+      { x: 11.0, y: 15.5 },   //  2 west onto the flank
+      { x:  5.0, y: 15.5 },   //  3 south
+      { x:  5.0, y: 20.5 },   //  4 the first change of lane
+      { x:  3.0, y: 20.5 },   //  5
+      { x:  3.0, y: 30.5 },   //  6 east along the second step
+      { x: 20.0, y: 30.5 },   //  7 south onto the bottom deck
+      { x: 20.0, y: 38.0 },   //  8 east, over the line
+      { x: 31.0, y: 38.0 },   //  9 the second change of lane
+      { x: 31.0, y: 36.0 },   // 10
+      { x: 40.0, y: 36.0 },   // 11 north up the third step
+      { x: 40.0, y: 22.5 },   // 12 east onto the flank
+      { x: 46.0, y: 22.5 },   // 13 north
+      { x: 46.0, y:  9.0 },   // 14 west along the fourth step
+      { x: 25.0, y:  9.0 }    // 15 north onto the top deck
+    ],
+    startLeg: 8,
+    checkpoints: [
+      { x0:  1, y0: 21, x1:  7, y1: 22 },   // south down the west flank
+      { x0: 32, y0: 34, x1: 33, y1: 40 },   // east along the bottom deck
+      { x0: 38, y0: 26, x1: 44, y1: 27 },   // north up the third step
+      { x0: 36, y0:  7, x1: 37, y1: 13 }    // west along the fourth
+    ],
+    finish: { x0: 23.4, y0: 34, x1: 24.2, y1: 40, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 22.4, y: 35.6, wp: 9 },
+      { x: 22.4, y: 38.4, wp: 9 },
+      { x: 20.5, y: 35.6, wp: 9 },
+      { x: 20.5, y: 38.4, wp: 9 }
+    ]
+  };
+
   /* ------------------------------------------------------------------ *
    * DIRECTION
    *
@@ -2734,6 +3018,7 @@
     FOUNDRY, PIPEWORKS, REFINERY,
     SANCTUM, COLONNADE, LABYRINTH,
     BASALT, FISSURE, CRATER,
+    ORBITAL, DRIFTFIELD, HORIZON,
     // and the seven built before the themes, kept raceable under LEGACY
     CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE
   ].map(function (t) { return t.mirror ? flipX(t) : t; });

@@ -9,7 +9,7 @@
   'use strict';
 
   var C = global.CONFIG;
-  var KIND_ID = { edge: 1, infield: 2, jog: 3, lava: 4 };
+  var KIND_ID = { edge: 1, infield: 2, jog: 3, lava: 4, void: 5 };
 
   var T = {};
 
@@ -184,8 +184,9 @@
     T.theme = data.theme || null;
     T.weather = data.weather || null;
     T.emblems = data.emblems || null;
-    // Rectangles the renderer animates. Empty on a track with no lava.
+    // Rectangles the renderer animates. Empty on a track with neither.
     T.lavaRects = data.walls.filter(function (r) { return r.kind === 'lava'; });
+    T.voidRects = data.walls.filter(function (r) { return r.kind === 'void'; });
     T.name = data.name;
     T.cols = cols;
     T.rows = rows;
