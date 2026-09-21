@@ -49,16 +49,17 @@ zero-sized.
 
 ## Themes and tracks
 
-Four themes, ascending in difficulty, three tracks each:
+Five themes, ascending in difficulty, three tracks each:
 
 | Theme | Tracks | | |
 | --- | --- | --- | --- |
 | Forest | Pinefall, Hollow, Canopy | easiest | **built** |
 | Desert | Duneline, Salt Flats, Canyon Run | harder | **built** |
 | Snow | Frostline, Glacier, Whiteout | moderate | **built** |
-| Cliffs | Scree, Quarry, Overhang | challenging | **built** |
+| Cliffs | Scree, Overhang, Quarry | challenging | **built** |
+| City | Gridlock, Crosstown, Downtown | hard | **built** |
 
-All twelve are built. A theme's track is matched to `js/tracks.js` by id, and a
+All fifteen are built. A theme's track is matched to `js/tracks.js` by id, and a
 name with no track behind it renders as a placeholder rather than being hidden,
 so a fifth theme can be sketched in `js/themes.js` and filled in later.
 
@@ -219,6 +220,36 @@ from is behind you and there is nothing to aim at - and it is why this is the
 hardest track in the theme to drive even though it is not the hardest to
 simulate.
 
+### The city three
+
+Streets between buildings, and the solids stop being scenery you drive
+around. A city track is a grid of blocks with the tarmac left over, which is
+the opposite way round from every theme before it, where a circuit was drawn
+and an island dropped in the middle of it. The streets are seven cells rather
+than the cliffs' eight, and the roadworks cut them to four.
+
+**Gridlock** is a block grid: four streets one way, three the other, six
+buildings between them, and a lap that weaves through the junctions rather
+than running round the outside. Nothing else in the game has more than four
+solid masses. Every street the lap does not use is **built over** - a street
+you can see down but not drive is a city, and a street you can accidentally
+drive down is runoff.
+
+**Crosstown** drives the main street **twice a lap**, and no other track
+reuses a road. Two blocks with a street between them: out along the spine,
+round the north block, back along the spine in the *other lane*, round the
+south block. It is a figure of eight that never crosses itself, because both
+passes run the same way in their own lane and the field meets head to tail
+rather than head on. The lanes are also where the difficulty is: the racing
+line sits 1.85 cells off the kerb instead of 3.5 in the middle of the street,
+on every straight on the track.
+
+**Downtown** uses all twelve street segments of its grid, and the lap goes
+straight through one junction **twice** - once east to west and once south to
+north - so the racing line crosses itself at a set of traffic lights, with a
+building on all four corners. Glacier crosses too, but as two big lobes
+meeting in open ground.
+
 ### The ladder
 
 Twelve tracks, one continuous curve. Crashes per thousand laps of AI racing,
@@ -231,15 +262,16 @@ slide 0.8, four cars (see **A note on the numbers** below):
 | Desert | 69 | 144 | 190 |
 | Snow | 197 | 318 | 450 |
 | Cliffs | 430 | 617 | 467 |
+| City | 588 | 643 | 712 |
 
-In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 617. Forest and
-Desert interleave, so the first track of the desert is easier than the last of
-the forest and a new theme reads as a new theme rather than a wall. Snow and
-Cliffs interleave the same way, so arriving at a harder theme is a step rather
-than a cliff.
+In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 588, 617, 643,
+712. Forest and Desert interleave, so the first track of the desert is easier
+than the last of the forest and a new theme reads as a new theme rather than a
+wall. Snow, Cliffs and City interleave the same way, so arriving at a harder
+theme is a step rather than a cliff.
 
-The two numbers that are out of order are Snow's first and Cliffs' last, and
-both are explained under **Where the numbers and the driving disagree**.
+The two numbers out of order are Snow's first and Cliffs' last, and both are
+explained under **Where the numbers and the driving disagree**.
 
 Three levers, in order of how much they are worth:
 
@@ -319,9 +351,11 @@ their comments still describe them. Everything downstream - the game, the
 thumbnails, the validator, `tools/map.js` - sees only the turned-round
 version. A track opts in with `mirror: true`.
 
-**Crossover and Glacier are not flipped and cannot be.** They are figures of
-eight: one way round one lobe and the other way round the other. Their left
-and right turns come out exactly even, which is what a figure of eight is.
+**Four tracks are not flipped and cannot be.** Crossover and Glacier are
+figures of eight: one way round one lobe and the other way round the other.
+Crosstown is the same shape without the crossing, and Downtown's lap crosses
+itself at a junction. All four come out with their left and right turns
+exactly even, which is what those shapes are.
 
 ### The card pictures
 
@@ -544,6 +578,11 @@ Three things learned the hard way getting them to read:
 - **A mountain range needs many more peaks than you think.** Seven points across
   the screen gives slabs. The step is 4.5% of the width, and the heights are
   skewed so most of the range is low and the occasional one stands out of it.
+- **A skyline is a mountain range with the lights on.** The city scene uses
+  `skyline`: flat-topped towers whose heights are squared, so most of the run
+  is low and the occasional one stands right up out of it - the same trick
+  `peaks` uses, because the shape is the same shape. The windows are what
+  makes it a city rather than a bar chart.
 - **Rock is not a mountain.** The cliffs scene uses `terrace` rather than
   `peaks`: a run of flat-topped blocks that each step up or down from the one
   before. Triangles read as alpine whatever colour they are, and the point of
@@ -557,10 +596,15 @@ of the game. Overhang's massif is twenty-two cells by twenty-one, and at that
 size a flat fill stops reading as rock and starts reading as a hole cut in the
 picture.
 
+The city does the same thing with `windows: true`: nine windows per wall cell,
+each lit warm, lit cold or dark, because a city block is the one solid in the
+game meant to read as a **building** rather than as terrain. Roadworks get a
+single amber lamp instead - a hoarding is not a tower.
+
 The values come from each cell's own coordinates rather than from a random
-stream, so a cell is the same stone every time the track is baked. Moving the
-slide slider rebakes the scenery, and a texture seeded from `Math.random`
-would crawl every time you pressed a bracket.
+stream, so a cell is the same stone, and a tower the same tower, every time
+the track is baked. Moving the slide slider rebakes the scenery, and a texture
+seeded from `Math.random` would crawl every time you pressed a bracket.
 
 ## On a phone
 

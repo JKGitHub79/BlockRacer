@@ -61,6 +61,18 @@
         { id: 'overhang', name: 'OVERHANG', grade: 'CHALLENGING +' },
         { id: 'quarry',   name: 'QUARRY',   grade: 'CHALLENGING ++' }
       ]
+    },
+    {
+      id: 'city',
+      name: 'CITY',
+      tagline: 'Streets between buildings. Wet tarmac, and no room to be wrong.',
+      scene: 'city',
+      accent: '#ff79c6',
+      tracks: [
+        { id: 'gridlock',  name: 'GRIDLOCK',  grade: 'HARD' },
+        { id: 'crosstown', name: 'CROSSTOWN', grade: 'HARD +' },
+        { id: 'downtown',  name: 'DOWNTOWN',  grade: 'HARD ++' }
+      ]
     }
   ];
 })(typeof window !== 'undefined' ? window : globalThis);

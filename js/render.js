@@ -101,7 +101,11 @@
     // Rock dust off the faces: finer and faster than snow, and it falls
     // rather than drifts, because there is nothing up there to hold it.
     grit:   { per: 3000, color: '#c8b9a4', r: [0.6, 1.6], vx: [-18, -55],
-              vy: [14, 42], sway: 3, swayRate: 1.3, alpha: [0.14, 0.42], smear: 2 }
+              vy: [14, 42], sway: 3, swayRate: 1.3, alpha: [0.14, 0.42], smear: 2 },
+    // Rain falls, it does not drift: no sway, and smeared the other way from
+    // the dust - tall and thin rather than long and flat.
+    rain:   { per: 1700, color: '#a8c8ea', r: [2.0, 4.6], vx: [-22, -48],
+              vy: [190, 330], sway: 0, swayRate: 0.1, alpha: [0.14, 0.36], smear: 0.26 }
   };
 
   function ensureMotes() {
@@ -185,6 +189,41 @@
     g.fillStyle = 'rgba(0,0,0,0.22)';
     g.fillRect(x + Math.floor(cellNoise(cx, cy, 6) * (S - w - 3)) + 2,
                y + Math.floor(cellNoise(cx, cy, 7) * (S - w - 3)) + 2, w - 1, w - 1);
+  }
+
+  /* ---- windows --------------------------------------------------------
+   *
+   * A city block is the one solid in the game meant to read as a BUILDING
+   * rather than as terrain, so its cells get windows: nine per cell, each
+   * lit warm, lit cold, or dark. Seeded from the cell's own coordinates
+   * like the stone is, so a tower is the same tower every time the track is
+   * baked and does not reshuffle when the slide slider moves.
+   *
+   * Roadworks get a single lamp instead. A hoarding is not a tower. */
+  function drawWindows(g, cx, cy, kind) {
+    var x = cx * S, y = cy * S;
+    if (kind === 3) {
+      if (cellNoise(cx, cy, 31) > 0.32) return;
+      g.fillStyle = 'rgba(255,186,86,0.85)';
+      g.fillRect(x + Math.floor(cellNoise(cx, cy, 32) * (S - 8)) + 3,
+                 y + Math.floor(cellNoise(cx, cy, 33) * (S - 8)) + 3, 4, 4);
+      return;
+    }
+    var n = 3, pad = 3, gap = 2;
+    var w = Math.max(2, Math.floor((S - pad * 2 - gap * (n - 1)) / n));
+    for (var iy = 0; iy < n; iy++) {
+      for (var ix = 0; ix < n; ix++) {
+        var t = cellNoise(cx * 3 + ix, cy * 3 + iy, 41);
+        if (t < 0.28) {
+          g.fillStyle = 'rgba(255,214,140,' + (0.34 + t).toFixed(2) + ')';
+        } else if (t < 0.38) {
+          g.fillStyle = 'rgba(150,215,255,0.40)';
+        } else {
+          g.fillStyle = 'rgba(8,11,18,0.52)';
+        }
+        g.fillRect(x + pad + ix * (w + gap), y + pad + iy * (w + gap), w, w);
+      }
+    }
   }
 
   function eachWall(fn) {
@@ -314,6 +353,7 @@
     // emblems are painted over the flat fill, then the lit edges go on top -
     // so the faces that make the blocks read as raised survive the livery.
     var stone = !!(T.theme && T.theme.rock);
+    var lit = !!(T.theme && T.theme.windows);
     eachWall(function (cx, cy, kind) {
       // Four kinds of solid: the islands inside the circuit, the ground
       // outside it, the chicane blocks, and lava - whose cooled crust is
@@ -322,6 +362,7 @@
                   : (kind === 2 || kind === 4) ? colorOf('wall') : colorOf('outer');
       g.fillRect(cx * S, cy * S, S, S);
       if (stone) drawStone(g, cx, cy);
+      if (lit) drawWindows(g, cx, cy, kind);
     });
 
     drawEmblems(g);

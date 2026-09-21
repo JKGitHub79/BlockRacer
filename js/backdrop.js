@@ -154,6 +154,33 @@
     }
   }
 
+  /* A city at night. Flat-topped towers of wildly varying height with lit
+   * windows in them - the height is squared so most of the run is low and
+   * the occasional tower stands right up out of it, which is the same trick
+   * the mountain range uses because a skyline has the same shape. */
+  function skyline(g, y, height, color, lit, seed, step) {
+    var rnd = rng(seed);
+    for (var x = -step; x < W + step; x += step) {
+      var t = rnd();
+      var h = height * (0.16 + t * t * 1.3);
+      var w = step * (0.55 + rnd() * 0.6);
+      var bx = x + rnd() * step * 0.28;
+      g.fillStyle = color;
+      g.fillRect(bx, y - h, w, h + 2);
+      if (!lit) continue;
+      g.fillStyle = lit;
+      var cw = 3, ch = 4, pad = 3;
+      var cols = Math.floor((w - pad) / (cw + 3));
+      var rows = Math.floor((h - pad) / (ch + 4));
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          if (rnd() > 0.33) continue;
+          g.fillRect(bx + pad + c * (cw + 3), y - h + pad + r * (ch + 4), cw, ch);
+        }
+      }
+    }
+  }
+
   function recede(g) {
     g.fillStyle = 'rgba(4,8,14,0.18)';
     g.fillRect(0, 0, W, H);
@@ -227,6 +254,23 @@
       }
     },
 
+    city: {
+      weather: 'rain',
+      paint: function (g) {
+        sky(g, [[0, '#04060f'], [0.34, '#0b1226'], [0.60, '#1b1f45'],
+                [0.82, '#3d2a54'], [1, '#77445c']]);
+        // the moon, and the sodium glow the streets throw back up at it
+        sun(g, W * 0.76, H * 0.15, H * 0.026, '#e6ecff', 'rgba(150,180,255,0.16)');
+        skyline(g, H * (HORIZON + 0.03), H * 0.36, '#161c32',
+                'rgba(255,214,140,0.42)', 31, W * 0.042);
+        skyline(g, H * (HORIZON + 0.17), H * 0.27, '#0c1020',
+                'rgba(255,205,125,0.52)', 57, W * 0.034);
+        skyline(g, H * (HORIZON + 0.34), H * 0.19, '#05070f',
+                'rgba(255,196,110,0.42)', 83, W * 0.027);
+        recede(g);
+      }
+    },
+
     /* The front screen sits on its own night sky rather than borrowing a
      * theme's, so arriving at the game does not imply a theme. */
     night: {
@@ -259,7 +303,11 @@
     snow:   { n: 70, color: '#eef5ff', r: [0.7, 2.0], vx: [-8, -34], vy: [26, 78],
               sway: 13, rate: 0.7, alpha: [0.18, 0.62], wide: 1 },
     grit:   { n: 60, color: '#c8b9a4', r: [0.5, 1.5], vx: [-30, -80], vy: [20, 60],
-              sway: 5, rate: 1.3, alpha: [0.08, 0.30], wide: 2 }
+              sway: 5, rate: 1.3, alpha: [0.08, 0.30], wide: 2 },
+    // Rain falls; it does not drift. No sway, and `wide` under one so the
+    // mote comes out tall and thin instead of long and flat.
+    rain:   { n: 110, color: '#a8c8ea', r: [1.6, 3.4], vx: [-40, -95], vy: [320, 540],
+              sway: 0, rate: 0.1, alpha: [0.10, 0.28], wide: 0.28 }
   };
 
   function ensureMotes(kind) {
