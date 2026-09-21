@@ -77,12 +77,18 @@
    * catching the slide rather than snapping straight. Cosmetic only - the lean
    * never feeds back into position, collision or the racing line. */
   Car.prototype.updatePose = function (dt) {
-    var target = this.slip() * C.slideOversteer;
+    var frac = C.oversteerFrac();
+    var full = (Math.PI / 2) * frac;          // the lean a fresh corner throws
+    var target = this.slip() * frac;
     if (Math.abs(target) >= Math.abs(this.lean) && target * this.lean >= 0) {
       this.lean = target;
       return;
     }
-    var step = C.slideSettle > 0 ? (Math.PI / 4) / C.slideSettle * dt : Infinity;
+    // Unwinding takes CONFIG.slideSettle seconds from FULL lean, whatever
+    // full happens to be, so the settle reads the same at every angle. With
+    // no lean to unwind - oversteer turned down to nothing mid-slide - there
+    // is nothing to animate and the pose goes straight to square.
+    var step = (C.slideSettle > 0 && full > 0) ? full / C.slideSettle * dt : Infinity;
     var d = target - this.lean;
     this.lean += Math.abs(d) <= step ? d : (d > 0 ? step : -step);
   };
@@ -111,13 +117,14 @@
     this.dir = sign > 0 ? { x: -d.y, y: d.x } : { x: d.y, y: -d.x };
     // A car pulling away from a wall has no momentum to fight, so it just goes
     // the new way. A moving car keeps its velocity and slides into line, and
-    // its body flicks straight to the full oversteer pose - half of a right
-    // angle, so it is drawn at 45 degrees to the way it is still travelling.
+    // its body flicks straight to the full oversteer pose - CONFIG.oversteer
+    // degrees of the right angle it has just turned through, so at the
+    // default it is drawn at 45 degrees to the way it is still travelling.
     if (standing || C.slide <= 0) {
       this.velAngle = this.headingAngle();
       this.lean = 0;
     } else {
-      this.lean = sign * (Math.PI / 2) * C.slideOversteer;
+      this.lean = sign * (Math.PI / 2) * C.oversteerFrac();
     }
     // Rotating about the centre can poke the corners into a wall when the car
     // is hugging one; shove it back onto the tarmac rather than refusing.

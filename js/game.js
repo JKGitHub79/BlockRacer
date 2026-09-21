@@ -303,6 +303,9 @@
     el.aiRange = document.getElementById('ai-range');
     el.aiRange.min = C.minAiLevel;
     el.aiRange.max = C.maxAiLevel;
+    el.steerRange = document.getElementById('oversteer-range');
+    el.steerRange.min = C.minOversteer;   // one place decides how far it goes
+    el.steerRange.max = C.maxOversteer;
     el.record = document.getElementById('hud-record');
     el.resultsHead = document.getElementById('results-head');
     el.btnAgain = document.getElementById('btn-again');
@@ -490,6 +493,23 @@
     Renderer.setTrack();
   };
 
+  /* The oversteer pose, live and cosmetic. Every car reads CONFIG the next
+   * time its pose is updated, so dragging this mid-race turns the whole field
+   * as you drag. Nothing is rebaked and nothing is reset, because the lean is
+   * added when a car is drawn and never written back: this cannot move a car,
+   * change what it hits or change a lap time. */
+  Game.setOversteer = function (deg) {
+    C.oversteer = C.clampOversteer(deg);
+    C.saveOversteer();
+    document.getElementById('menu-oversteer').textContent = C.oversteer;
+    document.getElementById('menu-oversteer-note').textContent =
+      C.oversteer === 0 ? '(body follows its travel)'
+      : C.oversteer === 90 ? '(fully sideways)' : '';
+    if (parseInt(el.steerRange.value, 10) !== C.oversteer) {
+      el.steerRange.value = C.oversteer;
+    }
+  };
+
   Game.setSpeed = function (level) {
     C.speedLevel = level;
     Array.prototype.forEach.call(el.speedButtons.children, function (b) {
@@ -599,6 +619,7 @@
     global.Screens.init();
     this.setLaps(C.laps);
     this.setSlide(C.slide);
+    this.setOversteer(C.oversteer);
     this.setSpeed(C.speedLevel);
     this.setRoad(C.roadTint);
     this.setAiLevel(C.aiLevel);
@@ -622,6 +643,10 @@
     el.slideRange.addEventListener('input', function (e) {
       e.stopPropagation();
       Game.setSlide(parseFloat(el.slideRange.value));
+    });
+    el.steerRange.addEventListener('input', function (e) {
+      e.stopPropagation();
+      Game.setOversteer(parseInt(el.steerRange.value, 10));
     });
     el.carsRange.addEventListener('input', function (e) {
       e.stopPropagation();

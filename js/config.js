@@ -59,14 +59,25 @@
      * the point of having the range. */
     maxSlide: 20,
 
-    /* How far the body leads its own direction of travel while sliding.
-     * 0.5 points it exactly half way, so a car that has just flicked into a
-     * corner sits at 45 degrees to the way it is actually going. */
-    slideOversteer: 0.5,
+    /* How far the body leads its own direction of travel while sliding, in
+     * DEGREES. A turn is a right angle, so this runs 0 to 90: 45 points the
+     * car exactly half way, which is the pose a car that has just flicked
+     * into a corner is drawn in.
+     *
+     * Cosmetic in the strict sense. The lean is added at the moment the car
+     * is DRAWN and is never read back: where the car is, what it hits, what
+     * the AI aims at and when a lap is scored all come from `velAngle` and
+     * `dir`, and this touches neither. At 0 the car is drawn square to the
+     * way it is travelling and at 90 fully sideways, and it goes to exactly
+     * the same places, at the same speed, either way. */
+    oversteer: 45,
+    minOversteer: 0,
+    maxOversteer: 90,
 
     /* Seconds for the body to straighten up again out of full lean. Purely
-     * cosmetic: the car flicks to its 45 degrees instantly and then unwinds no
-     * faster than this, so the drift stays on screen long enough to read at a
+     * cosmetic: the car flicks to its full oversteer instantly and then
+     * unwinds no faster than this, so the drift stays on screen long enough
+     * to read at a
      * radius small enough for Staircase's chicanes. Nothing about where the
      * car actually is or what it collides with depends on it. */
     slideSettle: 0.14,
@@ -302,6 +313,37 @@
   } catch (e) { /* unreadable storage: keep the default */ }
   var aiParam = /[?&]ai=(\d+)/.exec(search);
   if (aiParam) CONFIG.aiLevel = CONFIG.clampAiLevel(parseInt(aiParam[1], 10));
+
+  /* A turn is a right angle, so the lean the pose asks for is a fraction of
+   * one. Everything that draws a car works in radians; the slider works in
+   * degrees because that is what the pose is called. */
+  CONFIG.oversteerFrac = function () {
+    return CONFIG.oversteer / 90;
+  };
+  CONFIG.clampOversteer = function (deg) {
+    var n = Math.round(deg);
+    if (!(n >= CONFIG.minOversteer)) return 45;
+    return Math.max(CONFIG.minOversteer, Math.min(CONFIG.maxOversteer, n));
+  };
+
+  /* Same rule as the AI level: a look you chose is a preference, not a
+   * result, so it has its own key and RESET DATA leaves it alone. */
+  var STEER_KEY = 'blockracer.oversteer.v1';
+  CONFIG.saveOversteer = function () {
+    try {
+      if (global.localStorage) {
+        global.localStorage.setItem(STEER_KEY, String(CONFIG.oversteer));
+      }
+    } catch (e) { /* storage blocked or full */ }
+  };
+  try {
+    var savedSteer = global.localStorage && global.localStorage.getItem(STEER_KEY);
+    if (savedSteer !== null && savedSteer !== undefined && savedSteer !== '') {
+      CONFIG.oversteer = CONFIG.clampOversteer(parseInt(savedSteer, 10));
+    }
+  } catch (e) { /* unreadable storage: keep the default */ }
+  var steerParam = /[?&]steer=(\d+)/.exec(search);
+  if (steerParam) CONFIG.oversteer = CONFIG.clampOversteer(parseInt(steerParam[1], 10));
 
   CONFIG.roadColors = function () {
     return CONFIG.roadTints[CONFIG.roadTint].colors || null;

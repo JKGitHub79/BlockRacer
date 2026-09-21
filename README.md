@@ -975,7 +975,9 @@ catches up at a fixed rate. At a constant speed that traces a quarter circle, so
 a corner is an arc rather than a right angle and you have to commit to it early.
 While the velocity is catching up the body is drawn leading it by 45° - the car
 is pointing into the corner and still travelling the old way, which is what
-oversteer looks like - and it lays rubber until it hooks up.
+oversteer looks like - and it lays rubber until it hooks up. That 45° is the
+**OVERSTEER** slider and is the one setting in the game that changes nothing at
+all about the race; see below.
 
 `slide` is the **turn radius in cells**, and it is a slider on the start menu
 because it is the number worth prototyping with. `[` and `]` nudge it by 0.05
@@ -1028,10 +1030,32 @@ chicanes on track 2. Crossover, with its six-cell roads, is happy at `2.0`.
 radius with the real physics and names the corners that do not fit, which is the
 quick way to find out what a prototype value costs.
 
-`slideOversteer` sets how far the body leads its direction of travel (`0.5` is
-the 45° pose). `slideSettle` is how long the body takes to straighten up again;
-it is cosmetic only, and exists because a radius small enough for Staircase
-would otherwise put the drift on screen for about three frames.
+### Oversteer
+
+`oversteer` sets how far the body leads its own direction of travel while
+sliding, **in degrees** of the right angle the car has just turned through. It
+runs 0 to 90 and starts at 45, which is the pose the game has always drawn.
+
+It is cosmetic in the strict sense, not the loose one. The lean is added at the
+moment a car is **drawn** and is never read back: position, collision, the AI's
+aim and lap timing all come from `velAngle` and `dir`, and the lean touches
+neither. The proof is mechanical rather than argued - the same deterministic
+race run at 0°, 15°, 30°, 45°, 60° and 90° across five tracks and three seeds
+produces byte-identical results: every car ends at the same position to ten
+decimal places, with the same velocity angle, the same crash and scrape counts
+and the same lap times, ninety comparisons out of ninety. Nothing else on the
+options screen can say that: slide, cars, AI level, speed and laps all change
+the racing, and the road tint at least forces a rebake.
+
+Because nothing depends on it, it is live and nothing resets: drag it mid-race
+and the whole field changes pose as you drag. It has its own storage key and
+survives RESET DATA, which wipes what you have won rather than what you have
+chosen. `&steer=60` sets it from the URL.
+
+`slideSettle` is how long the body takes to straighten up again out of *full*
+lean, whatever full happens to be, so the settle reads the same at every angle.
+It exists because a radius small enough for Staircase would otherwise put the
+drift on screen for about three frames.
 
 ## Race length, track and speed
 
