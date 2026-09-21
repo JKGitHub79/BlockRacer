@@ -547,6 +547,16 @@ Starting third of four was a hangover from the field being a fixed list with
 YOU sitting in the middle of it. Racing from the back means the race has
 somewhere to go.
 
+**You start in the middle of the back row.** Being last is the point; being
+last *and* on the outside kerb is a second handicap nobody asked for, and which
+lane you got depended on how the track happened to declare its slots. `startRace`
+now picks the slot whose lateral offset is closest to the middle of the back row
+- longitudinal and lateral are measured along and across `T.startDir`, so it
+works on a grid pointing any of the four ways - and hands that one to you. The
+opponents fill the rest in their usual order, so the grid is the same shape it
+was; only which car sits where has changed. At two cars there is nothing to
+choose and you take the one remaining slot.
+
 On the grid the running order is taken from the grid itself rather than from
 `progressAlong`. That projects a car onto the racing line; on most tracks the
 back rows sit where the line is arcing through a corner, and the projection of
@@ -814,6 +824,16 @@ a 200px side panel eating a quarter of the screen and a running order that ran
 off the bottom of it. There is now a block keyed on `max-height: 560px` that
 narrows the panel to about 135px and sizes the order to fit eight rows, and it
 sits last in the stylesheet so it wins wherever the two overlap.
+
+**Short screens shrink text; they no longer delete it.** The `max-height` blocks
+used to reach for `display: none` on anything secondary - the hint under each
+option, the grade under each track card, the strapline on the theme screen, the
+key legend. The effect was that a phone held sideways lost the words that explain
+what a button does, and turning it upright brought them back, which reads as a
+bug rather than as a layout. Twelve of those rules are now small type instead:
+the text is always there, at a size that fits. Anything genuinely redundant would
+be better deleted from the markup for every screen size than hidden on some of
+them.
 
 **Portrait cannot make the board bigger, so it stops wasting the height.**
 Every track is wider than it is tall, so upright the board is limited by the
@@ -1133,11 +1153,11 @@ compare these numbers with any quoted in an earlier commit.
 Turning swings the car's heading round instantly, but its *velocity* only
 catches up at a fixed rate. At a constant speed that traces a quarter circle, so
 a corner is an arc rather than a right angle and you have to commit to it early.
-While the velocity is catching up the body is drawn leading it by 45° - the car
-is pointing into the corner and still travelling the old way, which is what
-oversteer looks like - and it lays rubber until it hooks up. That 45° is the
-**OVERSTEER** slider and is the one setting in the game that changes nothing at
-all about the race; see below.
+While the velocity is catching up the body can be drawn leading it - the car
+pointing into the corner while it is still travelling the old way, which is what
+oversteer looks like - and it lays rubber until it hooks up. How far it leads is
+the **OVERSTEER** slider, which now starts at 0 and is the one setting in the
+game that changes nothing at all about the race; see below.
 
 `slide` is the **turn radius in cells**, and it is a slider on the start menu
 because it is the number worth prototyping with. `[` and `]` nudge it by 0.05
@@ -1194,7 +1214,11 @@ quick way to find out what a prototype value costs.
 
 `oversteer` sets how far the body leads its own direction of travel while
 sliding, **in degrees** of the right angle the car has just turned through. It
-runs 0 to 90 and starts at 45, which is the pose the game has always drawn.
+runs 0 to 90 and **starts at 0**: the body points where the car is going, which
+is the honest read of the track and the easier one to drive off. 45 was the
+default for one version and is still one drag away - it is a good-looking pose
+and a slightly misleading one, because the nose is aimed a half-corner ahead of
+where the car will actually be.
 
 It is cosmetic in the strict sense, not the loose one. The lean is added at the
 moment a car is **drawn** and is never read back: position, collision, the AI's
@@ -1248,7 +1272,8 @@ road, how hard it tries - live with the track in `js/tracks.js`.
 ## How many cars
 
 Four by default - you and three - and anything from 2 to 16 on the options screen.
-The number includes you, and you keep third on the grid whatever the field size.
+The number includes you, and you start from the middle of the back row whatever
+the field size.
 
 A track declares four grid slots, and at four or fewer those four are used
 exactly as declared, so a default race lines up where it always has. Past four
@@ -1287,6 +1312,28 @@ outside.
 Past eight cars the in-race leaderboard and the results table close their rows
 up, and the results table scrolls inside a panel capped at the window height, so
 the finishing position and both buttons stay on screen with a full field.
+
+## Finding your own car
+
+Sixteen cars on a six-cell road, all the same shape, is a lot of paint to read at
+a glance - and the colour that is yours is only yours for as long as you can
+remember it. **YOUR CAR / GLOW** on the options screen puts a soft halo under the
+player's car *in the player's own colour*, so the thing you are looking for is
+brighter than everything around it without becoming a different object. It is on
+by default, `NO GLOW` turns it off, it has its own `localStorage` key, and
+`?glow=0` sets it from the URL.
+
+It is drawn before the car and before the body's rotation - a radial gradient
+painted straight onto the road, fading to nothing at 1.7 car lengths - so it does
+not rotate, does not move with the oversteer lean, and never covers the car's own
+outline. `car.isPlayer` gates it, so an AI car can never pick it up, and no
+opponent's colour is dimmed to make room: the halo adds light rather than taking
+it away. Nothing in the physics, the AI or the collision grid reads it.
+
+The alternative was a marker floating above the car - an arrow or a ring. That
+reads instantly but it also sits on top of the track, hides the car it is meant
+to point at when the field bunches, and looks like a HUD element in a game that
+has deliberately kept everything on the board.
 
 ## Road colour
 

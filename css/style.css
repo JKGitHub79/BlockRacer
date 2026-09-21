@@ -458,7 +458,8 @@ body.mode-trial .stat.trial-only { display: flex; }
   #standings { display: flex; flex-wrap: wrap; gap: 2px 14px; width: 100%; }
   #standings li { padding: 0; }
   #standings .lp { display: none; }
-  .keys { display: none; }
+  .keys { font-size: 9px; letter-spacing: 0; gap: 6px; }
+  .keys b { padding: 1px 4px; }
 }
 
 /* The options screen lays its controls out in columns, so it no longer runs
@@ -466,13 +467,13 @@ body.mode-trial .stat.trial-only { display: flex; }
  * left is the hint copy, which is the first thing to go when there is no room
  * for it. */
 @media (max-height: 700px) {
-  .opt .hint { display: none; }
+  .opt .hint { font-size: 10px; line-height: 1.35; margin-top: 5px; }
 }
 
 /* Narrow enough that prose wraps into many lines and pushes the controls off
  * the bottom. The explanatory copy goes; the controls are the point. */
 @media (max-width: 430px) {
-  .slide-hint { display: none; }
+  .slide-hint { font-size: 9px; line-height: 1.3; }
   .panel { padding: 16px; }
   .laps button { font-size: 11px; padding: 9px 2px; }
   .panel h2 { font-size: 19px; letter-spacing: 3px; }
@@ -487,27 +488,27 @@ body.mode-trial .stat.trial-only { display: flex; }
   .topbar { margin-bottom: 6px; }
   .topbar h1 { font-size: 15px; letter-spacing: 2px; }
   .topbar h1 em { margin-left: 6px; font-size: 9px; }
-  .keys { display: none; }
+  .keys { font-size: 9px; letter-spacing: 0; gap: 6px; }
+  .keys b { padding: 1px 4px; }
   .hud { padding: 8px 10px; font-size: 12px; }
   .stat b { font-size: 13px; }
   .overlay { padding: 4px; }
   .panel { padding: 12px; width: min(380px, 100%); }
   .panel h2 { font-size: 16px; margin-bottom: 4px; letter-spacing: 3px; }
-  .slide-hint { display: none; }
+  .slide-hint { font-size: 9px; line-height: 1.3; margin-top: 4px; }
   .lapline { margin-bottom: 3px; }
   .laps { margin-bottom: 6px; }
   /* Every other row of buttons drops to 10px here; the lap row had been left
    * at 12, which cost a dozen pixels for nothing. */
   .laps button { font-size: 10px; padding: 6px 2px; }
   .setrow { flex-direction: row; align-items: center; gap: 10px; margin: 6px 0; }
-  /* The road name goes; six squares of tarmac say it better than a word. */
-  .roadrow .lapline { display: none; }
+  .roadrow .lapline { font-size: 9px; margin-bottom: 2px; }
   .swatches button { width: 16px; height: 16px; }
   /* A short screen is a wide one, so the four levels fit across in one row -
    * and the row they save is what keeps START on screen. */
   .speeds { grid-template-columns: repeat(4, 1fr); }
   .speeds button { font-size: 10px; letter-spacing: 0; padding: 5px 2px; }
-  #menu .hint { display: none; }
+  #menu .hint { font-size: 9px; line-height: 1.3; margin-top: 4px; }
   button.primary { padding: 9px; }
   .lapline { margin-bottom: 4px; }
   .hint { margin-top: 6px; }
@@ -893,7 +894,7 @@ body.in-race #backdrop { display: none; }
 @media (max-width: 560px) {
   .doors { gap: 8px; }
   .door { min-height: 96px; padding: 12px 6px; }
-  .door-sub { display: none; }
+  .door-sub { font-size: 9px; letter-spacing: 1px; line-height: 1.25; }
   .cards { gap: 6px; }
   .card { padding: 6px; }
   .card-name { letter-spacing: 1px; }
@@ -903,7 +904,9 @@ body.in-race #backdrop { display: none; }
    height: the copy goes and everything closes up. */
 @media (max-height: 520px) {
   .screen { padding: 10px; }
-  .wordmark-sub, .theme-head p, .opt .hint { display: none; }
+  .wordmark-sub { font-size: 9px; letter-spacing: 2px; margin-top: 3px; }
+  .theme-head p { font-size: 9px; margin-top: 2px; }
+  .opt .hint { font-size: 9px; line-height: 1.3; margin-top: 4px; }
   .doors { margin-top: 14px; }
   .door { min-height: 84px; }
   .carousel { margin-top: 12px; }
@@ -1194,7 +1197,7 @@ body.in-race #backdrop { display: none; }
   .card-medal, .card-record { top: 6px; right: 6px; padding: 0 5px; font-size: 9px; }
   .arrow { height: clamp(40px, calc(var(--app-h) * 18 / 100), 90px); }
   .screen-foot { margin-top: 8px; font-size: 10px; letter-spacing: 1px; }
-  .wordmark-sub { display: none; }
+  .wordmark-sub { font-size: 8px; letter-spacing: 1px; margin-top: 2px; }
   .screen-title { margin-bottom: 10px; font-size: clamp(14px, calc(var(--app-h) * 4 / 100), 24px); letter-spacing: 3px; }
 }
 
@@ -1202,9 +1205,11 @@ body.in-race #backdrop { display: none; }
    about 230px for everything. The tagline and the footer are the first
    things that can go, because neither is a control. */
 @media (max-height: 330px) {
-  /* The tagline goes. The star rides on the name, so it costs no height and
-     stays. */
-  #theme-tagline, .play .screen-foot { display: none; }
+  /* Nothing is hidden here any more - it is shrunk. A line of copy that is
+     there upright and gone on its side reads as a bug, and eight pixels of
+     it costs four. */
+  #theme-tagline { font-size: 8px; margin-top: 1px; }
+  .play .screen-foot { margin-top: 4px; font-size: 8px; letter-spacing: 0; }
   .mode-tag { margin-bottom: 2px; }
 }
 
@@ -1237,7 +1242,7 @@ body.in-race #backdrop { display: none; }
   .back { top: calc(8px + var(--sa-t)); left: calc(8px + var(--sa-l));
     padding: 7px 12px; font-size: 11px; }
   .doors { gap: 8px; }
-  .door-sub { display: none; }
+  .door-sub { font-size: 9px; letter-spacing: 1px; line-height: 1.25; }
 }
 
 /* ---- upright: a phone in portrait ------------------------------------

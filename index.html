@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.39.0', built: '2026-09-21' };
+window.BR = { version: '0.40.0', built: '2026-09-21' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -196,9 +196,20 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       </div>
 
       <div class="opt">
-        <p class="lapline">OVERSTEER &middot; <b id="menu-oversteer">45</b>&deg;
+        <p class="lapline">YOUR CAR &middot; <b id="menu-glow">ON</b></p>
+        <div id="glow-buttons" class="laps">
+          <button data-glow="1">GLOW</button>
+          <button data-glow="0">NO GLOW</button>
+        </div>
+        <p class="hint">A halo under your own car, in your own colour. Six
+          cars on a dark track is a lot to pick yourself out of at speed.
+          Your car only, and it changes nothing about the racing.</p>
+      </div>
+
+      <div class="opt">
+        <p class="lapline">OVERSTEER &middot; <b id="menu-oversteer">0</b>&deg;
           <span class="sub" id="menu-oversteer-note"></span></p>
-        <input id="oversteer-range" class="slider" type="range" min="0" max="90" step="5" value="45">
+        <input id="oversteer-range" class="slider" type="range" min="0" max="90" step="5" value="0">
         <p class="hint">How far the body is drawn leading the way the car is
           actually travelling while it slides. A look and nothing else: 0 lines
           the body up with its own direction of travel, 90 throws it fully
@@ -276,7 +287,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
     </div>
 
     <p class="screen-foot">Settings apply to every race &middot;
-      <code>?track=2&amp;laps=7&amp;cars=8&amp;ai=9&amp;steer=45</code> races that track straight away</p>
+      <code>?track=2&amp;laps=7&amp;cars=8&amp;ai=9&amp;steer=45&amp;glow=0</code> races that track straight away</p>
   </div>
 </section>
 

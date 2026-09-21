@@ -69,10 +69,18 @@
      * the AI aims at and when a lap is scored all come from `velAngle` and
      * `dir`, and this touches neither. At 0 the car is drawn square to the
      * way it is travelling and at 90 fully sideways, and it goes to exactly
-     * the same places, at the same speed, either way. */
-    oversteer: 45,
+     * the same places, at the same speed, either way. Starts at 0 - the car
+     * points where it is going - because that is what most people expect a
+     * car to do; 45 is the pose the game drew before it was a setting. */
+    oversteer: 0,
     minOversteer: 0,
     maxOversteer: 90,
+
+    /* A halo under YOUR car, in your own colour. Six cars of six colours on
+     * a dark track is a lot to pick yourself out of at speed, and the white
+     * outline the player has always had is one pixel wide. Cosmetic, live,
+     * and the player's car only - an AI with a halo would be a tell. */
+    playerGlow: true,
 
     /* Seconds for the body to straighten up again out of full lean. Purely
      * cosmetic: the car flicks to its full oversteer instantly and then
@@ -314,6 +322,23 @@
   var aiParam = /[?&]ai=(\d+)/.exec(search);
   if (aiParam) CONFIG.aiLevel = CONFIG.clampAiLevel(parseInt(aiParam[1], 10));
 
+  /* The halo is a preference like the rest, so it has its own key and
+   * RESET DATA leaves it alone. */
+  var GLOW_KEY = 'blockracer.glow.v1';
+  CONFIG.savePlayerGlow = function () {
+    try {
+      if (global.localStorage) {
+        global.localStorage.setItem(GLOW_KEY, CONFIG.playerGlow ? '1' : '0');
+      }
+    } catch (e) { /* storage blocked or full */ }
+  };
+  try {
+    var savedGlow = global.localStorage && global.localStorage.getItem(GLOW_KEY);
+    if (savedGlow === '0' || savedGlow === '1') CONFIG.playerGlow = savedGlow === '1';
+  } catch (e) { /* unreadable storage: keep the default */ }
+  var glowParam = /[?&]glow=([01])/.exec(search);
+  if (glowParam) CONFIG.playerGlow = glowParam[1] === '1';
+
   /* A turn is a right angle, so the lean the pose asks for is a fraction of
    * one. Everything that draws a car works in radians; the slider works in
    * degrees because that is what the pose is called. */
@@ -322,7 +347,7 @@
   };
   CONFIG.clampOversteer = function (deg) {
     var n = Math.round(deg);
-    if (!(n >= CONFIG.minOversteer)) return 45;
+    if (!(n >= CONFIG.minOversteer)) return 0;
     return Math.max(CONFIG.minOversteer, Math.min(CONFIG.maxOversteer, n));
   };
 

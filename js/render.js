@@ -831,10 +831,34 @@
     });
   }
 
+  /* '#5ef2ff' -> '94,242,255', so a car's own colour can be used at an
+   * alpha. The livery is stored as hex because that is what CSS wants. */
+  function hexRgb(hex) {
+    var h = String(hex).replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    var n = parseInt(h, 16);
+    return ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255);
+  }
+
   function drawCar(g, car) {
     var L = C.carLength * S, W = C.carWidth * S;
     var a = car.bodyAngle();
     var cos = Math.cos(a), sin = Math.sin(a);
+
+    /* The halo goes on BEFORE the body and outside the rotation, so it is a
+     * circle under the car rather than an oval that swings with it. The
+     * player's car only: the point of it is telling yours from theirs. */
+    if (car.isPlayer && C.playerGlow) {
+      var rgb = hexRgb(car.color);
+      var rr = Math.max(L, W) * 1.7;
+      var halo = g.createRadialGradient(car.x * S, car.y * S, 0,
+                                        car.x * S, car.y * S, rr);
+      halo.addColorStop(0, 'rgba(' + rgb + ',0.50)');
+      halo.addColorStop(0.42, 'rgba(' + rgb + ',0.20)');
+      halo.addColorStop(1, 'rgba(' + rgb + ',0)');
+      g.fillStyle = halo;
+      g.fillRect(car.x * S - rr, car.y * S - rr, rr * 2, rr * 2);
+    }
 
     g.save();
     g.translate(car.x * S, car.y * S);

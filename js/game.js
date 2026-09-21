@@ -44,6 +44,36 @@
   var PLAYER_CAR = FIELD.filter(function (c) { return c.player; })[0];
   var OPPONENTS = FIELD.filter(function (c) { return !c.player; });
 
+  /* Which grid slot the player takes: the back row, and the middle of it.
+   * Starting last is the point of the rule; starting last AND hard against
+   * a kerb is a second penalty nobody asked for, and on a six-lane grid the
+   * outside lane is measurably the worst place to be.
+   *
+   * The field is still built with the player LAST, so everything that reads
+   * `cars` in order - the countdown standings especially - still has them
+   * at the back. Only which piece of tarmac they get is permuted. */
+  function middleBackSlot(grid) {
+    var d = T.startDir;
+    var lon = function (s) { return s.x * d.x + s.y * d.y; };
+    var lat = function (s) { return s.x * -d.y + s.y * d.x; };
+    var back = Infinity, lo = Infinity, hi = -Infinity, i, L;
+    for (i = 0; i < grid.length; i++) {
+      if (lon(grid[i]) < back) back = lon(grid[i]);
+      L = lat(grid[i]);
+      if (L < lo) lo = L;
+      if (L > hi) hi = L;
+    }
+    // the middle of the whole grid's WIDTH, not of the back row alone: a
+    // back row holding one car would otherwise call that car central
+    var mid = (lo + hi) / 2, best = grid.length - 1, bd = Infinity;
+    for (i = 0; i < grid.length; i++) {
+      if (lon(grid[i]) > back + 0.01) continue;
+      var dd = Math.abs(lat(grid[i]) - mid);
+      if (dd < bd) { bd = dd; best = i; }
+    }
+    return best;
+  }
+
   function fieldFor(n) {
     var spec = [];
     for (var i = 0; i < n - 1 && i < OPPONENTS.length; i++) {
@@ -97,9 +127,16 @@
     var field = fieldFor(trial ? 1 : grid.length);
     this.gridSize = field.length;
 
+    /* Slot order: the AI take theirs as laid out, and the player - last in
+     * the field - takes the middle of the back row rather than whatever was
+     * left over at the end of it. */
+    var slots = [], pSlot = field.length > 1 ? middleBackSlot(grid.slice(0, field.length)) : 0;
+    for (var k = 0; k < field.length; k++) if (k !== pSlot) slots.push(k);
+    slots.push(pSlot);
+
     var aiIndex = 0;
     for (var i = 0; i < field.length; i++) {
-      var slot = grid[i];
+      var slot = grid[slots[i]];
       var spec = field[i];
       var cfg = spec.player ? null : C.aiSpec(aiIndex++, field.length - 1);
       var car = new Car({
@@ -303,6 +340,7 @@
     el.aiRange = document.getElementById('ai-range');
     el.aiRange.min = C.minAiLevel;
     el.aiRange.max = C.maxAiLevel;
+    el.glowButtons = document.getElementById('glow-buttons');
     el.steerRange = document.getElementById('oversteer-range');
     el.steerRange.min = C.minOversteer;   // one place decides how far it goes
     el.steerRange.max = C.maxOversteer;
@@ -510,6 +548,18 @@
     }
   };
 
+  /* The halo under your own car. Cosmetic and live: nothing reads it but
+   * the car painter, so it takes effect on the very next frame and there is
+   * nothing to rebake and nothing to reset. */
+  Game.setPlayerGlow = function (on) {
+    C.playerGlow = !!on;
+    C.savePlayerGlow();
+    Array.prototype.forEach.call(el.glowButtons.children, function (b) {
+      b.classList.toggle('on', (b.dataset.glow === '1') === C.playerGlow);
+    });
+    document.getElementById('menu-glow').textContent = C.playerGlow ? 'ON' : 'OFF';
+  };
+
   Game.setSpeed = function (level) {
     C.speedLevel = level;
     Array.prototype.forEach.call(el.speedButtons.children, function (b) {
@@ -620,6 +670,7 @@
     this.setLaps(C.laps);
     this.setSlide(C.slide);
     this.setOversteer(C.oversteer);
+    this.setPlayerGlow(C.playerGlow);
     this.setSpeed(C.speedLevel);
     this.setRoad(C.roadTint);
     this.setAiLevel(C.aiLevel);
@@ -660,6 +711,12 @@
       b.addEventListener('click', function (e) {
         e.stopPropagation();
         Game.setSpeed(parseInt(b.dataset.speed, 10));
+      });
+    });
+    Array.prototype.forEach.call(el.glowButtons.children, function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        Game.setPlayerGlow(b.dataset.glow === '1');
       });
     });
     Array.prototype.forEach.call(el.roadButtons.children, function (b) {
