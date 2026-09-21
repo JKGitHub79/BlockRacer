@@ -460,8 +460,8 @@ set of testing controls rather than a difficulty dial.
 
 ### Theme stars
 
-A star per theme, shown under its name on the track-select screen, worked out
-from the medals on its three tracks:
+A star per theme, on the same line as its name and at the same size, worked
+out from the medals on its three tracks:
 
 | | |
 | --- | --- |
@@ -481,11 +481,28 @@ the instant a medal improves, and RESET DATA clears it by clearing what it is
 made of. Writing a second number to `localStorage` would be a second thing to
 keep in sync and a second thing to get wrong: the medals *are* the save file.
 
-The row keeps its line whether the star is earned or not - an unmedalled
-theme shows a hollow star and how many of its tracks are medalled - because a
-row that appeared and disappeared would move the cards up and down the screen
-as you arrow between themes. A time trial shows no star, because medals are a
-race result and a trial has no positions to earn one in.
+**The colour is the whole message.** It does not also say the word "GOLD"
+next to a gold star; the star is the same gold as a gold card's border, and
+the two read as one thing. The only place the medal is named is the star's
+`aria-label`, for a screen reader, which cannot see the colour.
+
+An unearned theme shows the same star hollow rather than nothing at all, so
+the name does not shift sideways the first time you earn one, and so a theme
+you have not finished says so. A time trial hides it entirely - medals are a
+race result and a trial has no positions to earn one in - and hiding it moves
+nothing, because it rides on the name rather than having a row of its own.
+
+Two details it took a screenshot to get right:
+
+- It is an **SVG path, not the character U+2605**. A star glyph in a
+  monospace stack gets picked up by the emoji font on iOS, which renders it
+  in the font's own colours and ignores the medal colour completely. A path
+  takes `fill: currentColor` on every platform.
+- It is centred on the **capitals, not the line box**. `align-items: center`
+  centres it on the line, and a line box reserves room under the baseline for
+  descenders that a row of capitals never uses - so centred on the line sits
+  a tenth of an em low against the letters. The test measures the offset
+  against a baseline probe and holds it inside 0.06em.
 
 ### Lap records
 

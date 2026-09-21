@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.30.0', built: '2026-09-20' };
+window.BR = { version: '0.31.0', built: '2026-09-20' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -154,8 +154,17 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
   <div class="screen-inner">
     <header class="theme-head">
       <p class="mode-tag" id="play-mode">RACE</p>
-      <h2 id="theme-name">FOREST</h2>
-      <p class="theme-star" id="theme-star">&nbsp;</p>
+      <!-- The star sits on the same line as the name and at the same size.
+           It is an SVG rather than the character U+2605 on purpose: a star
+           glyph in a monospace stack gets picked up by the emoji font on
+           iOS, which would render it in the font's own colours and ignore
+           the medal colour entirely. A path takes `fill: currentColor`. -->
+      <h2 class="theme-title">
+        <span id="theme-name">FOREST</span>
+        <svg id="theme-star" class="theme-star" viewBox="0 0 24 24" role="img">
+          <path d="M12 2.2 15.1 8.5 22 9.5l-5 4.9 1.2 6.9L12 18l-6.2 3.3L7 14.4l-5-4.9 6.9-1z"/>
+        </svg>
+      </h2>
       <p id="theme-tagline">&nbsp;</p>
     </header>
 

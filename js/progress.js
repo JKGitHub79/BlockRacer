@@ -100,14 +100,6 @@
     return worst;
   };
 
-  /* How many of a theme's tracks have any medal at all, so the play screen
-   * can say how far off a star you are rather than showing nothing. */
-  Progress.medalled = function (trackIds) {
-    var n = 0;
-    (trackIds || []).forEach(function (id) { if (Progress.medal(id)) n++; });
-    return n;
-  };
-
   /* ---- lap records ----------------------------------------------------
    *
    * Keyed by track AND game speed, because they are not comparable across

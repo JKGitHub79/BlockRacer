@@ -150,19 +150,20 @@
      * when you switch modes. */
     var ids = theme.tracks.map(function (t) { return t.id; });
     var star = trial ? 0 : global.Progress.star(ids);
-    var got = trial ? 0 : global.Progress.medalled(ids);
-    if (trial) {
-      el.themeStar.className = 'theme-star';
-      el.themeStar.innerHTML = '&nbsp;';
-    } else if (star) {
-      el.themeStar.className = 'theme-star medal-' + MEDALS[star];
-      el.themeStar.innerHTML = '<span class="star">&#9733;</span>' +
-        MEDAL_NAME[star] + ' STAR';
-    } else {
-      el.themeStar.className = 'theme-star unearned';
-      el.themeStar.innerHTML = '<span class="star">&#9734;</span>' +
-        got + ' / ' + ids.length + ' MEDALLED';
-    }
+    /* Filled and coloured once every track in the theme has a medal, hollow
+     * until then. The colour is the whole message - the word "GOLD" next to
+     * a gold star is the star saying its own name - so the label is only
+     * there for a screen reader, which cannot see the colour.
+     *
+     * setAttribute rather than .className: on an SVG element className is an
+     * SVGAnimatedString and assigning a string to it silently does nothing. */
+    el.themeStar.setAttribute('class',
+      'theme-star' + (star ? ' earned medal-' + MEDALS[star] : ' unearned'));
+    el.themeStar.setAttribute('aria-label', star
+      ? MEDAL_NAME[star] + ' star for ' + theme.name
+      : 'no star for ' + theme.name + ' yet');
+    // A time trial has no medals, so it has no star at all.
+    el.themeStar.style.display = trial ? 'none' : '';
 
     el.cards.innerHTML = '';
     theme.tracks.forEach(function (entry) {
