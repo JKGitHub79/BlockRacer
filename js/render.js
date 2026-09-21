@@ -320,49 +320,93 @@
 
   /* ---- arrows on the floor ---------------------------------------------
    *
-   * A track whose walls do not enclose the road - one with junctions, where
-   * there is a second way to go - has to say which way is the lap, or its
-   * difficulty becomes "not knowing where the road goes", which is not
-   * difficulty. A track opts in with `arrows: true`.
+   * A track whose walls do not enclose the road - one built as an open grid,
+   * where every junction offers straight on as well as left and right - has
+   * to say which way the lap goes, or its difficulty becomes "not knowing
+   * where the road goes", which is not difficulty. A track opts in with
+   * `arrows: true`.
    *
-   * They are painted along the ROUTE and point along it, which is the only
-   * cue that cannot be ambiguous on a lap that passes a junction: the arrow
-   * says what the racing line does here. They are skipped within a corner,
-   * where a chevron would point across the arc rather than along it, and
-   * they are baked, so they cost nothing per frame.
+   * One big arrow per junction, painted on the tarmac a few cells BEFORE it
+   * and pointing the way the lap leaves it - so it is read in time to act
+   * on, and it says "straight on" at a crossroads the lap does not turn at
+   * just as clearly as it says "left".
    *
-   * This cue is a property of the TILE, so it can only ever serve a lap that
-   * visits each piece of road once. A track that crossed itself would need
-   * the arrow to say two things at the same junction, which is exactly why
-   * no track in the game does that any more. */
+   * The junctions are found rather than declared. Walking the lap, the road
+   * either side of the line is measured square to the way the car is going:
+   * down a street that distance is the kerb and does not move, and where a
+   * cross street opens it runs away. Every stretch where it runs away is one
+   * junction. Nothing in the track data lists them, so a street that moves
+   * cannot leave an arrow behind pointing at a wall.
+   *
+   * This cue is a property of the TILE, so it can only serve a lap that
+   * visits each piece of road once - which every track in the game now does.
+   * A lap that crossed itself would need the arrow to say two things at the
+   * same junction. */
+  function roadReach(x, y, nx, ny) {
+    for (var d = 0.5; d <= 9; d += 0.5) {
+      if (T.isWall(Math.floor(x + nx * d), Math.floor(y + ny * d))) return d;
+    }
+    return 9;
+  }
+
+  function bigArrow(g, x, y, dx, dy) {
+    var L = S * 2.4, W = S * 1.5, STEM = S * 0.52;
+    var px = x * S, py = y * S;
+    var nx = -dy, ny = dx;                       // square to the way it points
+    var P = function (along, across) {
+      return [px + dx * along + nx * across, py + dy * along + ny * across];
+    };
+    var pts = [
+      P(L * 0.5, 0),                             // the point
+      P(L * 0.5 - W * 0.62, W * 0.5),
+      P(L * 0.5 - W * 0.62, STEM * 0.5),
+      P(-L * 0.5, STEM * 0.5),
+      P(-L * 0.5, -STEM * 0.5),
+      P(L * 0.5 - W * 0.62, -STEM * 0.5),
+      P(L * 0.5 - W * 0.62, -W * 0.5)
+    ];
+    g.beginPath();
+    g.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
+    g.closePath();
+    // a dark bed under it, so it reads on pale tarmac as well as on black
+    g.strokeStyle = 'rgba(0,0,0,0.45)';
+    g.lineWidth = 3;
+    g.lineJoin = 'round';
+    g.stroke();
+    g.fillStyle = colorOf('arrow') || 'rgba(246,246,246,0.62)';
+    g.fill();
+  }
+
   function drawArrows(g) {
     if (!T.data.arrows) return;
-    var SPACING = 6.5;        // cells between chevrons
-    var CLEAR = 3.4;          // and none this close to a corner
-    var col = colorOf('arrow') || 'rgba(245,228,190,0.30)';
-    g.save();
-    g.strokeStyle = col;
-    g.lineWidth = Math.max(2, S * 0.11);
-    g.lineCap = 'round';
-    g.lineJoin = 'round';
+    var STEP = 0.25;          // cells between samples along the lap
+    var OPEN = 4.5;           // road this far off the line is a cross street
+    var LEAD = 4.2;           // cells before the junction the arrow is laid
     var pts = T.ROUTE, n = pts.length;
+    var walk = [];
     for (var i = 0; i < n; i++) {
       var a = pts[i], b = pts[(i + 1) % n];
       var len = Math.abs(b.x - a.x) + Math.abs(b.y - a.y);
       var dx = (b.x - a.x) / len, dy = (b.y - a.y) / len;
-      var usable = len - CLEAR * 2;
-      if (usable <= 0) continue;
-      var count = Math.max(1, Math.round(usable / SPACING));
-      for (var k = 0; k < count; k++) {
-        var d = CLEAR + usable * (count === 1 ? 0.5 : k / (count - 1));
-        var px = (a.x + dx * d) * S, py = (a.y + dy * d) * S;
-        var w = S * 0.42, h = S * 0.40;      // half-width across, reach ahead
-        g.beginPath();
-        g.moveTo(px - dy * w - dx * h, py + dx * w - dy * h);
-        g.lineTo(px + dx * h, py + dy * h);
-        g.lineTo(px + dy * w - dx * h, py - dx * w - dy * h);
-        g.stroke();
+      for (var d = 0; d < len - 1e-6; d += STEP) {
+        var px = a.x + dx * d, py = a.y + dy * d;
+        var r = Math.max(roadReach(px, py, -dy, dx), roadReach(px, py, dy, -dx));
+        walk.push({ x: px, y: py, dx: dx, dy: dy, open: r > OPEN });
       }
+    }
+    var m = walk.length;
+    if (!m) return;
+    var lead = Math.round(LEAD / STEP);
+    g.save();
+    for (var k = 0; k < m; k++) {
+      // the first sample of each open stretch, walking the lap forwards
+      if (!walk[k].open || walk[(k - 1 + m) % m].open) continue;
+      var end = k;
+      while (walk[(end + 1) % m].open && end - k < m) end++;
+      var exit = walk[(end + 1) % m];            // the way out of the junction
+      var at = walk[(k - lead + m * 2) % m];     // and where to say so
+      bigArrow(g, at.x, at.y, exit.dx, exit.dy);
     }
     g.restore();
   }
