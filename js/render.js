@@ -113,7 +113,11 @@
     // Dust hanging in the light of a ruin. Slower than anything else here
     // and it drifts UP as often as down, because nothing is moving the air.
     motes:  { per: 4000, color: '#f2dcb0', r: [0.7, 2.0], vx: [-6, -18],
-              vy: [-9, 11], sway: 11, swayRate: 0.32, alpha: [0.12, 0.40], smear: 1 }
+              vy: [-9, 11], sway: 11, swayRate: 0.32, alpha: [0.12, 0.40], smear: 1 },
+    // Embers RISE. The only weather in the game with negative vy, because
+    // everything else is falling and this is coming off something hot.
+    embers: { per: 2800, color: '#ffb066', r: [0.8, 2.2], vx: [-8, -26],
+              vy: [-70, -22], sway: 9, swayRate: 1.1, alpha: [0.22, 0.70], smear: 0.7 }
   };
 
   function ensureMotes() {
@@ -414,6 +418,63 @@
     }
   }
 
+  /* ---- crust ----------------------------------------------------------
+   *
+   * Cooled basalt: near black, cracked into plates, and glowing along the
+   * cracks where it has not finished cooling. The glow is baked rather than
+   * animated - the live lava painter handles the rects that are actually
+   * molten, and a whole map of pulsing cracks would fight it.
+   *
+   * Lava cells (kind 4) get nothing here: their crust is the flat fill and
+   * the molten middle is painted over it every frame. */
+  function drawCrust(g, cx, cy, kind) {
+    if (kind === 4) return;
+    var x = cx * S, y = cy * S;
+
+    var t = cellNoise(cx, cy, 71);
+    g.fillStyle = t < 0.5
+      ? 'rgba(0,0,0,' + (0.10 + t * 0.44).toFixed(3) + ')'
+      : 'rgba(150,104,80,' + ((t - 0.5) * 0.24).toFixed(3) + ')';
+    g.fillRect(x, y, S, S);
+
+    // the plates: two cracks across the cell, one each way, offset per cell
+    var gap = Math.max(2, Math.round(S * 0.10));
+    var hx = Math.round(cellNoise(cx, cy, 72) * (S - gap * 2)) + gap;
+    var hy = Math.round(cellNoise(cx, cy, 73) * (S - gap * 2)) + gap;
+    var hot = cellNoise(cx, cy, 74);
+    g.fillStyle = 'rgba(0,0,0,0.42)';
+    g.fillRect(x + hx, y, 1, S);
+    g.fillRect(x, y + hy, S, 1);
+    if (hot < 0.42) {
+      // still cooling: the crack glows, hotter the nearer it is to fresh
+      var a = (0.20 + (0.42 - hot) * 1.1).toFixed(2);
+      g.fillStyle = 'rgba(255,' + (90 + Math.round(hot * 240)).toString() + ',40,' + a + ')';
+      if (cellNoise(cx, cy, 75) < 0.5) g.fillRect(x + hx, y, 1, S);
+      else g.fillRect(x, y + hy, S, 1);
+    }
+
+    if (kind === 3) {
+      // a barrier here is a spatter cone: a ring of cooled spray
+      g.strokeStyle = 'rgba(255,150,60,0.30)';
+      g.lineWidth = 1;
+      g.beginPath();
+      g.arc(x + S * 0.5, y + S * 0.5, S * 0.30, 0, Math.PI * 2);
+      g.stroke();
+      return;
+    }
+
+    // a scatter of bombs thrown out and frozen where they landed
+    if (cellNoise(cx, cy, 76) < 0.18) {
+      var r = S * (0.10 + cellNoise(cx, cy, 77) * 0.10);
+      var bx = x + gap + cellNoise(cx, cy, 78) * (S - gap * 2);
+      var by = y + gap + cellNoise(cx, cy, 79) * (S - gap * 2);
+      g.fillStyle = 'rgba(0,0,0,0.45)';
+      g.beginPath(); g.arc(bx, by, r, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(190,120,86,0.22)';
+      g.beginPath(); g.arc(bx - r * 0.25, by - r * 0.25, r * 0.55, 0, Math.PI * 2); g.fill();
+    }
+  }
+
   function eachWall(fn) {
     for (var cy = 0; cy < T.rows; cy++) {
       for (var cx = 0; cx < T.cols; cx++) {
@@ -544,6 +605,7 @@
     var lit = !!(T.theme && T.theme.windows);
     var plant = !!(T.theme && T.theme.pipes);
     var dressed = !!(T.theme && T.theme.glyphs);
+    var basalt  = !!(T.theme && T.theme.crust);
     eachWall(function (cx, cy, kind) {
       // Four kinds of solid: the islands inside the circuit, the ground
       // outside it, the chicane blocks, and lava - whose cooled crust is
@@ -555,6 +617,7 @@
       if (lit) drawWindows(g, cx, cy, kind);
       if (plant) drawPipes(g, cx, cy, kind);
       if (dressed) drawRuins(g, cx, cy, kind);
+      if (basalt) drawCrust(g, cx, cy, kind);
     });
 
     drawEmblems(g);

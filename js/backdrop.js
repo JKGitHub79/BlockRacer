@@ -406,6 +406,116 @@
     }
   }
 
+  /* The mountain itself: a broad cone with a bitten-out crater, lava running
+   * down the flanks in channels that widen as they go, and a fountain of it
+   * standing out of the top. Drawn once like everything else here - the
+   * fountain is a shape, not an animation, because only weather is allowed
+   * to move in a backdrop. */
+  function volcano(g, cx, base, height, width, seed) {
+    var rnd = rng(seed);
+    var half = width / 2;
+    var rimL = cx - half * 0.26, rimR = cx + half * 0.26, rim = base - height;
+
+    // the cone, in three bands so the near flank reads as nearer
+    [['#150b09', 0], ['#0e0605', 0.10], ['#070303', 0.20]].forEach(function (b, i) {
+      g.fillStyle = b[0];
+      g.beginPath();
+      g.moveTo(cx - half * (1 - b[1] * 0.5), base + 2);
+      g.lineTo(rimL + half * b[1] * 0.4, rim + height * b[1]);
+      g.lineTo(rimR - half * b[1] * 0.4, rim + height * b[1]);
+      g.lineTo(cx + half * (1 - b[1] * 0.5), base + 2);
+      g.closePath();
+      g.fill();
+    });
+
+    // lava sitting in the crater: inset from the rim and fading down into
+    // it, so it reads as filling the bowl rather than lying on top of it
+    var lw = (rimR - rimL) * 0.62, lx = cx - lw / 2;
+    var cg = g.createLinearGradient(0, rim - height * 0.015, 0, rim + height * 0.03);
+    cg.addColorStop(0, 'rgba(255,214,140,0.92)');
+    cg.addColorStop(1, 'rgba(210,60,12,0)');
+    g.fillStyle = cg;
+    g.fillRect(lx, rim - height * 0.015, lw, height * 0.045);
+
+    // and the fountain standing out of it: a column of hot blobs that
+    // widen and cool as they rise, the same construction the city's smoke
+    // uses, because a fountain of rock is a plume that happens to glow. A
+    // smooth tapering wedge was tried first and read as a searchlight.
+    var fh = height * 0.30;
+    for (var i = 0; i < 70; i++) {
+      var f = i / 69;
+      var py = rim - fh * f - rnd() * fh * 0.04;
+      var px = cx + (rnd() - 0.5) * width * (0.04 + f * 0.13);
+      var r = fh * (0.030 + f * 0.070) * (0.5 + rnd() * 1.0);
+      var heat = 1 - f * 0.8;
+      g.fillStyle = 'rgba(255,' + (110 + Math.round(heat * 130)) + ',' +
+                    (30 + Math.round(heat * 90)) + ',' + (0.30 * heat + 0.05).toFixed(3) + ')';
+      g.beginPath();
+      g.arc(px, py, r, 0, Math.PI * 2);
+      g.fill();
+    }
+
+    // bombs thrown clear of the fountain, arcing out either side
+    for (var b2 = 0; b2 < 26; b2++) {
+      var side = rnd() < 0.5 ? -1 : 1;
+      var f2 = rnd();
+      var bx = cx + side * width * (0.03 + f2 * 0.26);
+      var by = rim - fh * (1.05 - f2 * f2 * 1.5);
+      var r2 = Math.max(1, height * (0.006 + rnd() * 0.014));
+      g.fillStyle = 'rgba(255,' + (140 + Math.round(rnd() * 90)) + ',70,' +
+                    (0.45 + rnd() * 0.45).toFixed(2) + ')';
+      g.beginPath(); g.arc(bx, by, r2, 0, Math.PI * 2); g.fill();
+    }
+
+    // and the flows: channels down the flanks, widening as they fall
+    for (var k = 0; k < 5; k++) {
+      var t0 = (k - 2) * 0.14 + (rnd() - 0.5) * 0.06;
+      var x0 = cx + half * t0 * 0.3, x1 = cx + half * t0 * 2.4;
+      var w0 = Math.max(1.5, width * 0.010), w1 = width * (0.018 + rnd() * 0.030);
+      var grad = g.createLinearGradient(0, rim, 0, base);
+      grad.addColorStop(0, 'rgba(255,236,186,0.95)');
+      grad.addColorStop(0.35, 'rgba(255,128,24,0.92)');
+      grad.addColorStop(1, 'rgba(168,26,6,0.70)');
+      g.fillStyle = grad;
+      g.beginPath();
+      g.moveTo(x0 - w0, rim + height * 0.02);
+      g.lineTo(x0 + w0, rim + height * 0.02);
+      g.lineTo(x1 + w1, base + 2);
+      g.lineTo(x1 - w1, base + 2);
+      g.closePath();
+      g.fill();
+    }
+
+    // the glow the whole thing throws into the sky
+    var halo = g.createRadialGradient(cx, rim, 0, cx, rim, height * 1.1);
+    halo.addColorStop(0, 'rgba(255,110,34,0.36)');
+    halo.addColorStop(1, 'rgba(255,110,34,0)');
+    g.fillStyle = halo;
+    g.fillRect(cx - height * 1.1, rim - height * 1.1, height * 2.2, height * 2.2);
+  }
+
+  /* The floor: a cooled flow, black and cracked, with the cracks still lit.
+   * Same job as `street`, `yard` and `sand` - the foot of the scene has to
+   * be a surface rather than an edge. */
+  function flowfloor(g, y, seed) {
+    var rnd = rng(seed);
+    var d = H - y;
+    g.fillStyle = '#0b0605';
+    g.fillRect(0, y, W, d);
+    for (var i = 0; i < 46; i++) {
+      var fx = rnd() * W, fy = y + rnd() * d;
+      var fw = W * (0.01 + rnd() * 0.06), fh = Math.max(1, d * 0.04);
+      var a = 0.10 + rnd() * 0.45;
+      g.fillStyle = 'rgba(255,' + (80 + Math.round(rnd() * 120)) + ',30,' + a.toFixed(2) + ')';
+      g.fillRect(fx, fy, fw, fh);
+    }
+    var lip = g.createLinearGradient(0, y, 0, y + d * 0.3);
+    lip.addColorStop(0, 'rgba(255,140,50,0.22)');
+    lip.addColorStop(1, 'rgba(255,140,50,0)');
+    g.fillStyle = lip;
+    g.fillRect(0, y, W, d * 0.3);
+  }
+
   function recede(g) {
     g.fillStyle = 'rgba(4,8,14,0.18)';
     g.fillRect(0, 0, W, H);
@@ -576,6 +686,24 @@
       }
     },
 
+    /* Everything here is lit from one place, and it is not the sky. The
+     * gradient runs from soot at the top to ember at the bottom, and the
+     * mountain sits to one side of the cards so the fountain is not behind
+     * the middle one. */
+    volcano: {
+      weather: 'embers',
+      paint: function (g) {
+        sky(g, [[0, '#080407'], [0.26, '#190810'], [0.54, '#3c0f0e'],
+                [0.80, '#6d200c'], [1, '#9c3a12']]);
+        crest(g, H * (HORIZON + 0.02), H * 0.030, '#2a1310', 19);
+        volcano(g, W * 0.775, H * (HORIZON + 0.12), H * 0.58, W * 0.60, 23);
+        crest(g, H * (HORIZON + 0.11), H * 0.042, '#190b09', 37);
+        crest(g, H * (HORIZON + 0.22), H * 0.055, '#0c0505', 53);
+        flowfloor(g, H * 0.945, 71);
+        recede(g);
+      }
+    },
+
     /* The front screen sits on its own night sky rather than borrowing a
      * theme's, so arriving at the game does not imply a theme. */
     night: {
@@ -620,7 +748,10 @@
     // Dust hanging in still air: the slowest thing here, and it drifts up as
     // often as down because nothing is moving it.
     motes:  { n: 50, color: '#f2dcb0', r: [0.6, 1.8], vx: [-10, -30], vy: [-14, 18],
-              sway: 18, rate: 0.32, alpha: [0.07, 0.26], wide: 1 }
+              sway: 18, rate: 0.32, alpha: [0.07, 0.26], wide: 1 },
+    // Embers rise: the only weather here with the sign the other way round.
+    embers: { n: 80, color: '#ffb066', r: [0.7, 2.0], vx: [-14, -44], vy: [-140, -40],
+              sway: 14, rate: 1.1, alpha: [0.14, 0.60], wide: 0.8 }
   };
 
   function ensureMotes(kind) {

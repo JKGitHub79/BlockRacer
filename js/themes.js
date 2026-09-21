@@ -97,6 +97,18 @@
         { id: 'colonnade', name: 'COLONNADE', grade: 'EXPERT +' },
         { id: 'labyrinth', name: 'LABYRINTH', grade: 'EXPERT ++' }
       ]
+    },
+    {
+      id: 'volcano',
+      name: 'VOLCANO',
+      tagline: 'Black rock and running lava. The gates here are the flows.',
+      scene: 'volcano',
+      accent: '#ff5a2b',
+      tracks: [
+        { id: 'basalt',  name: 'BASALT',  grade: 'INSANE' },
+        { id: 'fissure', name: 'FISSURE', grade: 'INSANE +' },
+        { id: 'crater',  name: 'CRATER',  grade: 'INSANE ++' }
+      ]
     }
   ];
 })(typeof window !== 'undefined' ? window : globalThis);

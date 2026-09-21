@@ -2381,6 +2381,284 @@
     ]
   };
 
+  /* ==================================================================== *
+   * VOLCANO - the eighth theme, and the hardest.
+   *
+   * The gates here are LAVA rather than barriers. `kind: 'lava'` has been in
+   * the engine since Caldera: it collides exactly like a wall and the
+   * renderer paints molten rock over it every frame, so a flow across the
+   * road is a gate that looks like what it is.
+   *
+   * These three are back on SIX-cell roads after the ruins, and that is the
+   * whole reason they are harder. A lane change needs two turn radii of room
+   * - 1.6 cells at the default slide - which a five-cell road cannot offer,
+   * so the ruins could only ever have gates on one side of a straight. Six
+   * cells buys back the PAIR: two flows against opposite kerbs, far enough
+   * apart that the lane one leaves clear is the lane the other blocks, and
+   * the car has to get across in the middle of the fastest road on the
+   * track. It is worth more than a cell of margin, and by some distance.
+   * ==================================================================== */
+  var VOLCANO = {
+    /* `crust` turns on the basalt texture in js/render.js: black plates,
+     * cracks that still glow where the rock has not finished cooling, and
+     * frozen bombs. Lava cells get none of it - their crust is the flat fill
+     * and the molten middle goes on live. */
+    crust:      true,
+    bg:         '#0a0503',
+    road:       '#16100d',   // ash over old basalt
+    roadLine:   '#241812',
+    wall:       '#2b1711',   // cooled crust
+    wallTop:    '#8f3d18',
+    outer:      '#1d0d09',
+    outerTop:   '#5c220e',
+    jog:        '#8a2f0c',
+    jogTop:     '#ff7a1f',
+    racingLine: 'rgba(255,190,120,0.26)',
+    check:      'rgba(255,150,60,0.07)',
+    checkNext:  'rgba(255,150,60,0.30)',
+    startLine:  '#ffeeda'
+  };
+
+  /* ---- Volcano 1: BASALT -----------------------------------------------
+   * A staircase down the mountain and two long runs back up it. The lap
+   * steps south-east in five equal flights, then turns and takes the
+   * bottom, the east flank and the whole top street home:
+   *
+   *        +----------------------+
+   *        |  ##################  |    five flights of eleven cells, then
+   *        +--+  ##############   |    a twenty-two, a thirty-three and a
+   *           +--+  ###########   |    forty-four - the longest straight
+   *              +--+  ########   |    in the game, with a pair on it
+   *                 +------------+
+   * -------------------------------------------------------------------- */
+  var BASALT = {
+    id: 'basalt',
+    name: 'BASALT',
+    blurb: 'A staircase down the mountain, and the long way back up it.',
+    grade: 'INSANE',
+    cols: 52,
+    rows: 41,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'embers',
+    theme: VOLCANO,
+    walls: border(52, 41).concat([
+      { x0:  7, y0:  7, x1: 44, y1: 11, kind: 'infield' },
+      { x0: 18, y0: 12, x1: 44, y1: 22, kind: 'infield' },
+      { x0: 29, y0: 23, x1: 44, y1: 33, kind: 'infield' },
+      { x0:  1, y0: 18, x1: 11, y1: 39, kind: 'edge' },
+      { x0: 12, y0: 29, x1: 22, y1: 39, kind: 'edge' },
+      // one flow per flight, always taken on the far side
+      { x0:  1, y0:  8, x1:  2, y1: 11, kind: 'lava' },
+      { x0:  8, y0: 12, x1: 11, y1: 13, kind: 'lava' },
+      { x0: 12, y0: 19, x1: 13, y1: 22, kind: 'lava' },
+      { x0: 19, y0: 23, x1: 22, y1: 24, kind: 'lava' },
+      { x0: 23, y0: 30, x1: 24, y1: 33, kind: 'lava' },
+      // and a PAIR on each of the three long runs home
+      { x0: 30, y0: 34, x1: 34, y1: 35, kind: 'lava' },
+      { x0: 39, y0: 38, x1: 44, y1: 39, kind: 'lava' },
+      { x0: 49, y0: 24, x1: 50, y1: 30, kind: 'lava' },
+      { x0: 45, y0: 10, x1: 46, y1: 16, kind: 'lava' },
+      { x0: 30, y0:  1, x1: 40, y1:  2, kind: 'lava' },
+      { x0: 10, y0:  5, x1: 20, y1:  6, kind: 'lava' }
+    ]),
+    route: [
+      { x:  5, y:  3 },   // 0  south down the west flank
+      { x:  5, y: 16 },   // 1  east, first flight
+      { x: 16, y: 16 },   // 2  south
+      { x: 16, y: 27 },   // 3  east
+      { x: 27, y: 27 },   // 4  south
+      { x: 27, y: 38 },   // 5  east along the bottom
+      { x: 37, y: 38 },   // 6  change lanes between the pair
+      { x: 37, y: 36 },   // 7
+      { x: 47, y: 36 },   // 8  north up the east flank
+      { x: 47, y: 20 },   // 9  and change again
+      { x: 49, y: 20 },   // 10
+      { x: 49, y:  5 },   // 11 west along the top, over the line
+      { x: 25, y:  5 },   // 12 and once more
+      { x: 25, y:  3 }    // 13
+    ],
+    startLeg: 11,
+    checkpoints: [
+      { x0: 14, y0:  1, x1: 15, y1:  5 },   // west along the top
+      { x0: 10, y0: 14, x1: 11, y1: 18 },   // east, first flight
+      { x0: 25, y0: 31, x1: 29, y1: 32 },   // south, last flight
+      { x0: 45, y0: 29, x1: 49, y1: 30 }    // north up the east flank
+    ],
+    finish: { x0: 43.6, y0: 1, x1: 44.4, y1: 7, dir: { x: -1, y: 0 } },
+    startGrid: [
+      { x: 45.5, y: 3.9, wp: 12 },
+      { x: 45.5, y: 6.1, wp: 12 },
+      { x: 47.4, y: 3.9, wp: 12 },
+      { x: 47.4, y: 6.1, wp: 12 }
+    ]
+  };
+
+
+  /* ---- Volcano 2: FISSURE ----------------------------------------------
+   * Two fissures opened across the middle of the map and the lap runs down
+   * one and up the other. Fifteen flows, five of them in pairs:
+   *
+   *        +--+  +--+-----------+
+   *        |  |  |  |           |    the west flank, the bottom and the
+   *        |  |  |  +-------+   |    east flank all carry a pair; so do
+   *        |  +--+          |   |    both fissures
+   *        +----------------+---+
+   * -------------------------------------------------------------------- */
+  var FISSURE = {
+    id: 'fissure',
+    name: 'FISSURE',
+    blurb: 'Two cracks across the middle, and a pair of flows on every run.',
+    grade: 'INSANE +',
+    cols: 52,
+    rows: 41,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'embers',
+    theme: VOLCANO,
+    walls: border(52, 41).concat([
+      { x0: 18, y0:  1, x1: 22, y1: 22, kind: 'edge' },
+      { x0: 40, y0:  1, x1: 50, y1: 11, kind: 'edge' },
+      { x0:  7, y0:  7, x1: 11, y1: 33, kind: 'infield' },
+      { x0: 29, y0:  7, x1: 33, y1: 33, kind: 'infield' },
+      { x0: 34, y0: 18, x1: 44, y1: 33, kind: 'infield' },
+      { x0: 12, y0: 29, x1: 28, y1: 33, kind: 'infield' },
+      // a pair on each of the five long runs
+      { x0:  1, y0:  8, x1:  2, y1: 14, kind: 'lava' },
+      { x0:  5, y0: 22, x1:  6, y1: 28, kind: 'lava' },
+      { x0:  8, y0: 34, x1: 16, y1: 35, kind: 'lava' },
+      { x0: 26, y0: 38, x1: 34, y1: 39, kind: 'lava' },
+      { x0: 49, y0: 29, x1: 50, y1: 33, kind: 'lava' },
+      { x0: 45, y0: 19, x1: 46, y1: 23, kind: 'lava' },
+      { x0: 23, y0:  8, x1: 24, y1: 12, kind: 'lava' },
+      { x0: 27, y0: 18, x1: 28, y1: 23, kind: 'lava' },
+      { x0: 12, y0:  8, x1: 13, y1: 12, kind: 'lava' },
+      // and one on each of the five short ones
+      { x0: 41, y0: 12, x1: 44, y1: 13, kind: 'lava' },
+      { x0: 34, y0:  8, x1: 35, y1: 11, kind: 'lava' },
+      { x0: 30, y0:  1, x1: 33, y1:  2, kind: 'lava' },
+      { x0: 19, y0: 27, x1: 22, y1: 28, kind: 'lava' },
+      { x0:  8, y0:  5, x1: 11, y1:  6, kind: 'lava' }
+    ]),
+    route: [
+      { x:  5, y:  3 },   // 0  south down the west flank
+      { x:  5, y: 18 },   // 1  change lanes between the pair
+      { x:  3, y: 18 },   // 2
+      { x:  3, y: 38 },   // 3  east along the bottom, over the line
+      { x: 21, y: 38 },   // 4  and change again
+      { x: 21, y: 36 },   // 5
+      { x: 47, y: 36 },   // 6  north up the east flank
+      { x: 47, y: 26 },   // 7
+      { x: 49, y: 26 },   // 8
+      { x: 49, y: 16 },   // 9  west
+      { x: 38, y: 16 },   // 10 north
+      { x: 38, y:  5 },   // 11 west along the top
+      { x: 27, y:  5 },   // 12 south down the first fissure
+      { x: 27, y: 15 },   // 13 changing lanes inside it
+      { x: 25, y: 15 },   // 14
+      { x: 25, y: 25 },   // 15 west
+      { x: 16, y: 25 },   // 16 north up the second
+      { x: 16, y:  3 }    // 17 west, back to the west flank
+    ],
+    startLeg: 3,
+    checkpoints: [
+      { x0: 41, y0: 14, x1: 42, y1: 18 },   // west off the east flank
+      { x0: 23, y0: 15, x1: 29, y1: 16 },   // south down the first fissure
+      { x0: 12, y0: 15, x1: 18, y1: 16 },   // north up the second
+      { x0:  1, y0: 16, x1:  7, y1: 17 }    // south down the west flank
+    ],
+    finish: { x0: 19.6, y0: 34, x1: 20.4, y1: 40, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 18.5, y: 36.9, wp: 4 },
+      { x: 18.5, y: 39.1, wp: 4 },
+      { x: 16.6, y: 36.9, wp: 4 },
+      { x: 16.6, y: 39.1, wp: 4 }
+    ]
+  };
+
+
+  /* ---- Volcano 3: CRATER -----------------------------------------------
+   * Two hooks into the crater, one from each side, and two forty-four cell
+   * runs past them. Twelve corners and twelve flows:
+   *
+   *        +----------------------+
+   *        |  +--+  ########  +-+ |    the hooks are mirror images and the
+   *        +--+  |  ########  | +-+    runs are not: the top carries the
+   *        |     |  ########  |   |    line and the bottom carries the lap
+   *        +-----+----------+-----+
+   * -------------------------------------------------------------------- */
+  var CRATER = {
+    id: 'crater',
+    name: 'CRATER',
+    blurb: 'Two hooks into the crater and two forty-four cell runs past them.',
+    grade: 'INSANE ++',
+    cols: 52,
+    rows: 41,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'embers',
+    theme: VOLCANO,
+    walls: border(52, 41).concat([
+      { x0:  7, y0:  7, x1: 44, y1: 11, kind: 'infield' },
+      { x0: 18, y0: 12, x1: 33, y1: 33, kind: 'lava' },     // the crater itself
+      { x0:  1, y0: 18, x1: 11, y1: 22, kind: 'edge' },
+      { x0: 40, y0: 18, x1: 50, y1: 22, kind: 'edge' },
+      { x0:  7, y0: 29, x1: 17, y1: 33, kind: 'infield' },
+      { x0: 34, y0: 29, x1: 44, y1: 33, kind: 'infield' },
+      // one flow per corner leg
+      { x0:  1, y0:  7, x1:  2, y1: 12, kind: 'lava' },
+      { x0:  7, y0: 12, x1: 12, y1: 13, kind: 'lava' },
+      { x0: 16, y0: 18, x1: 17, y1: 23, kind: 'lava' },
+      { x0:  7, y0: 27, x1: 12, y1: 28, kind: 'lava' },
+      { x0:  5, y0: 29, x1:  6, y1: 34, kind: 'lava' },
+      { x0: 49, y0: 29, x1: 50, y1: 34, kind: 'lava' },
+      { x0: 40, y0: 23, x1: 45, y1: 24, kind: 'lava' },
+      { x0: 34, y0: 18, x1: 35, y1: 23, kind: 'lava' },
+      { x0: 40, y0: 16, x1: 45, y1: 17, kind: 'lava' },
+      { x0: 45, y0:  7, x1: 46, y1: 12, kind: 'lava' },
+      // and a pair on each forty-four
+      { x0:  8, y0: 34, x1: 16, y1: 35, kind: 'lava' },
+      { x0: 30, y0: 38, x1: 38, y1: 39, kind: 'lava' },
+      { x0: 30, y0:  1, x1: 40, y1:  2, kind: 'lava' },
+      { x0: 10, y0:  5, x1: 20, y1:  6, kind: 'lava' }
+    ]),
+    route: [
+      { x:  5, y:  3 },   // 0  south into the west hook
+      { x:  5, y: 16 },   // 1  east
+      { x: 14, y: 16 },   // 2  south
+      { x: 14, y: 25 },   // 3  west, back out
+      { x:  3, y: 25 },   // 4  south down the flank
+      { x:  3, y: 38 },   // 5  east along the bottom
+      { x: 23, y: 38 },   // 6  change lanes between the pair
+      { x: 23, y: 36 },   // 7
+      { x: 47, y: 36 },   // 8  north
+      { x: 47, y: 27 },   // 9  west into the east hook
+      { x: 38, y: 27 },   // 10 north
+      { x: 38, y: 14 },   // 11 east, back out
+      { x: 49, y: 14 },   // 12 north
+      { x: 49, y:  5 },   // 13 west along the top, over the line
+      { x: 25, y:  5 },   // 14 and change again
+      { x: 25, y:  3 }    // 15
+    ],
+    startLeg: 13,
+    checkpoints: [
+      { x0:  9, y0: 14, x1: 10, y1: 18 },   // east into the west hook
+      { x0:  9, y0: 23, x1: 10, y1: 27 },   // west, back out of it
+      { x0: 42, y0: 25, x1: 43, y1: 29 },   // west into the east hook
+      { x0: 42, y0: 12, x1: 43, y1: 16 }    // east, back out of it
+    ],
+    finish: { x0: 43.6, y0: 1, x1: 44.4, y1: 7, dir: { x: -1, y: 0 } },
+    startGrid: [
+      { x: 45.5, y: 3.9, wp: 14 },
+      { x: 45.5, y: 6.1, wp: 14 },
+      { x: 47.4, y: 3.9, wp: 14 },
+      { x: 47.4, y: 6.1, wp: 14 }
+    ]
+  };
+
   /* ------------------------------------------------------------------ *
    * DIRECTION
    *
@@ -2455,6 +2733,7 @@
     GRIDLOCK, CROSSTOWN, DOWNTOWN,
     FOUNDRY, PIPEWORKS, REFINERY,
     SANCTUM, COLONNADE, LABYRINTH,
+    BASALT, FISSURE, CRATER,
     // and the seven built before the themes, kept raceable under LEGACY
     CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE
   ].map(function (t) { return t.mirror ? flipX(t) : t; });

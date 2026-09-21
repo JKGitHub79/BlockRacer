@@ -60,6 +60,7 @@ Five themes, ascending in difficulty, three tracks each:
 | City | Gridlock, Crosstown, Downtown | hard | **built** |
 | Industrial | Foundry, Pipeworks, Refinery | extreme | **built** |
 | Ancient Ruins | Sanctum, Colonnade, Labyrinth | expert | **built** |
+| Volcano | Basalt, Fissure, Crater | insane | **built** |
 
 All fifteen are built. A theme's track is matched to `js/tracks.js` by id, and a
 name with no track behind it renders as a placeholder rather than being hidden,
@@ -327,9 +328,40 @@ All three are five cells wide, and their barriers are a single cell thick for
 the reason Pipeworks established: on a five-cell road two would leave three,
 and a three-cell gate is a trap rather than a difficulty.
 
+### The volcano three
+
+The gates here are **lava**. `kind: 'lava'` has been in the engine since
+Caldera: it collides exactly like a wall and the renderer paints molten rock
+over it every frame, so a flow across the road is a gate that looks like what
+it is.
+
+These three are back on **six-cell roads** after the ruins, and that is the
+whole reason they are harder. A lane change needs two turn radii of room -
+1.6 cells at the default slide - which a five-cell road cannot offer, so the
+ruins could only ever have a gate on one side of a straight. Six cells buys
+back the PAIR: two flows against opposite kerbs, far enough apart that the
+lane one leaves clear is the lane the other blocks, and the car has to get
+across in the middle of the fastest road on the track. Measured on Fissure,
+each pair is worth about a hundred and seventy-five crashes a thousand laps -
+taking two of its five out dropped it from 1131 to 783, and putting one back
+brought it to 878. Nothing else in the toolkit moves a number that far
+without turning a gate into a wall.
+
+**Basalt** is a staircase down the mountain and the long way back up it: five
+flights of eleven cells stepping south-east, then a twenty-two, a thirty-three
+and a forty-four, with a pair on each of the three.
+
+**Fissure** is two cracks across the middle of the map, run down one and up
+the other, with a pair on each of the four long runs and one inside the first
+fissure.
+
+**Crater** is two hooks into the crater, one from each side, with a
+forty-four cell run past each of them. The crater itself is a lava lake -
+twenty-two cells by sixteen, the largest single hazard in the game.
+
 ### The ladder
 
-Twenty-one tracks, one continuous curve. Crashes per thousand laps of AI
+Twenty-four tracks, one continuous curve. Crashes per thousand laps of AI
 racing, measured the way the whole ladder has always been measured - beginner
 speed, slide 0.8, four cars (see **A note on the numbers** below):
 
@@ -342,40 +374,18 @@ speed, slide 0.8, four cars (see **A note on the numbers** below):
 | City | 588 | 623 | 684 |
 | Industrial | 816 | 970 | 968 |
 | Ancient Ruins | 734 | 755 | 729 |
-
-**Ancient Ruins does not sit above Industrial, and the table says so.** It was
-built to, and it does not: on the ladder the three measure 734, 755 and 729,
-which is one number three times over inside this metric's noise, and all of it
-under Foundry's 816. At the settings the game ships with they do separate in
-the right order - 553, 586, 620 - but that is still under Industrial's 761,
-760 and 789.
-
-The reason is worth recording, because it is the edge of the toolkit rather
-than a mistake in one track. Difficulty on a corridor comes from three things:
-gate margin, the number of lane changes, and corner count. These three are
-five cells wide, which is as narrow as the game goes before the AI stops
-finishing; every straight already carries a barrier; and a **lane change needs
-two turn radii of room**, 1.6 cells at the default slide, which a five-cell
-road cannot offer - so the strongest lever Foundry and Refinery use is not
-available here at all. What is left is barrier length, and that lever has no
-middle: lengthening Sanctum's barriers one cell further takes it from 765 to
-1282, and Labyrinth's from 729 to 14,866, because past a point a barrier stops
-being a gate and becomes a wall the AI cannot get round. There is no setting
-between "a little easier than Industrial" and "impossible".
-
-Getting this theme above Industrial means going back to **six-cell roads with
-barrier pairs on the long legs**, which is the Foundry recipe: a manoeuvre in
-the middle of a straight rather than a gate on one side of it. That is a
-rebuild of two of the three, not a tuning pass.
+| Volcano | 803 | 878 | 1020 |
 
 In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 588, 617, 623,
-684, 729, 734, 755, 816, 968, 970. Forest and Desert interleave, so the first track of the
+684, 729, 734, 755, 803, 816, 878, 968, 970, 1020. Forest and Desert
+interleave, so the first track of the
 desert is easier than the last of the forest and a new theme reads as a new
 theme rather than a wall. Snow, Cliffs and City interleave the same way, so
 arriving at a harder theme is a step rather than a cliff. Industrial does not
 interleave with City and is not meant to: EXTREME starts above where HARD
 finished. Ancient Ruins interleaves with Industrial, which is not what was
-asked for - see above.
+asked for - see above. Volcano climbs cleanly and ends the ladder on the
+highest number in the themed set.
 
 Pipeworks and Refinery measure the same: 970 and 968 is two crashes in twelve
 hundred laps, well inside this metric's noise, so on the ladder they are tied.
@@ -707,6 +717,17 @@ Three things learned the hard way getting them to read:
   is low and the occasional one stands right up out of it - the same trick
   `peaks` uses, because the shape is the same shape. The windows are what
   makes it a city rather than a bar chart.
+- **Cooled rock is cracked, and the cracks are still lit.** `drawCrust` gives
+  the volcano solids black plates with a crack each way, and about two in five
+  of those cracks glow - hotter the fresher they are. The glow is baked rather
+  than animated: the live lava painter already handles the rects that are
+  actually molten, and a whole map of pulsing cracks would fight it. Lava
+  cells get none of it, because their crust is the flat fill and the molten
+  middle goes on every frame.
+- **A fountain is a plume that glows.** The volcano's eruption is a column of
+  seventy hot blobs that widen and cool as they rise, the same construction
+  the city's smoke uses. A smooth tapering wedge was tried first and read as
+  a searchlight rather than as rock being thrown.
 - **Old stone is dressed, not raw.** The cliffs' `drawStone` is geology - a
   bed, a seam and two chips. `drawRuins` is masonry: three courses of ashlar
   per cell with the joints staggered course to course, which is what makes
