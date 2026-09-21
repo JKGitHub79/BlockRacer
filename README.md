@@ -293,19 +293,12 @@ five-cell road with a pair on it can only ever offer one. A five-cell road
 cannot be a lane-change road. Widening the two long streets by a cell each
 gave them the 2-cell change and cost nothing anywhere else.
 
-**Refinery** is an **open street grid**, and the only one in the game. Twelve
-plant blocks, four streets across and five down, every street drivable end to
-end. There is no ring, no infield and no corridor: at each of the twenty
-junctions you can go straight on as well as left and right, and eleven of the
-thirty-one street segments are not on the lap at all.
-
-The lap is a Hamiltonian circuit of that grid - it reaches all twenty
-junctions, takes each exactly once and never crosses itself. Sixteen of the
-twenty are corners and four are crossroads the lap goes straight over.
-
-Its barriers sit mid-block, between junctions, because that is the only place
-on the track with a kerb to put one against. At a junction there is no kerb,
-which is the whole point of the place.
+**Refinery** is sixteen corners with five **loading bays** cut into the plant,
+three cells wide and three deep, opening straight off the road. Driving into
+one is a wrong turn you can actually make. A bay is a dead end walled on its
+other three sides, so the cost is a second and a reverse rather than a lost
+lap, and the lap itself visits every piece of road exactly once and never
+crosses.
 
 ### The ladder
 
@@ -320,15 +313,22 @@ slide 0.8, four cars (see **A note on the numbers** below):
 | Snow | 197 | 318 | 450 |
 | Cliffs | 430 | 617 | 467 |
 | City | 588 | 623 | 684 |
-| Industrial | 816 | 970 | 1214 |
+| Industrial | 816 | 970 | 968 |
 
 In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 588, 617, 623,
-684, 816, 970, 1214. Forest and Desert interleave, so the first track of the
+684, 816, 968, 970. Forest and Desert interleave, so the first track of the
 desert is easier than the last of the forest and a new theme reads as a new
 theme rather than a wall. Snow, Cliffs and City interleave the same way, so
 arriving at a harder theme is a step rather than a cliff. Industrial does not
 interleave with City and is not meant to: EXTREME starts above where HARD
 finished.
+
+Pipeworks and Refinery measure the same: 970 and 968 is two crashes in twelve
+hundred laps, well inside this metric's noise, so on the ladder they are tied.
+They separate the right way at the settings the game ships with, and
+Refinery's extra difficulty is structural rather than numerical - sixteen
+corners against twelve, and five openings in the walls that Pipeworks has not
+got.
 
 The two numbers out of order are Snow's first and Cliffs' last, and both are
 explained under **Where the numbers and the driving disagree**.

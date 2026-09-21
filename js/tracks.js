@@ -2026,31 +2026,26 @@
   };
 
   /* ---- Industrial 3: REFINERY -----------------------------------------
-   * An open street grid, and the only one in the game. Twelve plant blocks,
-   * four streets across and five down, and EVERY street is drivable end to
-   * end - there is no ring, no infield and no corridor:
+   * Sixteen corners, and five LOADING BAYS cut into the plant three cells
+   * wide and three deep, opening straight off the road: driving into one is
+   * a wrong turn you can actually make.
    *
-   *        +---+---+---+---+---+      twenty junctions. At every one of
-   *        | # | # | # | # |   |      them you can go straight on as well
-   *        +---+---+---+---+---+      as left and right, and eleven of
-   *        | # | # | # | # |   |      the thirty-one street segments are
-   *        +---+---+---+---+---+      not on the lap at all
-   *        | # | # | # | # |   |
-   *        +---+---+---+---+---+
+   *        +--+  +--+--+  +-----+       the lap threads three teeth down
+   *        |  |  |()|  |  |     |       from the top and two up from the
+   *        |  +--+  +--+  |  +--+       bottom; () are the bays
+   *        | ()  ##  ()   |  |
+   *        +--+  +--+--+  +--+  |
+   *        |  |  |()|  |  |  |  |
+   *        +--+  +--+--+--+--+--+
    *
-   * The lap is a Hamiltonian circuit of the grid: it reaches all twenty
-   * junctions, takes each one exactly once and never crosses itself.
-   * Sixteen of the twenty are corners and four are crossroads the lap goes
-   * straight over.
-   *
-   * The barriers sit mid-block, between junctions, where there is a kerb to
-   * put them against. At a junction there is no kerb, which is the whole
-   * point of the place.
+   * A bay is a dead end and is walled on the other three sides, so the cost
+   * of taking one is a second and a reverse rather than a lost lap. The lap
+   * itself visits every piece of road exactly once and never crosses.
    * -------------------------------------------------------------------- */
   var REFINERY = {
     id: 'refinery',
     name: 'REFINERY',
-    blurb: 'An open grid. Twenty junctions and eleven streets that are not the lap.',
+    blurb: 'Sixteen corners and five loading bays cut into the plant.',
     grade: 'EXTREME ++',
     cols: 52,
     rows: 41,
@@ -2060,72 +2055,74 @@
     weather: 'ash',
     theme: INDUSTRIAL,
     walls: border(52, 41).concat([
-      { x0:  7, y0:  7, x1: 11, y1: 11, kind: 'infield' },
-      { x0:  7, y0: 18, x1: 11, y1: 22, kind: 'infield' },
-      { x0:  7, y0: 29, x1: 11, y1: 33, kind: 'infield' },
-      { x0: 18, y0:  7, x1: 22, y1: 11, kind: 'infield' },
-      { x0: 18, y0: 18, x1: 22, y1: 22, kind: 'infield' },
-      { x0: 18, y0: 29, x1: 22, y1: 33, kind: 'infield' },
-      { x0: 29, y0:  7, x1: 33, y1: 11, kind: 'infield' },
-      { x0: 29, y0: 18, x1: 33, y1: 22, kind: 'infield' },
-      { x0: 29, y0: 29, x1: 33, y1: 33, kind: 'infield' },
-      { x0: 40, y0:  7, x1: 44, y1: 11, kind: 'infield' },
-      { x0: 40, y0: 18, x1: 44, y1: 22, kind: 'infield' },
-      { x0: 40, y0: 29, x1: 44, y1: 33, kind: 'infield' },
-      /* Barriers sit MID-BLOCK, between junctions, because that is the only
-       * place on this track with a kerb to put one against. At a junction
-       * there is no kerb, which is the whole point of the place. The lap
-       * takes every one of them on the far side, and the two long streets
-       * get a pair and change lanes between them. */
-      { x0:  1, y0:  7, x1:  2, y1: 11, kind: 'jog' },      // the west street
-      { x0:  5, y0: 29, x1:  6, y1: 33, kind: 'jog' },
-      { x0:  7, y0: 34, x1: 11, y1: 35, kind: 'jog' },
-      { x0: 18, y0: 23, x1: 22, y1: 24, kind: 'jog' },
-      { x0: 29, y0: 34, x1: 33, y1: 35, kind: 'jog' },      // the bottom street
-      { x0: 40, y0: 38, x1: 44, y1: 39, kind: 'jog' },
-      { x0: 49, y0: 29, x1: 50, y1: 33, kind: 'jog' },
-      { x0: 40, y0: 27, x1: 44, y1: 28, kind: 'jog' },
-      { x0: 40, y0: 12, x1: 44, y1: 13, kind: 'jog' },
-      { x0: 49, y0:  7, x1: 50, y1: 11, kind: 'jog' },
-      { x0: 29, y0:  5, x1: 33, y1:  6, kind: 'jog' },      // the top street
-      { x0: 18, y0: 12, x1: 22, y1: 13, kind: 'jog' },
-      { x0:  7, y0:  1, x1: 11, y1:  2, kind: 'jog' }
+      { x0: 18, y0:  1, x1: 22, y1:  8, kind: 'edge' },
+      { x0: 40, y0:  1, x1: 50, y1: 11, kind: 'edge' },
+      { x0:  7, y0:  7, x1: 11, y1: 19, kind: 'infield' },
+      { x0: 29, y0:  7, x1: 33, y1: 22, kind: 'infield' },
+      { x0: 18, y0:  9, x1: 18, y1: 11, kind: 'edge' },     // the jambs of bay 2
+      { x0: 22, y0:  9, x1: 22, y1: 11, kind: 'edge' },
+      { x0: 12, y0: 18, x1: 23, y1: 22, kind: 'infield' },
+      { x0: 27, y0: 18, x1: 28, y1: 22, kind: 'infield' },
+      { x0: 34, y0: 18, x1: 44, y1: 19, kind: 'infield' },
+      { x0:  7, y0: 20, x1:  7, y1: 22, kind: 'infield' },  // and of bay 1
+      { x0: 11, y0: 20, x1: 11, y1: 22, kind: 'infield' },
+      { x0: 34, y0: 20, x1: 35, y1: 22, kind: 'infield' },  // and of bay 4
+      { x0: 39, y0: 20, x1: 44, y1: 22, kind: 'infield' },
+      { x0: 24, y0: 21, x1: 26, y1: 22, kind: 'infield' },  // the back of bay 3
+      { x0: 18, y0: 23, x1: 22, y1: 30, kind: 'infield' },
+      { x0: 40, y0: 23, x1: 44, y1: 33, kind: 'infield' },
+      { x0:  1, y0: 29, x1: 11, y1: 39, kind: 'edge' },
+      { x0: 29, y0: 29, x1: 33, y1: 39, kind: 'edge' },
+      { x0: 18, y0: 31, x1: 18, y1: 33, kind: 'infield' },  // and of bay 5
+      { x0: 22, y0: 31, x1: 22, y1: 33, kind: 'infield' },
+      // the two long streets: a pair each, against opposite kerbs
+      { x0:  1, y0:  8, x1:  2, y1: 13, kind: 'jog' },
+      { x0:  5, y0: 18, x1:  6, y1: 23, kind: 'jog' },
+      { x0: 45, y0: 25, x1: 46, y1: 32, kind: 'jog' },
+      { x0: 49, y0: 15, x1: 50, y1: 20, kind: 'jog' },
+      // one on each of the six short verticals
+      { x0: 12, y0: 28, x1: 13, y1: 35, kind: 'jog' },
+      { x0: 27, y0: 28, x1: 28, y1: 35, kind: 'jog' },
+      { x0: 34, y0: 28, x1: 35, y1: 35, kind: 'jog' },
+      { x0: 38, y0:  5, x1: 39, y1: 13, kind: 'jog' },
+      { x0: 23, y0:  5, x1: 24, y1: 13, kind: 'jog' },
+      { x0: 16, y0:  5, x1: 17, y1: 13, kind: 'jog' }
     ]),
     route: [
-      { x:  5, y:  5 },   // 0  south down the west street, straight over two
-      { x:  5, y: 21 },   // 1  change lanes between the pair
-      { x:  3, y: 21 },   // 2
-      { x:  3, y: 38 },   // 3  east along the bottom
-      { x: 15, y: 38 },   // 4  north
-      { x: 15, y: 27 },   // 5  east
-      { x: 26, y: 27 },   // 6  south, back down
-      { x: 26, y: 38 },   // 7  east, straight over one
-      { x: 37, y: 38 },   // 8  and change lanes again
-      { x: 37, y: 36 },   // 9
-      { x: 47, y: 36 },   // 10 north up the east street
-      { x: 47, y: 25 },   // 11 west
-      { x: 37, y: 25 },   // 12 north
-      { x: 37, y: 16 },   // 13 east
-      { x: 47, y: 16 },   // 14 north
-      { x: 47, y:  3 },   // 15 west along the top, over the line
-      { x: 26, y:  3 },   // 16 south
-      { x: 26, y: 16 },   // 17 west
-      { x: 15, y: 16 },   // 18 north
-      { x: 15, y:  5 }    // 19 west, back to the west street
+      { x:  5, y:  4 },   // 0  the west street, southbound, east lane
+      { x:  5, y: 16 },   // 1  change lanes between the barriers
+      { x:  3, y: 16 },   // 2
+      { x:  3, y: 26 },   // 3  east, past the first bay
+      { x: 16, y: 26 },   // 4  south into the first tooth
+      { x: 16, y: 37 },   // 5  east along the bottom
+      { x: 25, y: 37 },   // 6  north
+      { x: 25, y: 26 },   // 7  east
+      { x: 38, y: 26 },   // 8  south into the second tooth
+      { x: 38, y: 37 },   // 9  east
+      { x: 49, y: 37 },   // 10 north up the east street, over the line
+      { x: 49, y: 23 },   // 11 change lanes again
+      { x: 47, y: 23 },   // 12
+      { x: 47, y: 15 },   // 13 west
+      { x: 36, y: 15 },   // 14 north
+      { x: 36, y:  4 },   // 15 west along the top
+      { x: 27, y:  4 },   // 16 south into the third tooth
+      { x: 27, y: 15 },   // 17 west
+      { x: 14, y: 15 },   // 18 north, back out
+      { x: 14, y:  4 }    // 19 west, back to the west street
     ],
-    startLeg: 15,
+    startLeg: 10,
     checkpoints: [
-      { x0:  3, y0:  9, x1:  7, y1: 10 },   // south down the west street
-      { x0: 20, y0: 25, x1: 21, y1: 29 },   // east across the middle
-      { x0: 42, y0: 14, x1: 43, y1: 18 },   // east, under the north-east block
-      { x0: 20, y0: 14, x1: 21, y1: 18 }    // west, back towards the start
+      { x0: 41, y0: 12, x1: 42, y1: 18 },   // west, off the east street
+      { x0:  1, y0: 15, x1:  7, y1: 16 },   // south down the west street
+      { x0: 14, y0: 31, x1: 18, y1: 32 },   // south into the first tooth
+      { x0: 42, y0: 34, x1: 43, y1: 40 }    // east along the bottom
     ],
-    finish: { x0: 42.6, y0: 1, x1: 43.4, y1: 7, dir: { x: -1, y: 0 } },
+    finish: { x0: 45, y0: 31.6, x1: 51, y1: 32.4, dir: { x: 0, y: -1 } },
     startGrid: [
-      { x: 44.5, y: 1.9, wp: 16 },
-      { x: 44.5, y: 4.1, wp: 16 },
-      { x: 46.4, y: 1.9, wp: 16 },
-      { x: 46.4, y: 4.1, wp: 16 }
+      { x: 47.8, y: 33.5, wp: 11 },
+      { x: 50.1, y: 33.5, wp: 11 },
+      { x: 47.8, y: 35.4, wp: 11 },
+      { x: 50.1, y: 35.4, wp: 11 }
     ]
   };
 
