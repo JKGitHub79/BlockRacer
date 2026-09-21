@@ -157,9 +157,19 @@
   /* A city at night. Flat-topped towers of wildly varying height with lit
    * windows in them - the height is squared so most of the run is low and
    * the occasional tower stands right up out of it, which is the same trick
-   * the mountain range uses because a skyline has the same shape. */
+   * the mountain range uses because a skyline has the same shape.
+   *
+   * Each band is drawn as a solid mass DOWN TO THE FOOT OF THE CANVAS, the
+   * way the cliff terraces are, rather than as towers standing on an
+   * invisible line: a tower whose base is open sky is a tower floating in
+   * mid air, and three bands of them floating at three different heights
+   * read as bunting rather than as a city. Filling to the floor also means
+   * a nearer band simply covers the one behind it, so the ground plane is
+   * whatever band is closest to you - which is what ground is. */
   function skyline(g, y, height, color, lit, seed, step) {
     var rnd = rng(seed);
+    g.fillStyle = color;
+    g.fillRect(0, y, W, H - y);                   // the ground this band stands on
     for (var x = -step; x < W + step; x += step) {
       var t = rnd();
       var h = height * (0.16 + t * t * 1.3);
@@ -178,6 +188,31 @@
           g.fillRect(bx + pad + c * (cw + 3), y - h + pad + r * (ch + 4), cw, ch);
         }
       }
+    }
+  }
+
+  /* The street the nearest band of towers stands on: a strip of wet tarmac
+   * with a row of sodium lamps down it and their reflections smeared under
+   * them, so the foot of the city is a surface and not an edge. */
+  function street(g, y, seed) {
+    var rnd = rng(seed);
+    var d = H - y;
+    g.fillStyle = '#080b12';
+    g.fillRect(0, y, W, d);
+    g.fillStyle = 'rgba(255,196,110,0.07)';               // the kerb catching the light
+    g.fillRect(0, y, W, Math.max(1, d * 0.09));
+    var step = W * 0.11;
+    for (var x = step * 0.35; x < W; x += step) {
+      var lx = x + rnd() * step * 0.18;
+      var r = Math.max(1, H * 0.0026);
+      var gy = y + d * 0.26;
+      var glow = g.createRadialGradient(lx, gy, 0, lx, gy, d * 0.9);
+      glow.addColorStop(0, 'rgba(255,206,126,0.30)');
+      glow.addColorStop(1, 'rgba(255,206,126,0)');
+      g.fillStyle = glow;
+      g.fillRect(lx - d, y, d * 2, d);
+      g.fillStyle = 'rgba(255,224,168,0.9)';
+      g.fillRect(lx - r, gy - r, r * 2, r * 2);
     }
   }
 
@@ -261,12 +296,13 @@
                 [0.82, '#3d2a54'], [1, '#77445c']]);
         // the moon, and the sodium glow the streets throw back up at it
         sun(g, W * 0.76, H * 0.15, H * 0.026, '#e6ecff', 'rgba(150,180,255,0.16)');
-        skyline(g, H * (HORIZON + 0.03), H * 0.36, '#161c32',
+        skyline(g, H * (HORIZON + 0.02), H * 0.36, '#161c32',
                 'rgba(255,214,140,0.42)', 31, W * 0.042);
-        skyline(g, H * (HORIZON + 0.17), H * 0.27, '#0c1020',
+        skyline(g, H * (HORIZON + 0.11), H * 0.27, '#0c1020',
                 'rgba(255,205,125,0.52)', 57, W * 0.034);
-        skyline(g, H * (HORIZON + 0.34), H * 0.19, '#05070f',
+        skyline(g, H * (HORIZON + 0.19), H * 0.19, '#05070f',
                 'rgba(255,196,110,0.42)', 83, W * 0.027);
+        street(g, H * 0.955, 109);
         recede(g);
       }
     },

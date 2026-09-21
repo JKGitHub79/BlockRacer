@@ -1646,201 +1646,173 @@
 
 
   /* ---- City 2: CROSSTOWN ----------------------------------------------
-   * You drive the main street TWICE a lap, and no other track in the game
-   * reuses a road.
+   * A pinwheel. Four corner blocks and one cross-shaped block in the
+   * middle, and the street between them turns twelve times a lap:
    *
-   *        +----------- top street ------------+
-   *        |  ##########################       |
-   *        | ===== the spine, northbound ===== |   lap 1 of 2
-   *        | ===== the spine, southbound ===== |   lap 2 of 2
-   *        |  ##########################       |
-   *        +---------- bottom street ----------+
+   *        +-----+   #   +-----+   A B C D are the corner blocks and
+   *        |  A  |   #   |  B  |   # is the cross in the middle; the
+   *        +-----+   #   +-----+   road is the gap between all five
+   *              #########
+   *        +-----+   #   +-----+   the lap swirls - west, south, west,
+   *        |  C  |   #   |  D  |   south, east, south, east, north,
+   *        +-----+   #   +-----+   east, north, west, north - and closes
    *
-   * Two blocks with a street between them, and the lap runs out along the
-   * spine, round the north block, back along the spine in the OTHER LANE,
-   * and round the south block. It is a figure of eight that never crosses
-   * itself: both passes run the same way, in their own lane, so the field
-   * meets head to tail rather than head on.
-   *
-   * That is also where the difficulty comes from. A lane is not a street:
-   * the racing line sits a cell and a half off the kerb instead of four and
-   * a half in the middle, on every straight on the track, and the outermost
-   * AI line is closer still.
+   * There is not one junction on it. Every wall is solid, the road is a
+   * single corridor, and at no point is there a second way to go - which
+   * is the whole point. The version this replaces drove the same street
+   * twice a lap in two different lanes, and the clever part of that was
+   * exactly the part you could not read at speed.
    * -------------------------------------------------------------------- */
   var CROSSTOWN = {
     id: 'crosstown',
     name: 'CROSSTOWN',
-    blurb: 'One main street, driven twice a lap, a lane each way round.',
+    blurb: 'A pinwheel through the blocks. Twelve corners and not one junction.',
     grade: 'HARD +',
-    cols: 44,
-    rows: 35,
+    cols: 47,
+    rows: 41,
     aiPace: 0.95,
     aiOffsetScale: 1.5,
     aiMistakeScale: 1,
     weather: 'rain',
     theme: CITY,
-    walls: border(44, 35).concat([
-      { x0: 8,  y0: 8,  x1: 35, y1: 13, kind: 'infield' },  // the north block
-      { x0: 8,  y0: 21, x1: 35, y1: 26, kind: 'infield' },  // the south block
-      // hoardings, a pair per street, offset along it so the lane one
-      // leaves clear is the lane the other blocks
-      { x0: 26, y0: 1,  x1: 32, y1: 3,  kind: 'jog' },      // the top street
-      { x0: 14, y0: 5,  x1: 20, y1: 7,  kind: 'jog' },
-      { x0: 14, y0: 27, x1: 20, y1: 29, kind: 'jog' },      // the bottom street
-      { x0: 26, y0: 31, x1: 32, y1: 33, kind: 'jog' }
+    walls: border(47, 41).concat([
+      { x0:  1, y0:  1, x1: 13, y1: 11, kind: 'edge' },     // the four corner blocks
+      { x0: 33, y0:  1, x1: 45, y1: 11, kind: 'edge' },
+      { x0:  1, y0: 29, x1: 13, y1: 39, kind: 'edge' },
+      { x0: 33, y0: 29, x1: 45, y1: 39, kind: 'edge' },
+      { x0: 20, y0:  7, x1: 26, y1: 33, kind: 'infield' },  // the cross in the middle
+      { x0:  7, y0: 18, x1: 19, y1: 22, kind: 'infield' },
+      { x0: 27, y0: 18, x1: 39, y1: 22, kind: 'infield' },
+      /* Roadworks. One per north-south street, two cells against a kerb,
+       * and the lap takes every one of them on the far side - so the line
+       * runs down the middle of the east-west streets and hard up one
+       * lane of the north-south ones, alternating, all the way round. */
+      { x0: 14, y0:  6, x1: 15, y1: 12, kind: 'jog' },
+      { x0:  5, y0: 16, x1:  6, y1: 24, kind: 'jog' },
+      { x0: 14, y0: 28, x1: 15, y1: 34, kind: 'jog' },
+      { x0: 31, y0: 27, x1: 32, y1: 35, kind: 'jog' },
+      { x0: 44, y0: 17, x1: 45, y1: 23, kind: 'jog' },
+      { x0: 27, y0:  5, x1: 28, y1: 13, kind: 'jog' }
     ]),
-    /* Every lane sits 1.7 cells off its kerb rather than 3.5 in the middle
-     * of the street, which is what a lane IS - and it is most of why this
-     * track is harder than the block grid. The outermost AI line is 0.85
-     * off the kerb; there is no room out there at all. */
     route: [
-      { x: 6.15, y: 15.85 },   // 0  the spine, near lane, eastbound
-      { x: 41.15, y: 15.85 },   // 1  turn north up the east street
-      { x: 41.15, y: 6.15  },   // 2  turn west along the top
-      { x: 23.5,  y: 6.15  },   // 3
-      { x: 23.5,  y: 2.85  },   // 4  round the hoarding
-      { x: 2.85, y: 2.85  },   // 5  turn south down the west street
-      { x: 2.85, y: 19.15 },   // 6  back onto the spine, far lane, eastbound
-      { x: 37.85, y: 19.15 },   // 7  turn south
-      { x: 37.85, y: 28.85 },   // 8  turn west along the bottom
-      { x: 23.5,  y: 28.85 },   // 9
-      { x: 23.5,  y: 32.15 },   // 10 round the other one
-      { x: 6.15, y: 32.15 }    // 11 turn north, back up to 0
+      { x: 31, y:  4 },   // 0  the top street, westbound
+      { x: 18, y:  4 },   // 1  south, in the east lane past the works
+      { x: 18, y: 15 },   // 2  west
+      { x:  3, y: 15 },   // 3  south, in the west lane
+      { x:  3, y: 26 },   // 4  east
+      { x: 18, y: 26 },   // 5  south, east lane again
+      { x: 18, y: 37 },   // 6  east along the bottom
+      { x: 29, y: 37 },   // 7  north, west lane
+      { x: 29, y: 26 },   // 8  east
+      { x: 42, y: 26 },   // 9  north up the east street, west lane
+      { x: 42, y: 15 },   // 10 west
+      { x: 31, y: 15 }    // 11 north, east lane, back over the line
     ],
     startLeg: 0,
     checkpoints: [
-      { x0: 36, y0: 10, x1: 43, y1: 11 },   // up the east street, north lobe
-      { x0: 10, y0: 1,  x1: 11, y1: 8  },   // along the top
-      { x0: 1,  y0: 10, x1: 8,  y1: 11 },   // down the west street
-      { x0: 10, y0: 27, x1: 11, y1: 34 }    // along the bottom, south lobe
+      { x0: 10, y0: 12, x1: 11, y1: 18 },   // west, under the north-west block
+      { x0: 24, y0: 34, x1: 25, y1: 40 },   // east along the bottom
+      { x0: 36, y0: 23, x1: 37, y1: 29 },   // east, under the cross
+      { x0: 29, y0:  9, x1: 33, y1: 10 }    // north, back to the top street
     ],
-    /* The line spans the whole spine, so the SECOND pass crosses it too -
-     * and is refused, because the fourth checkpoint is in the south lobe
-     * and has not been collected yet. The checkpoint order is what makes a
-     * shared straight countable. */
-    finish: { x0: 16.6, y0: 14, x1: 17.4, y1: 21, dir: { x: 1, y: 0 } },
+    finish: { x0: 23.6, y0: 1, x1: 24.4, y1: 7, dir: { x: -1, y: 0 } },
     startGrid: [
-      { x: 15.5, y: 15.3, wp: 1 },
-      { x: 15.5, y: 17.7, wp: 1 },
-      { x: 13.6, y: 15.3, wp: 1 },
-      { x: 13.6, y: 17.7, wp: 1 }
+      { x: 25.5, y: 2.2, wp: 1 },
+      { x: 25.5, y: 4.4, wp: 1 },
+      { x: 27.4, y: 2.2, wp: 1 },
+      { x: 27.4, y: 4.4, wp: 1 }
     ]
   };
 
 
   /* ---- City 3: DOWNTOWN ------------------------------------------------
-   * The full grid, and every street in it is driven.
+   * Two long streets and two teeth. The west and east streets run the
+   * whole height of the map, and between them the lap bites once up from
+   * the bottom and once down from the top:
    *
-   *        +--+--+--+--+--+--+--+
-   *        |  |##|  |##|  |##|  |     six blocks, twelve street segments,
-   *        +--+--+--X--+--+--+--+     and the lap uses all twelve
-   *        |  |##|  |##|  |##|  |
-   *        +--+--+--+--+--+--+--+
+   *        +---------+    +----+
+   *        |         |    |    |    the top street dives round the north
+   *        |   +-----+----+    |    block and comes back up; the bottom
+   *        |   |               |    street does the same round the south
+   *        |   +----+-----+    |
+   *        |         |    |    |
+   *        +---------+    +----+
    *
-   * At X the lap goes straight through the same junction twice - once east
-   * to west and once south to north - so the racing line crosses ITSELF at
-   * a crossroads. Glacier crosses too, but as two big lobes meeting in open
-   * ground; this is a set of traffic lights you arrive at from two
-   * directions on the same lap, with a building on all four corners.
-   *
-   * The lanes are six cells, the narrowest in the game, and the roadworks
-   * cut them to four. That and the crossing are the whole of it: there is
-   * no theme furniture here, just streets.
+   * Same rule as Crosstown: one corridor, no junctions, nowhere wrong to
+   * go. The difficulty is the two thirty-three cell straights - the
+   * longest in the theme - arriving at a corner with no let-up, and the
+   * roadworks strung along them.
    * -------------------------------------------------------------------- */
   var DOWNTOWN = {
     id: 'downtown',
     name: 'DOWNTOWN',
-    blurb: 'Every street in the grid, and a crossroads you meet twice a lap.',
+    blurb: 'Two long streets, two teeth and roadworks the whole way down both.',
     grade: 'HARD ++',
-    cols: 48,
-    rows: 35,
+    cols: 52,
+    rows: 41,
     aiPace: 0.95,
-    aiOffsetScale: 1,
+    aiOffsetScale: 1.5,
     aiMistakeScale: 1,
     weather: 'rain',
     theme: CITY,
-    walls: border(48, 35).concat([
-      // six blocks, and nothing else: every street between them is driven
-      { x0: 8,  y0: 8,  x1: 13, y1: 13, kind: 'infield' },
-      { x0: 21, y0: 8,  x1: 26, y1: 13, kind: 'infield' },
-      { x0: 34, y0: 8,  x1: 39, y1: 13, kind: 'infield' },
-      { x0: 8,  y0: 21, x1: 13, y1: 26, kind: 'infield' },
-      { x0: 21, y0: 21, x1: 26, y1: 26, kind: 'infield' },
-      { x0: 34, y0: 21, x1: 39, y1: 26, kind: 'infield' },
-      /* Roadworks: FOUR cells against one kerb, which cuts a seven-cell
-       * street to three - or three cells, cutting it to four - and paired
-       * along the street so the gap they leave is on the other side each
-       * time. There is no threading them -
-       * the two clear lanes do not overlap - so every street with a pair is
-       * a lane change, and five of the twelve have one.
-       *
-       * A three-cell gate leaves 0.8 of margin either side of the racing
-       * line once the AI's offsets are counted, which is the tightest in
-       * the game; a four-cell one leaves 1.3. Two streets get the tight
-       * pair and three get the wide one. All five tight measured 1587
-       * crashes a thousand laps, two and a half times Crosstown, which is
-       * not a step up from the cliffs - it is a different game. */
-      { x0: 8,  y0: 14, x1: 13, y1: 16, kind: 'jog' },      // the middle street
-      { x0: 21, y0: 18, x1: 26, y1: 20, kind: 'jog' },
-      { x0: 40, y0: 12, x1: 43, y1: 16, kind: 'jog' },      // the east street
-      { x0: 43, y0: 21, x1: 46, y1: 26, kind: 'jog' },
-      { x0: 34, y0: 27, x1: 39, y1: 29, kind: 'jog' },      // the bottom street
-      { x0: 21, y0: 31, x1: 26, y1: 33, kind: 'jog' },
-      { x0: 14, y0: 21, x1: 16, y1: 26, kind: 'jog' },      // the second street
-      { x0: 14, y0: 8,  x1: 16, y1: 13, kind: 'jog' },
-      { x0: 1,  y0: 9,  x1: 2,  y1: 14, kind: 'jog' }       // the west street
+    walls: border(52, 41).concat([
+      { x0: 22, y0:  1, x1: 30, y1: 11, kind: 'edge' },     // the north block
+      { x0: 22, y0: 29, x1: 30, y1: 39, kind: 'edge' },     // the south block
+      { x0:  7, y0:  7, x1: 15, y1: 33, kind: 'infield' },  // the middle, an H
+      { x0: 37, y0:  7, x1: 44, y1: 33, kind: 'infield' },
+      { x0: 16, y0: 18, x1: 36, y1: 22, kind: 'infield' },
+      /* The two long streets get a PAIR each, against opposite kerbs and
+       * eighteen cells apart, so the lane the first one leaves clear is the
+       * lane the second one blocks: there is no threading them, the car
+       * has to change lanes in the middle of the fastest road on the
+       * track. The six short streets get one apiece. */
+      { x0:  1, y0: 11, x1:  2, y1: 16, kind: 'jog' },      // the west street
+      { x0:  5, y0: 22, x1:  6, y1: 27, kind: 'jog' },
+      { x0: 49, y0: 22, x1: 50, y1: 27, kind: 'jog' },      // the east street
+      { x0: 45, y0: 11, x1: 46, y1: 16, kind: 'jog' },
+      { x0: 20, y0: 27, x1: 21, y1: 35, kind: 'jog' },      // the south tooth
+      { x0: 31, y0: 28, x1: 32, y1: 34, kind: 'jog' },
+      { x0: 35, y0:  5, x1: 36, y1: 13, kind: 'jog' },      // the north tooth
+      { x0: 16, y0:  6, x1: 17, y1: 12, kind: 'jog' }
     ]),
-    /* The second street runs dead straight through both its gates on
-     * purpose. An earlier cut changed lanes there as well, and its step sat
-     * on top of the middle street's step at the crossroads - two legs of
-     * the same route a cell apart, crossing, with cars mid-manoeuvre on
-     * both. It measured 1519 crashes a thousand laps, nearly all of them in
-     * that one junction, and no amount of widening the gates touched it:
-     * the fault was the route arguing with itself, not the road.
-     *
-     * The turn in off the top street is taken mid-lane and the car moves
-     * out to the kerb afterwards, for the same kind of reason: entering at
-     * the far lane left nine tenths of a cell between the nose and the
-     * wall, and forty-four per cent of every crash on the track was that
-     * one corner. A gate is a difficulty; no runoff at all is a trap. */
     route: [
-      { x: 43.5, y: 4  },   // 0  turn south down the east street, mid-lane
-      { x: 43.5, y: 10 },   // 1
-      { x: 45.5, y: 10 },   // 2  out to the far kerb, past the works
-      { x: 45.5, y: 19 },   // 3
-      { x: 41.5, y: 19 },   // 4  and back in past the second lot
-      { x: 41.5, y: 32 },   // 5  turn west along the bottom
-      { x: 30,   y: 32 },   // 6
-      { x: 30,   y: 29 },   // 7  round the works
-      { x: 19,   y: 29 },   // 8  turn north up the second street
-      { x: 19,   y: 4  },   // 9  straight through both gates and the crossroads
-      { x: 5,    y: 4  },   // 10 turn south down the west street
-      { x: 5,    y: 19 },   // 11 turn east along the middle
-      { x: 17,   y: 19 },   // 12
-      { x: 17,   y: 16 },   // 13 round the works
-      { x: 30,   y: 16 },   // 14 across the crossroads, then turn north
-      { x: 30,   y: 4  }    // 15 turn east along the top, over the line, to 0
+      { x:  5, y:  4 },   // 0  the west street, southbound, in the east lane
+      { x:  5, y: 19 },   // 1  change lanes between the two sets of works
+      { x:  3, y: 19 },   // 2
+      { x:  3, y: 37 },   // 3  east along the bottom
+      { x: 18, y: 37 },   // 4  north into the south tooth
+      { x: 18, y: 26 },   // 5  east
+      { x: 35, y: 26 },   // 6  south, back out
+      { x: 35, y: 37 },   // 7  east
+      { x: 47, y: 37 },   // 8  north up the east street, west lane
+      { x: 47, y: 19 },   // 9  and change again
+      { x: 49, y: 19 },   // 10
+      { x: 49, y:  4 },   // 11 west along the top
+      { x: 33, y:  4 },   // 12 south into the north tooth
+      { x: 33, y: 15 },   // 13 west
+      { x: 20, y: 15 },   // 14 north, back out
+      { x: 20, y:  4 }    // 15 west, back to the west street
     ],
-    startLeg: 15,
+    startLeg: 8,
     checkpoints: [
-      { x0: 40, y0: 9,  x1: 47, y1: 10 },   // down the east street
-      { x0: 36, y0: 27, x1: 37, y1: 34 },   // west along the bottom
-      { x0: 14, y0: 23, x1: 21, y1: 24 },   // north through the crossroads
-      { x0: 10, y0: 14, x1: 11, y1: 21 }    // east along the middle
+      { x0: 39, y0:  1, x1: 40, y1:  7 },   // west along the top
+      { x0: 18, y0:  9, x1: 22, y1: 10 },   // north out of the tooth
+      { x0:  1, y0: 26, x1:  5, y1: 27 },   // south down the west street
+      { x0: 21, y0: 23, x1: 22, y1: 29 }    // east through the south tooth
     ],
-    finish: { x0: 36.1, y0: 1, x1: 36.9, y1: 8, dir: { x: 1, y: 0 } },
+    finish: { x0: 45, y0: 30.6, x1: 51, y1: 31.4, dir: { x: 0, y: -1 } },
     startGrid: [
-      { x: 35.0, y: 2.8, wp: 1 },
-      { x: 35.0, y: 5.2, wp: 1 },
-      { x: 33.1, y: 2.8, wp: 1 },
-      { x: 33.1, y: 5.2, wp: 1 }
+      { x: 46.2, y: 32.5, wp: 9 },
+      { x: 48.4, y: 32.5, wp: 9 },
+      { x: 46.2, y: 34.4, wp: 9 },
+      { x: 48.4, y: 34.4, wp: 9 }
     ]
   };
 
   /* ------------------------------------------------------------------ *
    * DIRECTION
    *
-   * Every circuit runs anticlockwise. Eight of them were drawn clockwise,
+   * Every circuit runs anticlockwise. Nine of them were drawn clockwise,
    * and a set of tracks where some go one way and some the other is not a
    * set of tracks, it is a set of surprises: you learn to read a corner and
    * then the next track reads it back at you mirrored.

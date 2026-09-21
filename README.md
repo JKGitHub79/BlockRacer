@@ -225,8 +225,17 @@ simulate.
 Streets between buildings, and the solids stop being scenery you drive
 around. A city track is a grid of blocks with the tarmac left over, which is
 the opposite way round from every theme before it, where a circuit was drawn
-and an island dropped in the middle of it. The streets are seven cells rather
-than the cliffs' eight, and the roadworks cut them to four.
+and an island dropped in the middle of it.
+
+Two of the three are **pure corridor**: every wall on them is solid, the road
+is one continuous street, and at no point on a lap is there a second way to
+go. That is deliberate, and it is a correction. The first cut of Crosstown
+drove the same street twice a lap in two different lanes, and Downtown's lap
+crossed itself at a junction it arrived at twice from two directions. Both
+ideas are good on paper and both are illegible at speed, because a city gives
+you nothing to navigate by - every street is a grey gap between two identical
+blocks. A track whose difficulty is *not knowing where the road goes* is not a
+hard track, it is a badly drawn one.
 
 **Gridlock** is a block grid: four streets one way, three the other, six
 buildings between them, and a lap that weaves through the junctions rather
@@ -235,20 +244,25 @@ solid masses. Every street the lap does not use is **built over** - a street
 you can see down but not drive is a city, and a street you can accidentally
 drive down is runoff.
 
-**Crosstown** drives the main street **twice a lap**, and no other track
-reuses a road. Two blocks with a street between them: out along the spine,
-round the north block, back along the spine in the *other lane*, round the
-south block. It is a figure of eight that never crosses itself, because both
-passes run the same way in their own lane and the field meets head to tail
-rather than head on. The lanes are also where the difficulty is: the racing
-line sits 1.85 cells off the kerb instead of 3.5 in the middle of the street,
-on every straight on the track.
+**Crosstown** is a pinwheel. Four corner blocks, one cross-shaped block in the
+middle, and a street that turns twelve times in a hundred and forty-four
+cells: west, south, west, south, east, south, east, north, east, north, west,
+north, and back to where it started. Its legs are eleven and thirteen cells
+against a six-cell street, which is the whole reason it is hard - there is no
+straight to speak of, so the car is always either in a corner or lining one
+up. The six roadworks sit one per north-south street, and the lap takes every
+one of them on the far side, so the line runs down the middle of the east-west
+streets and hard up one lane of the north-south ones, alternating, the whole
+way round.
 
-**Downtown** uses all twelve street segments of its grid, and the lap goes
-straight through one junction **twice** - once east to west and once south to
-north - so the racing line crosses itself at a set of traffic lights, with a
-building on all four corners. Glacier crosses too, but as two big lobes
-meeting in open ground.
+**Downtown** is two long streets and two teeth. The west and east streets run
+the full height of the map - thirty-three cells, the longest in the theme -
+and between them the lap bites once up from the bottom and once down from the
+top around a block. Both long streets carry a **pair** of roadworks against
+opposite kerbs eighteen cells apart, so the lane the first one leaves clear is
+the lane the second one blocks: there is no threading them, the car has to
+change lanes in the middle of the fastest road on the track. The six short
+streets get one apiece.
 
 ### The ladder
 
@@ -262,10 +276,10 @@ slide 0.8, four cars (see **A note on the numbers** below):
 | Desert | 69 | 144 | 190 |
 | Snow | 197 | 318 | 450 |
 | Cliffs | 430 | 617 | 467 |
-| City | 588 | 643 | 712 |
+| City | 588 | 623 | 684 |
 
-In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 588, 617, 643,
-712. Forest and Desert interleave, so the first track of the desert is easier
+In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 588, 617, 623,
+684. Forest and Desert interleave, so the first track of the desert is easier
 than the last of the forest and a new theme reads as a new theme rather than a
 wall. Snow, Cliffs and City interleave the same way, so arriving at a harder
 theme is a step rather than a cliff.
@@ -333,7 +347,7 @@ screen. They are being replaced rather than removed, and they stay raceable.
 
 ### Direction
 
-**Every circuit runs anticlockwise.** Eight were drawn clockwise, and a set
+**Every circuit runs anticlockwise.** Nine were drawn clockwise, and a set
 where some go one way and some the other is not a set of tracks, it is a set
 of surprises: you learn to read a corner and the next track reads it back at
 you mirrored.
@@ -351,11 +365,11 @@ their comments still describe them. Everything downstream - the game, the
 thumbnails, the validator, `tools/map.js` - sees only the turned-round
 version. A track opts in with `mirror: true`.
 
-**Four tracks are not flipped and cannot be.** Crossover and Glacier are
+**Two tracks are not flipped and cannot be.** Crossover and Glacier are
 figures of eight: one way round one lobe and the other way round the other.
-Crosstown is the same shape without the crossing, and Downtown's lap crosses
-itself at a junction. All four come out with their left and right turns
-exactly even, which is what those shapes are.
+Their left and right turns come out exactly even, which is what a figure of
+eight is. Everything else, the city three included, is a simple loop and runs
+anticlockwise.
 
 ### The card pictures
 
@@ -583,6 +597,15 @@ Three things learned the hard way getting them to read:
   is low and the occasional one stands right up out of it - the same trick
   `peaks` uses, because the shape is the same shape. The windows are what
   makes it a city rather than a bar chart.
+- **Towers need a floor.** Each skyline band is filled as a solid mass **down
+  to the foot of the canvas**, the way `terrace` is, rather than as towers
+  standing on an invisible baseline. Towers with open sky under them float,
+  and three bands of them floating at three different heights read as bunting
+  rather than as a city. Filling to the floor also means a nearer band simply
+  covers the one behind it, so the ground plane is whatever band is closest -
+  which is what ground is. In front of all three, `street` lays a strip of wet
+  tarmac with a row of sodium lamps and their glow on it, so the foot of the
+  city is a surface and not an edge.
 - **Rock is not a mountain.** The cliffs scene uses `terrace` rather than
   `peaks`: a run of flat-topped blocks that each step up or down from the one
   before. Triangles read as alpine whatever colour they are, and the point of
