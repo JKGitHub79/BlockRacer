@@ -2677,17 +2677,19 @@
    * one fewer way through.
    * ==================================================================== */
   var SPACE = {
-    /* `hull` turns on the plating in js/render.js: panels, seams, rivets and
-     * the occasional lit port. Void cells get none of it - there is no
-     * plating over a hole - and the sky goes on live. */
-    hull:       true,
-    bg:         '#02040c',
-    road:       '#080c16',   // the deck you drive on, lit from nowhere
-    roadLine:   '#141d30',
-    wall:       '#2a3a55',   // hull. Two full steps lighter than the deck,
-    wallTop:    '#74a6d4',   // because on a map this dark a half step is
-    outer:      '#22304a',   // not a difference you can read at speed
-    outerTop:   '#4d719c',
+    /* `vacuum` means EVERY solid on this track is open space rather than
+     * scenery: js/render.js masks a live starfield to the shape of the walls
+     * and paints it over the lot. So the values invert against every other
+     * theme - the road is the lit thing and the walls are the dark thing,
+     * because out here the walls are nothing at all. */
+    vacuum:     true,
+    bg:         '#01020a',
+    road:       '#1e2941',   // the deck: the only solid surface out here
+    roadLine:   '#2d3b59',
+    wall:       '#01020a',   // painted over with sky every frame
+    wallTop:    '#7fb4e4',   // the lit lip where the deck stops
+    outer:      '#01020a',
+    outerTop:   '#5580ad',
     jog:        '#1f4a5c',
     jogTop:     '#5ef2ff',
     racingLine: 'rgba(150,215,255,0.24)',

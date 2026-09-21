@@ -186,6 +186,9 @@
     T.emblems = data.emblems || null;
     // Rectangles the renderer animates. Empty on a track with neither.
     T.lavaRects = data.walls.filter(function (r) { return r.kind === 'lava'; });
+    /* On a vacuum theme the renderer masks the sky to the whole wall grid, so
+     * it needs no rectangles at all; the 'void' kind stays because it says in
+     * the track data which solids are holes in the deck rather than spars. */
     T.voidRects = data.walls.filter(function (r) { return r.kind === 'void'; });
     T.name = data.name;
     T.cols = cols;

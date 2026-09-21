@@ -15,7 +15,6 @@
   // it back up is indistinguishable, and a ninth of the pixels.
   var LAVA_SCALE = 1 / 3;
   var LAVA_RIM = 3;
-  var starLayers = null;
   var flakes = null;
 
   /* Three layers, most specific first: the road tint picked on the start menu
@@ -481,72 +480,67 @@
     }
   }
 
-  /* ---- hull -----------------------------------------------------------
+  /* ---- the void -------------------------------------------------------
    *
-   * A space solid is not terrain, it is built: the outside of a station, seen
-   * from directly above. So the texture is manufacture rather than geology -
-   * plating in regular panels, a seam where two panels meet, rivets at the
-   * corners, and here and there a lit port or a run of hazard paint.
+   * On a vacuum theme every solid IS open space. There is nothing built out
+   * there to draw, so the wall texture is the sky itself: a scatter of stars
+   * per cell over near-black, with the occasional bright one.
    *
-   * The same cell-seeded noise as the stone and the windows, for the same
-   * reason: the slide slider rebakes the scenery and a texture seeded from a
-   * random stream would crawl every time.
+   * It is BAKED, like every other wall painter, rather than scrolled live.
+   * A drifting starfield was built first - two star layers at different
+   * speeds, masked to the shape of the walls and composited every frame -
+   * and it looked better standing still than it was worth: full-resolution
+   * masking cost half the frame rate, 18fps against the volcano's 36 on the
+   * same machine. A station in orbit is not moving relative to the stars
+   * anyway, and the drifting weather over the top already says the scene is
+   * alive.
    *
-   * Void cells (kind 5) get none of it. There is no plating over a hole. */
-  function drawHull(g, cx, cy, kind) {
-    if (kind === 5) return;
-    var x = cx * S, y = cy * S;
+   * The values invert here against the rest of the game. Everywhere else the
+   * walls are the lit thing and the road is dark; out here the walls are
+   * nothing at all, so the deck is the only lit surface on the board and the
+   * lip along its edge is what tells you where it stops. */
+  function drawStars(g, cx, cy) {
+    var x = cx * S, y = cy * S, i;
 
-    // the plate itself, no two quite the same value
-    var t = cellNoise(cx, cy, 101);
-    g.fillStyle = t < 0.55
-      ? 'rgba(0,0,0,' + (0.04 + t * 0.18).toFixed(3) + ')'
-      : 'rgba(170,192,228,' + ((t - 0.55) * 0.16).toFixed(3) + ')';
-    g.fillRect(x, y, S, S);
-
-    // the seams: every cell carries the two edges of its own plate, so the
-    // plating lines up across a solid however the rectangles were declared
-    g.fillStyle = 'rgba(0,0,0,0.40)';
-    g.fillRect(x, y, S, 1);
-    g.fillRect(x, y, 1, S);
-    g.fillStyle = 'rgba(176,196,230,0.12)';
-    g.fillRect(x + 1, y + 1, S - 1, 1);
-
-    if (kind === 3) {
-      // a chicane block is a beacon: hazard paint round a lit core
-      g.fillStyle = 'rgba(255,214,120,0.30)';
-      for (var b = 0; b < 4; b++) {
-        g.fillRect(x + S * (0.14 + b * 0.19), y + S * 0.18, S * 0.10, S * 0.64);
-      }
-      return;
+    /* A wash of far-off gas. Seeded from a smooth function of the cell rather
+     * than from the cell's own noise: noise per cell reads as a grid, and
+     * noise per block of cells reads as a checkerboard, but a couple of sine
+     * terms give a field that drifts across the whole map and still resolves
+     * to one flat tone per cell, which is the idiom the game is drawn in. */
+    var f = Math.sin(cx * 0.19 + cy * 0.07) * Math.cos(cy * 0.13 - cx * 0.05);
+    if (f > 0.05) {
+      g.fillStyle = 'rgba(90,150,255,' + (f * 0.075).toFixed(3) + ')';
+      g.fillRect(x, y, S, S);
+    } else if (f < -0.05) {
+      g.fillStyle = 'rgba(150,110,235,' + (-f * 0.085).toFixed(3) + ')';
+      g.fillRect(x, y, S, S);
     }
 
-    // rivets, two per plate, always in the same two corners of it
-    var rv = Math.max(1, Math.round(S * 0.07));
-    g.fillStyle = 'rgba(0,0,0,0.30)';
-    g.fillRect(x + rv, y + rv, rv, rv);
-    g.fillRect(x + S - rv * 2, y + S - rv * 2, rv, rv);
+    var n = 2 + Math.floor(cellNoise(cx, cy, 202) * 3);
+    for (i = 0; i < n; i++) {
+      var sx = x + Math.floor(cellNoise(cx, cy, 210 + i * 3) * S);
+      var sy = y + Math.floor(cellNoise(cx, cy, 211 + i * 3) * S);
+      var b = cellNoise(cx, cy, 212 + i * 3);
+      // most stars are white, a few are blue, fewer are old and orange
+      var col = b < 0.12 ? '255,214,170' : b < 0.28 ? '190,214,255' : '236,244,255';
+      g.fillStyle = 'rgba(' + col + ',' + (0.20 + b * 0.58).toFixed(2) + ')';
+      g.fillRect(sx, sy, 1, 1);
+    }
 
-    var f = cellNoise(cx, cy, 102);
-    if (f < 0.11) {
-      // a lit port: the only warm thing on the whole hull
-      var pw = Math.max(2, Math.round(S * 0.26));
-      var px = x + Math.round(cellNoise(cx, cy, 103) * (S - pw - 4)) + 2;
-      var py = y + Math.round(cellNoise(cx, cy, 104) * (S - pw - 4)) + 2;
-      g.fillStyle = 'rgba(255,226,158,' + (0.30 + f * 2.2).toFixed(2) + ')';
-      g.fillRect(px, py, pw, Math.max(1, Math.round(pw * 0.6)));
-    } else if (f < 0.17) {
-      // a run of hazard paint across the plate
-      g.fillStyle = 'rgba(94,242,255,0.10)';
-      g.fillRect(x + Math.round(S * 0.2), y + Math.round(S * 0.42),
-                 Math.round(S * 0.6), Math.max(1, Math.round(S * 0.12)));
-    } else if (f < 0.24) {
-      // a vent: a short ladder of slots
-      g.fillStyle = 'rgba(0,0,0,0.34)';
-      for (var v = 0; v < 3; v++) {
-        g.fillRect(x + Math.round(S * 0.24), y + Math.round(S * (0.28 + v * 0.18)),
-                   Math.round(S * 0.52), Math.max(1, Math.round(S * 0.08)));
-      }
+    // one cell in forty carries something bright enough to have a cross
+    if (cellNoise(cx, cy, 230) < 0.025) {
+      var px = x + S * 0.5, py = y + S * 0.5;
+      var r = Math.max(2, S * 0.085);
+      var halo = g.createRadialGradient(px, py, 0, px, py, r * 5);
+      halo.addColorStop(0, 'rgba(200,226,255,0.28)');
+      halo.addColorStop(1, 'rgba(200,226,255,0)');
+      g.fillStyle = halo;
+      g.fillRect(px - r * 5, py - r * 5, r * 10, r * 10);
+      g.fillStyle = 'rgba(248,252,255,0.95)';
+      g.fillRect(px - r / 2, py - r / 2, r, r);
+      g.fillStyle = 'rgba(248,252,255,0.42)';
+      g.fillRect(px - r * 2.6, py - 0.5, r * 5.2, 1);
+      g.fillRect(px - 0.5, py - r * 2.6, 1, r * 5.2);
     }
   }
 
@@ -681,7 +675,7 @@
     var plant = !!(T.theme && T.theme.pipes);
     var dressed = !!(T.theme && T.theme.glyphs);
     var basalt  = !!(T.theme && T.theme.crust);
-    var plated  = !!(T.theme && T.theme.hull);
+    var sky     = !!(T.theme && T.theme.vacuum);
     eachWall(function (cx, cy, kind) {
       // Four kinds of solid: the islands inside the circuit, the ground
       // outside it, the chicane blocks, and lava - whose cooled crust is
@@ -695,7 +689,7 @@
       if (plant) drawPipes(g, cx, cy, kind);
       if (dressed) drawRuins(g, cx, cy, kind);
       if (basalt) drawCrust(g, cx, cy, kind);
-      if (plated) drawHull(g, cx, cy, kind);
+      if (sky) drawStars(g, cx, cy);
     });
 
     drawEmblems(g);
@@ -774,109 +768,8 @@
     g.imageSmoothingEnabled = smooth;
   };
 
-  /* ---- the void -------------------------------------------------------
-   *
-   * A hole in the deck. Mechanically it is a wall like any other - the car
-   * stops dead on it - but what you see through it is the sky the station is
-   * flying over, so it is painted live rather than baked.
-   *
-   * Two star layers scrolling at different speeds. One layer of stars on its
-   * own reads as a printed pattern sliding about; two at different speeds is
-   * parallax, which is the only cue that says the hole goes somewhere.
-   *
-   * Built once per context, tiled, and stamped through each void rectangle -
-   * the same construction as the lava, and for the same reason: every hole on
-   * the track then shows the same sky, so two holes either side of a spar read
-   * as one thing seen twice rather than two separate pictures. */
-  function buildStarTile(size, count, seed, big) {
-    var cv = document.createElement('canvas');
-    cv.width = cv.height = size;
-    var g = cv.getContext('2d');
-    var rnd = function () {
-      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-      return seed / 0x7fffffff;
-    };
-    // a wash of far-off gas, so the black is not flat black
-    for (var n = 0; n < 4; n++) {
-      var nx = rnd() * size, ny = rnd() * size, nr = size * (0.25 + rnd() * 0.35);
-      var tint = rnd() < 0.5 ? '90,150,255' : '150,110,235';
-      var wash = g.createRadialGradient(nx, ny, 0, nx, ny, nr);
-      wash.addColorStop(0, 'rgba(' + tint + ',' + (0.06 + rnd() * 0.07).toFixed(3) + ')');
-      wash.addColorStop(1, 'rgba(' + tint + ',0)');
-      g.fillStyle = wash;
-      g.fillRect(0, 0, size, size);
-    }
-    for (var i = 0; i < count; i++) {
-      var sx = Math.floor(rnd() * size), sy = Math.floor(rnd() * size);
-      var r = big ? (rnd() < 0.18 ? 2 : 1) : 1;
-      var a = (big ? 0.45 : 0.22) + rnd() * (big ? 0.55 : 0.34);
-      var warm = rnd();
-      var col = warm < 0.16 ? '255,214,170' : warm < 0.3 ? '190,214,255' : '236,244,255';
-      g.fillStyle = 'rgba(' + col + ',' + a.toFixed(2) + ')';
-      g.fillRect(sx, sy, r, r);
-      if (big && r === 2) {
-        // the brightest few get a cross, which is what reads as "bright"
-        g.fillStyle = 'rgba(' + col + ',' + (a * 0.4).toFixed(2) + ')';
-        g.fillRect(sx - 2, sy + 0.5, 6, 1);
-        g.fillRect(sx + 0.5, sy - 2, 1, 6);
-      }
-    }
-    return cv;
-  }
-
-  function buildStarLayers(g) {
-    return [
-      { size: 160, tile: buildStarTile(160, 150, 4711, false), vx: 2.2, vy: -1.1, alpha: 0.85 },
-      { size: 112, tile: buildStarTile(112, 46, 60613, true),  vx: 6.5, vy: -3.4, alpha: 1 }
-    ].map(function (L) { L.pattern = g.createPattern(L.tile, 'repeat'); return L; });
-  }
-
-  Renderer.drawVoid = function (g, t) {
-    var rects = T.voidRects;
-    if (!rects || !rects.length) return;
-    if (!starLayers) starLayers = buildStarLayers(g);
-
-    g.save();
-    rects.forEach(function (r) {
-      var x = r.x0 * S + LAVA_RIM, y = r.y0 * S + LAVA_RIM;
-      var w = (r.x1 - r.x0 + 1) * S - LAVA_RIM * 2;
-      var h = (r.y1 - r.y0 + 1) * S - LAVA_RIM * 2;
-      if (w <= 0 || h <= 0) return;
-
-      g.save();
-      g.beginPath();
-      g.rect(x, y, w, h);
-      g.clip();
-      g.fillStyle = '#01020a';
-      g.fillRect(x, y, w, h);
-      starLayers.forEach(function (L) {
-        var ox = (t * L.vx % L.size + L.size) % L.size;
-        var oy = (t * L.vy % L.size + L.size) % L.size;
-        g.globalAlpha = L.alpha;
-        g.fillStyle = L.pattern;
-        // The pattern is anchored to the origin, so moving the origin and
-        // drawing back the same amount scrolls the sky under a fixed hole.
-        g.translate(ox, oy);
-        g.fillRect(x - ox, y - oy, w, h);
-        g.translate(-ox, -oy);
-      });
-      g.restore();
-
-      // the containment field round the lip: a thin line that breathes, so
-      // the edge of the hole is legible at speed against a black middle
-      g.globalAlpha = 0.34 + 0.20 * Math.sin(t * 1.7 + r.x0 * 0.4 + r.y0 * 0.7);
-      g.strokeStyle = '#5ef2ff';
-      g.lineWidth = 2;
-      g.strokeRect(x + 1, y + 1, w - 2, h - 2);
-    });
-    g.restore();
-  };
-
   Renderer.init = function (canvas) {
     this.canvas = canvas;
-    // Patterns belong to the context that made them, so a new canvas needs
-    // new star layers.
-    starLayers = null;
     this.setTrack();
 
     // Refit on anything that can change the space available. Coalesced into
@@ -1083,7 +976,6 @@
 
     var now = (global.performance ? performance.now() : Date.now()) / 1000;
     Renderer.drawLava(g, now);
-    Renderer.drawVoid(g, now);
     drawCheckpoints(g, game.player);
 
     // tyre marks first so they sit under the sparks and the cars

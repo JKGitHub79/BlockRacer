@@ -362,11 +362,18 @@ twenty-two cells by sixteen, the largest single hazard in the game.
 
 ### The space three
 
-The gate here is a **hole**. `kind: 'void'` is new: it collides exactly like a
-wall, and the renderer paints the sky the station is flying over through it -
-two star layers at different speeds, so the parallax says the hole goes
-somewhere rather than being a black rectangle. Driving into one is the same
-crash as driving into a spar; it just looks like a much worse idea.
+**Every solid on these three is open space.** There is nothing built out
+there, so there is nothing to draw on a wall: `drawStars` gives each wall cell
+a scatter of stars over near-black and the deck is the only lit surface on the
+board. That inverts the values against every other theme in the game - walls
+light, road dark, everywhere else - and it is the right way round here,
+because out here the walls really are nothing at all. The lit lip along the
+edge of the deck is then the whole of what tells you where the road stops.
+
+The gate is a **hole**, and now it looks like one: `kind: 'void'` collides
+exactly like a wall and reads as a bite taken out of the deck. Driving into
+one is the same crash as driving into a spar; it just looks like a much worse
+idea.
 
 **These three cost a whole theory.** They were drawn on the volcano's
 assumption - that the PAIR is the difficulty lever - and built with holes
@@ -814,14 +821,25 @@ Three things learned the hard way getting them to read:
   row of deck lights, for the same reason `street`, `yard`, `sand` and
   `flowfloor` exist: without a surface at the foot, everything above it
   floats.
-- **A hull is manufactured, not weathered.** `drawHull` is the only wall
-  painter in the game that is not geology: panels with a seam on two edges of
-  every cell so the plating lines up across a solid however the rectangles
-  were declared, two rivets always in the same two corners, and here and there
-  a lit port, a run of hazard paint or a vent. The deck is then set two full
-  steps darker than the hull rather than one, because on a map this dark a
-  half step is not a difference you can read at speed - drawn at one step, the
-  first cut of Event Horizon was a pinwheel you had to trace with a finger.
+- **The sky is a wall painter, and it is baked.** A space solid gets
+  `drawStars`: two to four stars per cell, mostly white with a few blue and
+  fewer old and orange, one cell in forty carrying something bright enough to
+  have a cross, over a wash of far-off gas. The wash is seeded from a couple
+  of sine terms in the cell's coordinates rather than from its own noise -
+  noise per cell reads as a grid and noise per block of cells reads as a
+  checkerboard, but two sines give a field that drifts across the whole map
+  and still resolves to one flat tone per cell, which is the idiom everything
+  else here is drawn in.
+
+  It was built the other way first: two star layers scrolling at different
+  speeds, masked to the shape of the wall grid and composited every frame. It
+  looked no better than the baked version and cost **half the frame rate** -
+  18fps against the volcano's 36 on the same machine, because a full-
+  resolution mask is four passes over the whole board every frame. A station
+  in orbit is not moving relative to the stars anyway, and the drifting
+  weather over the top already says the scene is alive. Baked, space is the
+  cheapest theme in the game rather than the dearest: 48fps where the volcano
+  gets 36.
 - **A fountain is a plume that glows.** The volcano's eruption is a column of
   seventy hot blobs that widen and cool as they rise, the same construction
   the city's smoke uses. A smooth tapering wedge was tried first and read as
@@ -1456,9 +1474,11 @@ Optional per-track settings: `theme` for the palette, `aiPace` for how hard the
 opposition tries, `aiOffsetScale` for how far they spread across the road, and
 `aiMistakeScale` for how often they turn in late - worth turning down on a track
 whose legs are short enough that a late turn means a wall rather than a wide
-line. Marking a wall rectangle `kind: 'lava'` makes it molten and animated and
-`kind: 'void'` opens it onto the sky; both collide exactly like any other wall,
-and both are painted live over the baked track rather than into it. `weather`
+line. Marking a wall rectangle `kind: 'lava'` makes it molten and animated, and it
+collides exactly like any other wall; it is painted live over the baked track
+rather than into it. `kind: 'void'` says a solid is a hole in the deck rather
+than a spar, which on a `vacuum` theme - where every solid is open space
+already - is documentation of intent rather than a change of appearance. `weather`
 blows motes across the board - `'snow'`, `'dust'`, `'leaves'`, `'grit'`,
 `'rain'`, `'ash'`, `'motes'`, `'embers'` or `'drift'`: flakes that fall soft and
 fat, grit that tears across almost flat and is smeared along its own direction
