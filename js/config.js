@@ -40,13 +40,19 @@
      * [ and ] adjust it mid-race, because it is the number worth prototyping
      * with. Every car reads it live, player and AI alike.
      *
-     * The default is 3.0 - deliberately near the top of what any track can
-     * take, because a long arc is what the game is for. It is well past the
-     * 0.47 that Staircase's chicanes clear and past the 2.0 Crossover has
-     * room for, so expect the tighter circuits to punish it. `npm run check`
-     * drives every corner of every track at a given radius and says which
-     * ones stop fitting: `node tools/validate-track.js 1.2`. */
-    slide: 3.0,
+     * The default is one car width. It is past the 0.47 that Staircase's
+     * chicanes clear - there the arc cuts the corner far enough to clip the
+     * block it is stepping around - and well under the 2.0 Crossover has room
+     * for. The whole ladder in the README is measured at this radius.
+     *
+     * It shipped at 3.0 for a while, which is near the top of what any track
+     * can take. Every corner became a scrape and the difficulty spread
+     * collapsed: at that radius the car is still arcing when it reaches the
+     * next corner, so gate margin stops being a difficulty lever and becomes
+     * a wall. `npm run check` drives every corner of every track at a given
+     * radius and says which ones stop fitting:
+     * `node tools/validate-track.js 1.2`. */
+    slide: CAR_WIDTH,
     /* Top of the slider. Far past anything drivable - a radius wider than the
      * road means the car cannot get round a corner without meeting a wall -
      * but this is a prototyping control, and seeing where it stops working is

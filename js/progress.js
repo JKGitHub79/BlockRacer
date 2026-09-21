@@ -75,6 +75,39 @@
     return true;
   };
 
+  /* ---- theme stars ----------------------------------------------------
+   *
+   * One per theme, from the medals on its three tracks. The star is the
+   * WORST of the three, and there is no star at all until every track has a
+   * medal: gold, gold, silver is a silver star, and gold, gold, nothing is
+   * no star.
+   *
+   * It is DERIVED, not stored, and that is the whole design. A star is a
+   * pure function of medals that are already saved, so it cannot drift out
+   * of step with them, it upgrades itself the instant a medal improves, and
+   * RESET DATA clears it by clearing what it is made of. Writing a second
+   * number to storage would be a second thing to keep in sync and a second
+   * thing to get wrong - the medals ARE the save file.
+   */
+  Progress.star = function (trackIds) {
+    if (!trackIds || !trackIds.length) return 0;
+    var worst = 0;
+    for (var i = 0; i < trackIds.length; i++) {
+      var m = this.medal(trackIds[i]);
+      if (!m) return 0;            // one track short and the theme has no star
+      if (m > worst) worst = m;    // 1 gold, 2 silver, 3 bronze: higher is worse
+    }
+    return worst;
+  };
+
+  /* How many of a theme's tracks have any medal at all, so the play screen
+   * can say how far off a star you are rather than showing nothing. */
+  Progress.medalled = function (trackIds) {
+    var n = 0;
+    (trackIds || []).forEach(function (id) { if (Progress.medal(id)) n++; });
+    return n;
+  };
+
   /* ---- lap records ----------------------------------------------------
    *
    * Keyed by track AND game speed, because they are not comparable across

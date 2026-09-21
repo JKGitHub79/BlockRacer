@@ -52,6 +52,7 @@
   }
 
   var MEDALS = ['', 'gold', 'silver', 'bronze'];
+  var MEDAL_NAME = ['', 'GOLD', 'SILVER', 'BRONZE'];
 
   /* m:ss.hh, the same shape the HUD uses, so a record on a card and the clock
    * in the race read as the same number. */
@@ -139,6 +140,30 @@
     // and a card that showed both would suggest one counts towards the other.
     var trial = global.Game.mode === 'trial';
 
+    /* The theme's star: the worst medal across all three of its tracks, or
+     * nothing at all until each of them has one. Worked out from the medals
+     * every time this screen is painted rather than stored, so it is right
+     * by construction and upgrades itself the moment a medal does.
+     *
+     * A time trial has no medals, so it has no star - and the row is kept,
+     * empty, rather than removed, so the cards do not jump up the screen
+     * when you switch modes. */
+    var ids = theme.tracks.map(function (t) { return t.id; });
+    var star = trial ? 0 : global.Progress.star(ids);
+    var got = trial ? 0 : global.Progress.medalled(ids);
+    if (trial) {
+      el.themeStar.className = 'theme-star';
+      el.themeStar.innerHTML = '&nbsp;';
+    } else if (star) {
+      el.themeStar.className = 'theme-star medal-' + MEDALS[star];
+      el.themeStar.innerHTML = '<span class="star">&#9733;</span>' +
+        MEDAL_NAME[star] + ' STAR';
+    } else {
+      el.themeStar.className = 'theme-star unearned';
+      el.themeStar.innerHTML = '<span class="star">&#9734;</span>' +
+        got + ' / ' + ids.length + ' MEDALLED';
+    }
+
     el.cards.innerHTML = '';
     theme.tracks.forEach(function (entry) {
       var found = trackData(entry.id);
@@ -207,6 +232,7 @@
     el.cards = document.getElementById('theme-cards');
     el.themeName = document.getElementById('theme-name');
     el.themeTag = document.getElementById('theme-tagline');
+    el.themeStar = document.getElementById('theme-star');
     el.themeIndex = document.getElementById('theme-index');
     el.playMode = document.getElementById('play-mode');
     el.legacyList = document.getElementById('legacy-list');

@@ -278,28 +278,22 @@ outside of an armpit and the wall you are turning away from is behind you. A
 human has to find that corner. A waypoint-follower is already pointed at the
 next waypoint and the corner costs it nothing. The grade follows the driving.
 
-### A note on the numbers
+### A note on the slide radius
 
 Every figure above is measured at **slide 0.8**, which is what the whole
-ladder was built against and is no longer the value the game ships at. The
-shipped default is 3.0, and it changes what "hard" means rather than just how
-hard things are:
+ladder was built against and is what the game ships at again.
 
-| | Snow | | | Cliffs | | |
-| --- | --- | --- | --- | --- | --- | --- |
-| slide 0.8 | 294 | 318 | 450 | 375 | 408 | 617 |
-| slide 3.0 | 227 | 272 | 373 | 216 | 292 | 432 |
+It shipped at 3.0 for a few versions, and that is worth recording because of
+what it did rather than what it was. At a three-cell turn radius the car is
+still arcing when it reaches the next corner, so **margin stops being a
+difficulty lever and becomes a wall**, and the spread between tracks
+collapses - every corner is a scrape on every circuit. A cut of Quarry with
+three- and four-cell gates measured 1208 crashes at those settings, three
+times the hardest snow track, and every one of them was the same crash.
 
-At a three-cell turn radius the car is still arcing when it reaches the next
-corner, so **margin stops being a difficulty lever and becomes a wall**: an
-early cut of Quarry with three- and four-cell gates measured 1208 crashes at
-the shipped settings, three times the hardest snow track, and every one of
-them was the same crash. Corner count, which costs the same at any radius, is
-the lever that survives. All three cliffs tracks are built on it.
-
-The ordering holds at both radii with one exception: at slide 3.0 Scree (216)
-lands a whisker under Frostline (227), because its lap is half again as long
-as Frostline's and crashes are counted per lap rather than per cell.
+Corner count costs the same at any radius, which is why the cliffs three are
+built on it rather than on margin. That decision was right for the wrong
+reason and is still right.
 
 The seven circuits that came first - Crossover, Snowdrift, Mesa, Wildwood,
 Catalunya, Caldera, Staircase - are the **legacy tracks**, on the options
@@ -463,6 +457,35 @@ A medal is recorded for any podium finish at whatever settings the race ran
 at. With the field set to two cars you are first or second by definition, so
 silver is free - left as it is deliberately, because the options screen is a
 set of testing controls rather than a difficulty dial.
+
+### Theme stars
+
+A star per theme, shown under its name on the track-select screen, worked out
+from the medals on its three tracks:
+
+| | |
+| --- | --- |
+| Gold star | gold on all three |
+| Silver star | silver or better on all three |
+| Bronze star | bronze or better on all three |
+| no star | any track without a medal |
+
+**The star is the worst of the three.** Gold, gold, silver is a silver star.
+One track unmedalled and there is no star at all, however good the other two
+are - which is the point of it: a medal rewards a good race, a star rewards
+finishing the theme.
+
+It is **derived, never stored**. A star is a pure function of medals that are
+already saved, so it cannot drift out of step with them, it upgrades itself
+the instant a medal improves, and RESET DATA clears it by clearing what it is
+made of. Writing a second number to `localStorage` would be a second thing to
+keep in sync and a second thing to get wrong: the medals *are* the save file.
+
+The row keeps its line whether the star is earned or not - an unmedalled
+theme shows a hollow star and how many of its tracks are medalled - because a
+row that appeared and disappeared would move the cards up and down the screen
+as you arrow between themes. A time trial shows no star, because medals are a
+race result and a trial has no positions to earn one in.
 
 ### Lap records
 
@@ -928,7 +951,7 @@ would otherwise put the drift on screen for about three frames.
 
 ## Race length, track and speed
 
-Five laps on Pinefall at Sweat by default, six cars, slide 3.0, AI level 5. All three are set the same way:
+Five laps on Pinefall at Sweat by default, six cars, slide 0.8, AI level 5. All three are set the same way:
 
 1. the options screen,
 2. URL parameters - `index.html?track=2&laps=7&speed=3&slide=0.4&road=3&cars=8&ai=9`
