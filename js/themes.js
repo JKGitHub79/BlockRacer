@@ -17,7 +17,7 @@
     {
       id: 'forest',
       name: 'FOREST',
-      tagline: 'Wide lanes under the canopy. Where you learn the car.',
+      tagline: 'Race beneath the trees where every journey begins.',
       scene: 'forest',
       accent: '#5fd08a',
       tracks: [
@@ -29,7 +29,7 @@
     {
       id: 'desert',
       name: 'DESERT',
-      tagline: 'Wide open and still forgiving, but it asks more of you.',
+      tagline: 'Burn across endless sands under the scorching sun.',
       scene: 'desert',
       accent: '#e8a23c',
       tracks: [
@@ -41,7 +41,7 @@
     {
       id: 'snow',
       name: 'SNOW',
-      tagline: 'Three shapes no other theme has. A switchback, a crossing, an L.',
+      tagline: 'Keep your cool on frozen roads and icy turns.',
       scene: 'snow',
       accent: '#8fd3ff',
       tracks: [
@@ -53,7 +53,7 @@
     {
       id: 'cliffs',
       name: 'CLIFFS',
-      tagline: 'Rock, and not much room. A serpentine, a pit and a ledge.',
+      tagline: 'Push higher where one wrong turn means a long way down.',
       scene: 'cliffs',
       accent: '#d9884a',
       tracks: [
@@ -65,7 +65,7 @@
     {
       id: 'city',
       name: 'CITY',
-      tagline: 'Streets between buildings. Wet tarmac, and no room to be wrong.',
+      tagline: 'Tear through the streets where precision meets speed.',
       scene: 'city',
       accent: '#ff79c6',
       tracks: [
@@ -77,7 +77,7 @@
     {
       id: 'industrial',
       name: 'INDUSTRIAL',
-      tagline: 'A works at night. Pipe racks, barriers and nowhere to put a wheel.',
+      tagline: 'Race through steel, smoke and relentless machinery.',
       scene: 'industrial',
       accent: '#f5a623',
       tracks: [
@@ -89,7 +89,7 @@
     {
       id: 'ruins',
       name: 'ANCIENT RUINS',
-      tagline: 'Dressed stone and old shapes. A cross, a colonnade, a meander.',
+      tagline: 'Master forgotten roads carved through a lost civilisation.',
       scene: 'ruins',
       accent: '#6ec9c4',
       tracks: [
@@ -101,7 +101,7 @@
     {
       id: 'volcano',
       name: 'VOLCANO',
-      tagline: 'Black rock and running lava. The gates here are the flows.',
+      tagline: 'Outrun the heat through a world of fire and molten rock.',
       scene: 'volcano',
       accent: '#ff5a2b',
       tracks: [
@@ -113,7 +113,7 @@
     {
       id: 'space',
       name: 'SPACE',
-      tagline: 'A station over a dead world. The gates here are holes in the deck.',
+      tagline: 'Leave the world behind and race among the stars.',
       scene: 'space',
       accent: '#5ef2ff',
       tracks: [
@@ -125,7 +125,7 @@
     {
       id: 'alien',
       name: 'ALIEN',
-      tagline: 'Something landed here and grew. Mind the thing overhead.',
+      tagline: 'You’ve reached the unknown. Now survive the impossible.',
       scene: 'alien',
       accent: '#7cff5a',
       tracks: [
