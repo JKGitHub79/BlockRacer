@@ -1838,7 +1838,6 @@
     jog:        '#8d3312',   // crash barriers, rusted and chevroned
     jogTop:     '#ff7a33',
     racingLine: 'rgba(255,196,110,0.24)',
-    arrow:      'rgba(246,246,244,0.66)',   // floor arrows, where a track uses them
     check:      'rgba(255,176,70,0.07)',
     checkNext:  'rgba(255,176,70,0.30)',
     startLine:  '#f6efe2'
@@ -2040,10 +2039,9 @@
    *        +---+---+---+---+---+
    *
    * The lap is a Hamiltonian circuit of the grid: it reaches all twenty
-   * junctions, takes each one exactly once and never crosses itself. That
-   * is not decoration - it is what makes the track signable. Sixteen of the
-   * twenty are corners and four are crossroads the lap goes straight over,
-   * and a big arrow on the tarmac says which before you get to each one.
+   * junctions, takes each one exactly once and never crosses itself.
+   * Sixteen of the twenty are corners and four are crossroads the lap goes
+   * straight over.
    *
    * The barriers sit mid-block, between junctions, where there is a kerb to
    * put them against. At a junction there is no kerb, which is the whole
@@ -2052,7 +2050,7 @@
   var REFINERY = {
     id: 'refinery',
     name: 'REFINERY',
-    blurb: 'An open grid. Twenty junctions, eleven wrong turns, arrows on the floor.',
+    blurb: 'An open grid. Twenty junctions and eleven streets that are not the lap.',
     grade: 'EXTREME ++',
     cols: 52,
     rows: 41,
@@ -2061,7 +2059,6 @@
     aiMistakeScale: 1,
     weather: 'ash',
     theme: INDUSTRIAL,
-    arrows: true,
     walls: border(52, 41).concat([
       { x0:  7, y0:  7, x1: 11, y1: 11, kind: 'infield' },
       { x0:  7, y0: 18, x1: 11, y1: 22, kind: 'infield' },

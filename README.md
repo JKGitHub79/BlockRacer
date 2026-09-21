@@ -300,20 +300,8 @@ junctions you can go straight on as well as left and right, and eleven of the
 thirty-one street segments are not on the lap at all.
 
 The lap is a Hamiltonian circuit of that grid - it reaches all twenty
-junctions, takes each exactly once and never crosses itself. That is not
-decoration, it is what makes the track signable: sixteen of the twenty are
-corners and four are crossroads the lap goes straight over, and **a big white
-arrow on the tarmac says which, a few cells before you get there**. An arrow
-is a property of the tile, so it can only ever serve a lap that visits each
-piece of road once. A lap that crossed itself would need the same arrow to
-say two things.
-
-The junctions are **found rather than declared**. Walking the lap, the
-renderer measures the road either side of the racing line, square to the way
-the car is going: down a street that distance is the kerb and does not move,
-and where a cross street opens it runs away. Every stretch where it runs away
-is one junction. Nothing in the track data lists them, so a street that moves
-in a later edit cannot leave an arrow behind pointing at a wall.
+junctions, takes each exactly once and never crosses itself. Sixteen of the
+twenty are corners and four are crossroads the lap goes straight over.
 
 Its barriers sit mid-block, between junctions, because that is the only place
 on the track with a kerb to put one against. At a junction there is no kerb,
@@ -682,12 +670,6 @@ Three things learned the hard way getting them to read:
   which is what ground is. In front of all three, `street` lays a strip of wet
   tarmac with a row of sodium lamps and their glow on it, so the foot of the
   city is a surface and not an edge.
-- **An arrow points at a junction, not along a street.** `drawArrows` lays one
-  big white arrow before each junction on a track that sets `arrows: true`,
-  pointing the way the lap leaves. The first cut scattered small chevrons
-  along the whole route at a fixed spacing, which is decoration: it tells you
-  the direction you are already travelling in and says nothing at the one
-  place a direction is in doubt.
 - **A plant block is machinery.** `drawPipes` gives the industrial solids a
   pipe run straight across every cell, edge to edge, so runs join up between
   neighbours into lines that cross the whole block. The axis and the offset
