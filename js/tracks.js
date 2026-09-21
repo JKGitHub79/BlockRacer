@@ -1434,10 +1434,10 @@
     ],
     startLeg: 0,
     checkpoints: [
+      { x0: 11, y0: 32, x1: 33, y1: 33 },   // down into the bottom arm
       { x0: 1,  y0: 19, x1: 9,  y1: 20 },   // round the left tip
       { x0: 20, y0: 1,  x1: 21, y1: 9  },   // across the top tip
-      { x0: 35, y0: 19, x1: 43, y1: 20 },   // round the right tip
-      { x0: 11, y0: 32, x1: 33, y1: 33 }    // down into the bottom arm
+      { x0: 35, y0: 19, x1: 43, y1: 20 }    // round the right tip
     ],
     finish: { x0: 21.6, y0: 31, x1: 22.4, y1: 39, dir: { x: -1, y: 0 } },
     startGrid: [
@@ -2687,9 +2687,9 @@
     road:       '#1e2941',   // the deck: the only solid surface out here
     roadLine:   '#2d3b59',
     wall:       '#01020a',   // painted over with sky every frame
-    wallTop:    '#7fb4e4',   // the lit lip where the deck stops
-    outer:      '#01020a',
-    outerTop:   '#5580ad',
+    wallTop:    '#7fb4e4',   // the lit lip where the deck stops, and it is
+    outer:      '#01020a',   // the same lip whichever solid it runs round:
+    outerTop:   '#7fb4e4',   // out here they are all the same hole
     jog:        '#1f4a5c',
     jogTop:     '#5ef2ff',
     racingLine: 'rgba(150,215,255,0.24)',
@@ -2727,49 +2727,54 @@
       { x0: 37, y0:  7, x1: 44, y1: 33, kind: 'infield' },
       { x0: 17, y0: 21, x1: 36, y1: 33, kind: 'infield' },
       // The lever on this theme is not the hole, it is the LANE CHANGE the
-      // hole forces. Measured on this layout: the bare ring costs 202
-      // crashes a thousand laps, each hole about twenty, and each change of
-      // lane about three hundred and fifty. So the holes are spread over
-      // every leg and only two of them are paired - one on the bottom, one
-      // on the east flank - which is the same count the volcano runs.
-      { x0: 16, y0: 34, x1: 20, y1: 35, kind: 'void' },
-      { x0: 28, y0: 38, x1: 32, y1: 39, kind: 'void' },
-      { x0: 49, y0: 26, x1: 50, y1: 30, kind: 'void' },
-      { x0: 45, y0: 14, x1: 46, y1: 18, kind: 'void' },
-      { x0:  1, y0: 16, x1:  1, y1: 22, kind: 'void' },
-      { x0: 38, y0:  1, x1: 42, y1:  1, kind: 'void' },
+      // hole forces, so the holes are paired on all three long runs and the
+      // pairs are three cells deep on each side of a six-cell deck. Three
+      // cells is the depth that makes a change pay: it leaves a three-cell
+      // slot whose middle sits 1.1 clear of the hole and 1.1 clear of the
+      // plating, tight enough that the opponents' wander costs them and wide
+      // enough that a driven line goes through. Every other leg carries one
+      // hole, two cells deep, which asks for a lane and not a change of one.
+      { x0: 16, y0: 34, x1: 20, y1: 36, kind: 'void' },
+      { x0: 28, y0: 37, x1: 32, y1: 39, kind: 'void' },
+      { x0: 48, y0: 26, x1: 50, y1: 30, kind: 'void' },
+      { x0: 45, y0: 14, x1: 47, y1: 18, kind: 'void' },
+      { x0:  1, y0: 12, x1:  3, y1: 17, kind: 'void' },
+      { x0:  4, y0: 24, x1:  6, y1: 29, kind: 'void' },
+      { x0: 38, y0:  1, x1: 42, y1:  3, kind: 'void' },
       { x0: 31, y0:  9, x1: 32, y1: 13, kind: 'void' },
       { x0: 25, y0: 19, x1: 29, y1: 20, kind: 'void' },
       { x0: 17, y0:  8, x1: 18, y1: 12, kind: 'void' },
-      { x0:  9, y0:  1, x1: 13, y1:  1, kind: 'void' }
+      { x0:  9, y0:  1, x1: 13, y1:  3, kind: 'void' }
     ]),
     route: [
-      { x:  5.0, y:  5.0 },   //  0 south down the west flank
-      { x:  5.0, y: 38.0 },   //  1 east along the bottom, over the line
-      { x: 24.0, y: 38.0 },   //  2 the first change of lane
-      { x: 24.0, y: 36.0 },   //  3
-      { x: 47.0, y: 36.0 },   //  4 north up the east flank
-      { x: 47.0, y: 22.0 },   //  5 and the second
-      { x: 49.0, y: 22.0 },   //  6
-      { x: 49.0, y:  5.0 },   //  7 west along the top
-      { x: 35.0, y:  5.0 },   //  8 south down the arm
-      { x: 35.0, y: 17.0 },   //  9 west along the foot of it
-      { x: 21.0, y: 17.0 },   // 10 north, back out
-      { x: 21.0, y:  5.0 }    // 11 west along the top deck
+      { x:  5.5, y:  5.5 },   //  0 south down the west flank
+      { x:  5.5, y: 20.0 },   //  1 the first change of lane
+      { x:  2.5, y: 20.0 },   //  2
+      { x:  2.5, y: 38.5 },   //  3 east along the bottom, over the line
+      { x: 24.0, y: 38.5 },   //  4 and the second
+      { x: 24.0, y: 35.5 },   //  5
+      { x: 46.5, y: 35.5 },   //  6 north up the east flank
+      { x: 46.5, y: 22.0 },   //  7 and the third
+      { x: 49.5, y: 22.0 },   //  8
+      { x: 49.5, y:  5.5 },   //  9 west along the top
+      { x: 35.0, y:  5.5 },   // 10 south down the arm
+      { x: 35.0, y: 17.0 },   // 11 west along the foot of it
+      { x: 21.0, y: 17.0 },   // 12 north, back out
+      { x: 21.0, y:  5.5 }    // 13 west along the top deck
     ],
-    startLeg: 1,
+    startLeg: 3,
     checkpoints: [
-      { x0:  1, y0: 30, x1:  7, y1: 31 },   // south down the west flank
       { x0: 36, y0: 34, x1: 37, y1: 40 },   // east along the bottom
       { x0: 45, y0: 10, x1: 51, y1: 11 },   // north up the east flank
-      { x0: 23, y0: 15, x1: 24, y1: 21 }    // west along the foot of the arm
+      { x0: 23, y0: 15, x1: 24, y1: 21 },   // west along the foot of the arm
+      { x0:  1, y0: 30, x1:  7, y1: 31 }    // south down the west flank
     ],
     finish: { x0: 12, y0: 34, x1: 12.8, y1: 40, dir: { x: 1, y: 0 } },
     startGrid: [
-      { x: 10.4, y: 35.6, wp: 2 },
-      { x: 10.4, y: 38.4, wp: 2 },
-      { x:  8.3, y: 35.6, wp: 2 },
-      { x:  8.3, y: 38.4, wp: 2 }
+      { x: 10.4, y: 35.6, wp: 4 },
+      { x: 10.4, y: 38.4, wp: 4 },
+      { x:  8.3, y: 35.6, wp: 4 },
+      { x:  8.3, y: 38.4, wp: 4 }
     ]
   };
 
@@ -2896,45 +2901,47 @@
       // the core, opened to the sky. Nothing drives near it: it is there so
       // that the middle of the map is the one place you can see out of.
       { x0: 24, y0: 21, x1: 36, y1: 27, kind: 'void' },
-      // a pair on three of the four long runs - one more change of lane than
-      // anything else in the game - and a single hole on the rest. The four
-      // steps are left clear: a step is a corner twice over already.
-      { x0:  1, y0: 14, x1:  1, y1: 18, kind: 'void' },
-      { x0:  6, y0: 23, x1:  6, y1: 27, kind: 'void' },
-      { x0: 14, y0: 33, x1: 17, y1: 33, kind: 'void' },
-      { x0: 25, y0: 34, x1: 28, y1: 34, kind: 'void' },
-      { x0: 34, y0: 39, x1: 37, y1: 39, kind: 'void' },
-      { x0: 38, y0: 12, x1: 42, y1: 12, kind: 'void' },
-      { x0: 14, y0:  6, x1: 18, y1:  6, kind: 'void' },
-      { x0:  7, y0:  7, x1:  7, y1: 11, kind: 'void' },
-      { x0: 43, y0: 29, x1: 43, y1: 33, kind: 'void' },
-      { x0: 49, y0: 14, x1: 49, y1: 18, kind: 'void' },
-      { x0: 21, y0:  4, x1: 21, y1:  8, kind: 'void' }
+      // a three-cell pair on each of the three runs long enough to hold one,
+      // and a two-cell hole on each of the five legs that join them
+      { x0:  1, y0: 14, x1:  3, y1: 18, kind: 'void' },
+      { x0:  4, y0: 23, x1:  6, y1: 27, kind: 'void' },
+      { x0: 25, y0: 34, x1: 28, y1: 36, kind: 'void' },
+      { x0: 34, y0: 37, x1: 37, y1: 39, kind: 'void' },
+      { x0: 38, y0: 10, x1: 42, y1: 12, kind: 'void' },
+      { x0: 26, y0:  7, x1: 30, y1:  9, kind: 'void' },
+      { x0: 14, y0: 32, x1: 17, y1: 33, kind: 'void' },
+      { x0: 14, y0:  5, x1: 18, y1:  6, kind: 'void' },
+      { x0:  7, y0:  7, x1:  8, y1: 11, kind: 'void' },
+      { x0: 42, y0: 29, x1: 43, y1: 33, kind: 'void' },
+      { x0: 48, y0: 14, x1: 49, y1: 18, kind: 'void' },
+      { x0: 21, y0:  4, x1: 22, y1:  8, kind: 'void' }
     ]),
     route: [
       { x: 25.0, y:  3.0 },   //  0 west along the top deck
       { x: 11.0, y:  3.0 },   //  1 south down the first step
       { x: 11.0, y: 15.5 },   //  2 west onto the flank
-      { x:  5.0, y: 15.5 },   //  3 south
-      { x:  5.0, y: 20.5 },   //  4 the first change of lane
-      { x:  3.0, y: 20.5 },   //  5
-      { x:  3.0, y: 30.5 },   //  6 east along the second step
+      { x:  5.5, y: 15.5 },   //  3 south
+      { x:  5.5, y: 20.5 },   //  4 the first change of lane
+      { x:  2.5, y: 20.5 },   //  5
+      { x:  2.5, y: 30.5 },   //  6 east along the second step
       { x: 20.0, y: 30.5 },   //  7 south onto the bottom deck
-      { x: 20.0, y: 38.0 },   //  8 east, over the line
-      { x: 31.0, y: 38.0 },   //  9 the second change of lane
-      { x: 31.0, y: 36.0 },   // 10
-      { x: 40.0, y: 36.0 },   // 11 north up the third step
+      { x: 20.0, y: 38.5 },   //  8 east, over the line
+      { x: 31.0, y: 38.5 },   //  9 and the second
+      { x: 31.0, y: 35.5 },   // 10
+      { x: 40.0, y: 35.5 },   // 11 north up the third step
       { x: 40.0, y: 22.5 },   // 12 east onto the flank
       { x: 46.0, y: 22.5 },   // 13 north
-      { x: 46.0, y:  9.0 },   // 14 west along the fourth step
-      { x: 25.0, y:  9.0 }    // 15 north onto the top deck
+      { x: 46.0, y:  8.5 },   // 14 west along the fourth step
+      { x: 34.0, y:  8.5 },   // 15 and the third
+      { x: 34.0, y: 11.5 },   // 16
+      { x: 25.0, y: 11.5 }    // 17 north onto the top deck
     ],
     startLeg: 8,
     checkpoints: [
-      { x0:  1, y0: 21, x1:  7, y1: 22 },   // south down the west flank
       { x0: 32, y0: 34, x1: 33, y1: 40 },   // east along the bottom deck
       { x0: 38, y0: 26, x1: 44, y1: 27 },   // north up the third step
-      { x0: 36, y0:  7, x1: 37, y1: 13 }    // west along the fourth
+      { x0: 36, y0:  7, x1: 37, y1: 13 },   // west along the fourth
+      { x0:  1, y0: 21, x1:  7, y1: 22 }    // south down the west flank
     ],
     finish: { x0: 23.4, y0: 34, x1: 24.2, y1: 40, dir: { x: 1, y: 0 } },
     startGrid: [

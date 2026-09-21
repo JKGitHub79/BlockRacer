@@ -694,15 +694,27 @@
 
     drawEmblems(g);
 
+    /* The lit edges. Everywhere but space these make a solid read as a block
+     * standing up off the road: three sides catch the light and the fourth,
+     * the one facing you, is in shadow.
+     *
+     * A hole is not a block. It has no top face to catch the light and no
+     * underside to cast a shadow, so on a vacuum theme the shadow is wrong
+     * three ways at once: it is the only unlit edge on the board, it is black
+     * against a starfield that is already black, and it makes the same hole
+     * look outlined along one edge and open along the other. Every side of a
+     * hole is the same cut edge of the same deck, so every side gets the same
+     * line. */
     eachWall(function (cx, cy, kind) {
-      g.fillStyle = kind === 3 ? colorOf('jogTop')
+      g.fillStyle = sky ? colorOf('wallTop')
+                  : kind === 3 ? colorOf('jogTop')
                   : (kind === 2 || kind === 4 || kind === 5) ? colorOf('wallTop')
                   : colorOf('outerTop');
       if (!T.isWall(cx, cy - 1)) g.fillRect(cx * S, cy * S, S, 3);
       if (!T.isWall(cx - 1, cy)) g.fillRect(cx * S, cy * S, 3, S);
       if (!T.isWall(cx + 1, cy)) g.fillRect(cx * S + S - 3, cy * S, 3, S);
       if (!T.isWall(cx, cy + 1)) {
-        g.fillStyle = 'rgba(0,0,0,0.45)';
+        if (!sky) g.fillStyle = 'rgba(0,0,0,0.45)';
         g.fillRect(cx * S, cy * S + S - 3, S, 3);
       }
     });

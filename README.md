@@ -375,37 +375,38 @@ exactly like a wall and reads as a bite taken out of the deck. Driving into
 one is the same crash as driving into a spar; it just looks like a much worse
 idea.
 
-**These three cost a whole theory.** They were drawn on the volcano's
-assumption - that the PAIR is the difficulty lever - and built with holes
-three cells deep on a six-cell deck, so that no lane cleared both and the
-change across was compulsory rather than merely wise. Orbital came out at
-**2470** crashes a thousand laps against a target of about 900. Every fix that
-followed from the theory made it worse: shallower holes took it to 1895,
-gentler lane steps to 2352, and winding the opponents' wander down from 1.5
-cells to 1.0 took it *up* to 1925.
+**The lever here is not the hole, it is the change of lane the hole forces.**
+Orbital, taken apart: the bare ring with no holes and the racing line down the
+middle of the road the whole way scores **71** crashes a thousand laps. Put the
+three lane-change doglegs back in and it scores **582**. Put the eleven holes
+back as well and it scores **1010**. So a change of lane costs about **170**
+and a hole about **39**, and the volcano's "175 a pair" was never really the
+gates at all - it was the weave they force, counted once for the pair that
+caused it.
 
-The theory was wrong, and one measurement said so. Strip every hole off
-Orbital and it still scores **1482**. Strip the lane-change doglegs out of the
-racing line as well, so the car drives the middle of the road the whole way,
-and it scores **202**. The same test on Basalt: 803 with its gates, 714
-without them. So on both tracks the holes are worth about twenty crashes each
-and **a change of lane is worth about three hundred and fifty** - and the
-volcano's "175 a pair" was never the gates. It was the weave the gates force,
-counted once for the pair that caused it.
+That is also the answer to an arithmetic question the volcano never had to
+ask. On a six-cell deck with a car 0.8 wide, a hole two cells deep leaves a
+four-cell slot whose middle sits 1.6 clear of the hole and 1.6 clear of the
+plating - comfortable, and a car can hold one lane past a whole pair of them
+without ever moving. A hole **three** cells deep leaves three cells and 1.1
+either side, which is tight enough that the opponents' 1.5 cells of wander
+costs them and wide enough that a driven line still goes through. So the pairs
+on all three tracks are three cells deep and the single holes that only ask
+for a lane are two, and the weave is the ladder: three changes on Orbital,
+three on Drift Field, three on Event Horizon, over eight corners, twelve and
+twelve-plus-four-steps respectively.
 
-That also settles an arithmetic question the volcano never had to ask. On a
-six-cell deck with a car 0.8 wide and a hole two cells deep, a lane that keeps
-2.0 cells off the plating leaves 1.2 from the hole, and one that keeps 2.0
-from the hole leaves 1.2 from the plating; you cannot have both, and the
-opponents wander 1.5. Both compromises were measured and both are worse than
-splitting it evenly at 1.6 and 1.6, which is what the volcano does. Only a
-one-cell hole lets a single lane sit 2.1 clear of everything, which is why
-Event Horizon's are one cell and the other two are two: the depth is set by
-how much the layout could afford, not by taste.
-
-So the holes are spread over every leg and the *weave* is the ladder: two
-changes of lane on Orbital, three on Drift Field, two on Event Horizon on top
-of four stepped corners that are worth more than a third change would be.
+**These numbers are the second set.** The first were measured against tracks
+whose checkpoints were declared in map order rather than lap order, on Orbital
+and Event Horizon both. Every zone still got crossed, so every check in
+`npm run check` passed and the racing looked right; but the game collects
+checkpoints by index, so a lap that starts on the zone declared last needs two
+laps of driving to register. The simulator counts laps, not distance, and
+quietly measured those two tracks over twice the road. It reported 1027 and
+1422 for layouts that were really doing 526 and 665, and the lane-change
+figure came out at 350 rather than 170 for the same reason. `npm run check`
+now walks the line from the finish and insists the zones come up 0, 1, 2, 3 -
+see **Checking a change**.
 
 **Orbital** is the ring round the station with one docking arm hanging into it
 off the top deck - eight corners, and a forty-three cell bottom straight that
@@ -413,7 +414,7 @@ the lap starts on.
 
 **Drift Field** is two arms, one off each deck, pointing opposite ways, so the
 lap turns into the middle twice and comes out on the far side both times.
-Twelve corners and fourteen holes, more than any other track in the game.
+Twelve corners and fifteen holes, more than any other track in the game.
 
 **Event Horizon** steps sideways by a full road width halfway along every one
 of its four sides, so it turns twelve times without ever doubling back and
@@ -436,10 +437,10 @@ speed, slide 0.8, four cars (see **A note on the numbers** below):
 | Industrial | 816 | 970 | 968 |
 | Ancient Ruins | 734 | 755 | 729 |
 | Volcano | 803 | 878 | 1020 |
-| Space | 1027 | 1196 | 1422 |
+| Space | 1010 | 1196 | 1481 |
 
 In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 588, 617, 623,
-684, 729, 734, 755, 803, 816, 878, 968, 970, 1020, 1027, 1196, 1422. Forest and Desert
+684, 729, 734, 755, 803, 816, 878, 968, 970, 1010, 1020, 1196, 1481. Forest and Desert
 interleave, so the first track of the
 desert is easier than the last of the forest and a new theme reads as a new
 theme rather than a wall. Snow, Cliffs and City interleave the same way, so
@@ -447,10 +448,13 @@ arriving at a harder theme is a step rather than a cliff. Industrial does not
 interleave with City and is not meant to: EXTREME starts above where HARD
 finished. Ancient Ruins interleaves with Industrial, which is not what was
 asked for - see above. Volcano climbs cleanly. Space climbs cleanly on top of
-it, starts seven crashes above where Volcano finished, and ends the ladder on
-the highest number in the themed set. At the settings the game actually ships
-with - sweat, six cars - the same order holds: 764, 805, 1094 against the
-volcano's 689, 646, 764.
+it and ends the ladder on the highest number in the themed set. Its first
+track and the volcano's last are ten crashes apart in twelve hundred laps,
+which is a handover rather than a step - the one place in the top half of the
+ladder where two themes touch, and the right place for it, because arriving at
+the last theme should not be a wall. At the settings the game actually ships
+with - sweat, six cars - the order holds: 688, 805, 1075 against the volcano's
+689, 646, 764.
 
 Pipeworks and Refinery measure the same: 970 and 968 is two crashes in twelve
 hundred laps, well inside this metric's noise, so on the ladder they are tied.
@@ -1561,6 +1565,20 @@ either side. Quarry shipped past the old version of this check with a
 checkpoint like that, and two of its four cars drove the circuit perfectly,
 forever, stuck on checkpoint two. **A checkpoint is thin in the direction the
 car is travelling and spans the full width of the road across it.**
+
+**It also insists the checkpoints are declared in the order they are driven.**
+The game collects them by index: a car holds a `nextCp` and only the zone at
+that index counts. Declared out of order they all still get crossed, so every
+other check here passes and the racing looks right - the only symptoms are
+that the tint marking the next one points at something behind you, and that a
+lap needs more than a lap of driving to register. Quarry shipped like that,
+and so did two of the three space tracks; all three were rotated by exactly
+one, which is what you get from writing the list in map order instead of lap
+order. It cost more than a wrong tint: `simulate.js` counts laps rather than
+distance, so it measured those two space tracks over twice the road and
+reported them almost twice as hard as they were, and a whole page of this
+README was written from those numbers. The check walks the line from the
+finish and insists the zones come up 0, 1, 2, 3.
 
 It fails if a car ever touches a wall or cannot rotate at a
 corner - so a track cannot be edited into something undriveable without

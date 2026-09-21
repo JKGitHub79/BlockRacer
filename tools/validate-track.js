@@ -184,6 +184,48 @@ for (let ti = 0; ti < TRACKS.length; ti++) {
   });
   report();
 
+  /* The checkpoints have to be DECLARED in the order they are driven, because
+   * that is the order the game collects them in: a car holds a `nextCp` index
+   * and only the zone at that index counts. Declared out of order they still
+   * all get crossed, so every other check here passes, and the only symptom is
+   * that the tint marking the next one points somewhere behind you and a lap
+   * takes two laps to complete. Quarry shipped like that, and so did two of
+   * the three space tracks - all three were rotated by exactly one, which is
+   * what you get from writing the list in map order rather than lap order.
+   *
+   * So: walk the racing line from the finish, note the order the zones are
+   * actually entered, and insist it is 0, 1, 2, 3. */
+  console.log('  checkpoints in lap order:');
+  {
+    const seenOrder = [];
+    const R = TRACK.ROUTE, n = R.length;
+    let leg = TRACK.data.startLeg;
+    const f = TRACK.FINISH;
+    let pos = { x: (f.x0 + f.x1) / 2, y: (f.y0 + f.y1) / 2 };
+    let a = R[leg], b = R[(leg + 1) % n], guard = 0;
+    while (seenOrder.length < TRACK.CHECKPOINTS.length && guard++ < 200000) {
+      const dx = Math.sign(b.x - a.x), dy = Math.sign(b.y - a.y);
+      pos.x += dx * 0.05;
+      pos.y += dy * 0.05;
+      TRACK.CHECKPOINTS.forEach((z, i) => {
+        if (seenOrder.indexOf(i) < 0 && TRACK.inZone(z, pos.x, pos.y)) seenOrder.push(i);
+      });
+      if ((dx > 0 && pos.x >= b.x) || (dx < 0 && pos.x <= b.x) ||
+          (dy > 0 && pos.y >= b.y) || (dy < 0 && pos.y <= b.y) || (dx === 0 && dy === 0)) {
+        leg = (leg + 1) % n;
+        a = R[leg];
+        b = R[(leg + 1) % n];
+        pos = { x: a.x, y: a.y };
+      }
+    }
+    const want = TRACK.CHECKPOINTS.map((_, i) => i).join(',');
+    if (seenOrder.join(',') !== want) {
+      fail(`declared ${want} but crossed in the order ${seenOrder.join(',')} - ` +
+           `the game only ever looks for the next one by index`);
+    }
+  }
+  report();
+
     const last = TRACK.ROUTE[TRACK.ROUTE.length - 1], first = TRACK.ROUTE[0];
     if (last.x !== first.x && last.y !== first.y) fail('closing leg is not axis aligned');
     console.log('  ' + TRACK.length.toFixed(0) + ' cells per lap, ' +
