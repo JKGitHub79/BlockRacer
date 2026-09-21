@@ -1809,6 +1809,330 @@
     ]
   };
 
+  /* ==================================================================== *
+   * INDUSTRIAL - the sixth theme, and the last word in the ladder so far.
+   *
+   * A works rather than a town: pipe racks, sheds, gasholders and the
+   * hardstanding between them. The city was the first theme where the
+   * solids defined the road instead of decorating it; this one keeps that
+   * and takes the road down to six cells and five.
+   *
+   * Two of the three are pure corridor, like the city two that were rebuilt.
+   * The third, REFINERY, is the one track in the game with open junctions on
+   * purpose - and it is the one track that paints ARROWS on the floor, which
+   * is the only reason it is allowed to have them.
+   * ==================================================================== */
+  var INDUSTRIAL = {
+    /* `pipes` turns on the plant texture in js/render.js, the way `rock`
+     * turns on stone and `windows` turns on lit glass. A plant block is
+     * neither terrain nor a building: it is machinery, and it gets pipe
+     * runs, flanges, drums and bolts. Barriers get hazard chevrons. */
+    pipes:      true,
+    bg:         '#0a0806',
+    road:       '#141312',   // oil-stained concrete, still near black
+    roadLine:   '#1e1c19',
+    wall:       '#3a342c',   // the plant: racks, sheds, tanks
+    wallTop:    '#6f6452',
+    outer:      '#241e19',   // the works beyond the circuit
+    outerTop:   '#42382c',
+    jog:        '#8d3312',   // crash barriers, rusted and chevroned
+    jogTop:     '#ff7a33',
+    racingLine: 'rgba(255,196,110,0.24)',
+    arrow:      'rgba(255,206,130,0.34)',   // floor arrows, where a track uses them
+    check:      'rgba(255,176,70,0.07)',
+    checkNext:  'rgba(255,176,70,0.30)',
+    startLine:  '#f6efe2'
+  };
+
+  /* ---- Industrial 1: FOUNDRY -------------------------------------------
+   * A zigzag ring with four teeth - two biting down from the top of the
+   * map and two biting up from the bottom - round one plant block that
+   * fills most of the middle:
+   *
+   *        +--+  +--+--------+       fourteen corners, and only two legs
+   *        |  |  |  |        |       longer than twelve cells: the west
+   *        |  +--+  |   ##   |       street and the east. Everything in
+   *        |   ##   |   ##   |       between is corner, gate, corner.
+   *        |  +--+--+--+  +--+
+   *        +--+        +--+
+   *
+   * Pure corridor: every wall is solid and there is nowhere wrong to go.
+   * The two long streets carry a PAIR of barriers each against opposite
+   * kerbs, so the lane one leaves clear is the lane the other blocks; the
+   * five short verticals get one apiece and the lap takes every one of them
+   * on the far side.
+   * -------------------------------------------------------------------- */
+  var FOUNDRY = {
+    id: 'foundry',
+    name: 'FOUNDRY',
+    blurb: 'Fourteen corners round one plant block. Barriers on every street.',
+    grade: 'EXTREME',
+    cols: 48,
+    rows: 41,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'ash',
+    theme: INDUSTRIAL,
+    walls: border(48, 41).concat([
+      { x0: 17, y0:  1, x1: 20, y1: 11, kind: 'edge' },     // the two teeth from the top
+      { x0: 27, y0: 29, x1: 30, y1: 39, kind: 'edge' },     // and the two from the bottom
+      { x0:  1, y0: 29, x1: 10, y1: 39, kind: 'edge' },
+      { x0:  7, y0:  7, x1: 10, y1: 22, kind: 'infield' },  // the plant, one mass
+      { x0: 27, y0:  7, x1: 40, y1: 22, kind: 'infield' },
+      { x0: 11, y0: 18, x1: 26, y1: 22, kind: 'infield' },
+      { x0: 17, y0: 23, x1: 20, y1: 33, kind: 'infield' },
+      { x0: 37, y0: 23, x1: 40, y1: 33, kind: 'infield' },
+      // the west street: a pair, against opposite kerbs, ten cells apart
+      { x0:  1, y0:  7, x1:  2, y1: 12, kind: 'jog' },
+      { x0:  5, y0: 17, x1:  6, y1: 22, kind: 'jog' },
+      // the east street: the same, and the lap changes lanes between them
+      { x0: 41, y0: 24, x1: 42, y1: 29, kind: 'jog' },
+      { x0: 45, y0: 12, x1: 46, y1: 17, kind: 'jog' },
+      // one on each short vertical
+      { x0: 11, y0: 28, x1: 12, y1: 33, kind: 'jog' },
+      { x0: 25, y0: 29, x1: 26, y1: 34, kind: 'jog' },
+      { x0: 31, y0: 28, x1: 32, y1: 33, kind: 'jog' },
+      { x0: 21, y0:  7, x1: 22, y1: 12, kind: 'jog' },
+      { x0: 15, y0:  7, x1: 16, y1: 12, kind: 'jog' }
+    ]),
+    route: [
+      { x:  5, y:  4 },   // 0  the west street, southbound, east lane
+      { x:  5, y: 15 },   // 1  change lanes between the two barriers
+      { x:  3, y: 15 },   // 2
+      { x:  3, y: 26 },   // 3  east, under the plant
+      { x: 15, y: 26 },   // 4  south into the first tooth
+      { x: 15, y: 37 },   // 5  east along the bottom
+      { x: 23, y: 37 },   // 6  north, back out
+      { x: 23, y: 26 },   // 7  east
+      { x: 35, y: 26 },   // 8  south into the second tooth
+      { x: 35, y: 37 },   // 9  east
+      { x: 45, y: 37 },   // 10 north up the east street, over the line
+      { x: 45, y: 20 },   // 11 change lanes again
+      { x: 43, y: 20 },   // 12
+      { x: 43, y:  4 },   // 13 west along the top
+      { x: 25, y:  4 },   // 14 south into the third tooth
+      { x: 25, y: 15 },   // 15 west
+      { x: 13, y: 15 },   // 16 north, back out
+      { x: 13, y:  4 }    // 17 west, back to the west street
+    ],
+    startLeg: 10,
+    checkpoints: [
+      { x0: 35, y0:  1, x1: 36, y1:  7 },   // west along the top
+      { x0: 11, y0:  9, x1: 15, y1: 10 },   // north out of the last tooth
+      { x0:  9, y0: 23, x1: 10, y1: 29 },   // east under the plant
+      { x0: 21, y0: 30, x1: 25, y1: 31 }    // north out of the first tooth
+    ],
+    finish: { x0: 41, y0: 32.6, x1: 47, y1: 33.4, dir: { x: 0, y: -1 } },
+    startGrid: [
+      { x: 43.8, y: 34.5, wp: 11 },
+      { x: 46.1, y: 34.5, wp: 11 },
+      { x: 43.8, y: 36.4, wp: 11 },
+      { x: 46.1, y: 36.4, wp: 11 }
+    ]
+  };
+
+  /* ---- Industrial 2: PIPEWORKS ----------------------------------------
+   * Five cells of road, the narrowest in the game, and a rack that hooks
+   * round most of the map:
+   *
+   *        +--------------------------+     one long street down the west
+   *        |  ####################    |     side, one longer along the top,
+   *        |  ############   +--+     |     and a staircase of nine-cell
+   *        |  ####  +---+ ## +--+     |     legs filling everything else
+   *        |  ####  | ## |  ######    |
+   *        +--------+----+------------+
+   *
+   * Pure corridor again. The barriers are a single cell thick rather than
+   * two, because on a five-cell road two would leave three - and a three
+   * cell gate is the one thing the cliffs proved is a trap rather than a
+   * difficulty. One cell leaves four, which is the same gate the city runs,
+   * on a road a cell narrower.
+   * -------------------------------------------------------------------- */
+  var PIPEWORKS = {
+    id: 'pipeworks',
+    name: 'PIPEWORKS',
+    blurb: 'Five cells of road and a rack that hooks round most of the map.',
+    grade: 'EXTREME +',
+    cols: 43,
+    rows: 34,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'ash',
+    theme: INDUSTRIAL,
+    walls: border(43, 34).concat([
+      { x0:  7, y0:  7, x1: 36, y1:  9, kind: 'infield' },  // the rack
+      { x0:  7, y0: 10, x1: 27, y1: 18, kind: 'infield' },
+      { x0:  7, y0: 19, x1:  9, y1: 27, kind: 'infield' },
+      { x0: 24, y0: 19, x1: 27, y1: 27, kind: 'infield' },
+      { x0: 28, y0: 24, x1: 36, y1: 27, kind: 'infield' },
+      { x0: 33, y0: 15, x1: 41, y1: 18, kind: 'edge' },
+      { x0: 15, y0: 24, x1: 18, y1: 32, kind: 'edge' },
+      /* One barrier per leg, a single cell thick, and the lap takes every
+       * one of them on the far side - so the line never sits in the middle
+       * of a street on this track.
+       *
+       * They are singles rather than the pairs the city and Foundry use,
+       * and that is geometry rather than taste: a lane change needs two
+       * turn radii of room to complete, 1.6 cells at the default slide, and
+       * a pair on a five-cell road can only ever offer one. The first cut
+       * had pairs here and the validator caught all six corners overshooting
+       * by 0.31 of a cell. A five-cell road cannot be a lane-change road. */
+      { x0:  1, y0:  9, x1:  2, y1: 14, kind: 'jog' },      // the west street
+      { x0:  7, y0: 32, x1:  9, y1: 32, kind: 'jog' },
+      { x0: 10, y0: 24, x1: 10, y1: 27, kind: 'jog' },
+      { x0: 16, y0: 19, x1: 18, y1: 19, kind: 'jog' },
+      { x0: 23, y0: 24, x1: 23, y1: 27, kind: 'jog' },
+      { x0: 26, y0: 28, x1: 34, y1: 28, kind: 'jog' },      // the long bottom leg
+      { x0: 41, y0: 23, x1: 41, y1: 28, kind: 'jog' },
+      { x0: 34, y0: 23, x1: 36, y1: 23, kind: 'jog' },
+      { x0: 28, y0: 14, x1: 28, y1: 19, kind: 'jog' },
+      { x0: 34, y0: 14, x1: 36, y1: 14, kind: 'jog' },
+      { x0: 37, y0:  7, x1: 37, y1: 10, kind: 'jog' },
+      { x0: 26, y0:  1, x1: 33, y1:  2, kind: 'jog' }       // the top street
+    ]),
+    route: [
+      { x:  5, y:  3 },   // 0  the west street, southbound, east lane
+      { x:  5, y: 17 },   // 1  change lanes between the pair
+      { x:  3, y: 17 },   // 2
+      { x:  3, y: 30 },   // 3  east along the bottom
+      { x: 13, y: 30 },   // 4  north
+      { x: 13, y: 22 },   // 5  east
+      { x: 21, y: 22 },   // 6  south, back down
+      { x: 21, y: 31 },   // 7  east along the long bottom leg
+      { x: 39, y: 31 },   // 8  north up the east street
+      { x: 39, y: 21 },   // 9  west
+      { x: 31, y: 21 },   // 10 north
+      { x: 31, y: 12 },   // 11 east
+      { x: 40, y: 12 },   // 12 north to the top street
+      { x: 40, y:  5 },   // 13 west along the top, over the line
+      { x: 22, y:  5 },   // 14 and change lanes again
+      { x: 22, y:  3 }    // 15
+    ],
+    startLeg: 13,
+    checkpoints: [
+      { x0:  1, y0: 18, x1:  7, y1: 19 },   // south down the west street
+      { x0: 16, y0: 20, x1: 17, y1: 24 },   // east through the staircase
+      { x0: 37, y0: 25, x1: 41, y1: 26 },   // north up the east street
+      { x0: 33, y0: 10, x1: 34, y1: 15 }    // east, under the rack
+    ],
+    finish: { x0: 35.6, y0: 1, x1: 36.4, y1: 7, dir: { x: -1, y: 0 } },
+    startGrid: [
+      { x: 37.5, y: 3.9, wp: 14 },
+      { x: 37.5, y: 6.1, wp: 14 },
+      { x: 39.4, y: 3.9, wp: 14 },
+      { x: 39.4, y: 6.1, wp: 14 }
+    ]
+  };
+
+  /* ---- Industrial 3: REFINERY -----------------------------------------
+   * The one track in the game with open junctions, and the only one that
+   * paints arrows on the floor - which is the deal. Five LOADING BAYS are
+   * cut into the plant, three cells wide and three deep, opening straight
+   * off the road: driving into one is a wrong turn you can actually make,
+   * and there are sixteen corners between them.
+   *
+   *        +--+  +--+--+  +-----+       the lap threads three teeth down
+   *        |  |  |()|  |  |     |       from the top and two up from the
+   *        |  +--+  +--+  |  +--+       bottom; () are the bays
+   *        | ()  ##  ()   |  |
+   *        +--+  +--+--+  +--+  |
+   *        |  |  |()|  |  |  |  |
+   *        +--+  +--+--+--+--+--+
+   *
+   * A bay is a dead end and is walled on the other three sides, so the cost
+   * of taking one is a second and a reverse, not a lost lap - and the arrow
+   * on the floor before it says so first. That cue works here for one
+   * reason only: the lap visits every piece of road exactly once, so an
+   * arrow painted on a tile can only ever mean one thing. A track that
+   * crossed itself could not be signed at all, which is why none does.
+   * -------------------------------------------------------------------- */
+  var REFINERY = {
+    id: 'refinery',
+    name: 'REFINERY',
+    blurb: 'Sixteen corners, five loading bays and arrows on the floor.',
+    grade: 'EXTREME ++',
+    cols: 52,
+    rows: 41,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'ash',
+    theme: INDUSTRIAL,
+    arrows: true,
+    walls: border(52, 41).concat([
+      { x0: 18, y0:  1, x1: 22, y1:  8, kind: 'edge' },
+      { x0: 40, y0:  1, x1: 50, y1: 11, kind: 'edge' },
+      { x0:  7, y0:  7, x1: 11, y1: 19, kind: 'infield' },
+      { x0: 29, y0:  7, x1: 33, y1: 22, kind: 'infield' },
+      { x0: 18, y0:  9, x1: 18, y1: 11, kind: 'edge' },     // the jambs of bay 2
+      { x0: 22, y0:  9, x1: 22, y1: 11, kind: 'edge' },
+      { x0: 12, y0: 18, x1: 23, y1: 22, kind: 'infield' },
+      { x0: 27, y0: 18, x1: 28, y1: 22, kind: 'infield' },
+      { x0: 34, y0: 18, x1: 44, y1: 19, kind: 'infield' },
+      { x0:  7, y0: 20, x1:  7, y1: 22, kind: 'infield' },  // and of bay 1
+      { x0: 11, y0: 20, x1: 11, y1: 22, kind: 'infield' },
+      { x0: 34, y0: 20, x1: 35, y1: 22, kind: 'infield' },  // and of bay 4
+      { x0: 39, y0: 20, x1: 44, y1: 22, kind: 'infield' },
+      { x0: 24, y0: 21, x1: 26, y1: 22, kind: 'infield' },  // the back of bay 3
+      { x0: 18, y0: 23, x1: 22, y1: 30, kind: 'infield' },
+      { x0: 40, y0: 23, x1: 44, y1: 33, kind: 'infield' },
+      { x0:  1, y0: 29, x1: 11, y1: 39, kind: 'edge' },
+      { x0: 29, y0: 29, x1: 33, y1: 39, kind: 'edge' },
+      { x0: 18, y0: 31, x1: 18, y1: 33, kind: 'infield' },  // and of bay 5
+      { x0: 22, y0: 31, x1: 22, y1: 33, kind: 'infield' },
+      // the two long streets: a pair each, against opposite kerbs
+      { x0:  1, y0:  8, x1:  2, y1: 13, kind: 'jog' },
+      { x0:  5, y0: 18, x1:  6, y1: 23, kind: 'jog' },
+      { x0: 45, y0: 25, x1: 46, y1: 32, kind: 'jog' },
+      { x0: 49, y0: 15, x1: 50, y1: 20, kind: 'jog' },
+      // one on each of the six short verticals
+      { x0: 12, y0: 28, x1: 13, y1: 35, kind: 'jog' },
+      { x0: 27, y0: 28, x1: 28, y1: 35, kind: 'jog' },
+      { x0: 34, y0: 28, x1: 35, y1: 35, kind: 'jog' },
+      { x0: 38, y0:  5, x1: 39, y1: 13, kind: 'jog' },
+      { x0: 23, y0:  5, x1: 24, y1: 13, kind: 'jog' },
+      { x0: 16, y0:  5, x1: 17, y1: 13, kind: 'jog' }
+    ]),
+    route: [
+      { x:  5, y:  4 },   // 0  the west street, southbound, east lane
+      { x:  5, y: 16 },   // 1  change lanes between the barriers
+      { x:  3, y: 16 },   // 2
+      { x:  3, y: 26 },   // 3  east, past the first bay
+      { x: 16, y: 26 },   // 4  south into the first tooth
+      { x: 16, y: 37 },   // 5  east along the bottom
+      { x: 25, y: 37 },   // 6  north
+      { x: 25, y: 26 },   // 7  east
+      { x: 38, y: 26 },   // 8  south into the second tooth
+      { x: 38, y: 37 },   // 9  east
+      { x: 49, y: 37 },   // 10 north up the east street, over the line
+      { x: 49, y: 23 },   // 11 change lanes again
+      { x: 47, y: 23 },   // 12
+      { x: 47, y: 15 },   // 13 west
+      { x: 36, y: 15 },   // 14 north
+      { x: 36, y:  4 },   // 15 west along the top
+      { x: 27, y:  4 },   // 16 south into the third tooth
+      { x: 27, y: 15 },   // 17 west
+      { x: 14, y: 15 },   // 18 north, back out
+      { x: 14, y:  4 }    // 19 west, back to the west street
+    ],
+    startLeg: 10,
+    checkpoints: [
+      { x0: 41, y0: 12, x1: 42, y1: 18 },   // west, off the east street
+      { x0:  1, y0: 15, x1:  7, y1: 16 },   // south down the west street
+      { x0: 14, y0: 31, x1: 18, y1: 32 },   // south into the first tooth
+      { x0: 42, y0: 34, x1: 43, y1: 40 }    // east along the bottom
+    ],
+    finish: { x0: 45, y0: 31.6, x1: 51, y1: 32.4, dir: { x: 0, y: -1 } },
+    startGrid: [
+      { x: 47.8, y: 33.5, wp: 11 },
+      { x: 50.1, y: 33.5, wp: 11 },
+      { x: 47.8, y: 35.4, wp: 11 },
+      { x: 50.1, y: 35.4, wp: 11 }
+    ]
+  };
+
   /* ------------------------------------------------------------------ *
    * DIRECTION
    *
@@ -1881,6 +2205,7 @@
     FROSTLINE, GLACIER, WHITEOUT,
     SCREE, OVERHANG, QUARRY,
     GRIDLOCK, CROSSTOWN, DOWNTOWN,
+    FOUNDRY, PIPEWORKS, REFINERY,
     // and the seven built before the themes, kept raceable under LEGACY
     CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE
   ].map(function (t) { return t.mirror ? flipX(t) : t; });

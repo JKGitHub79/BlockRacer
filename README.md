@@ -58,6 +58,7 @@ Five themes, ascending in difficulty, three tracks each:
 | Snow | Frostline, Glacier, Whiteout | moderate | **built** |
 | Cliffs | Scree, Overhang, Quarry | challenging | **built** |
 | City | Gridlock, Crosstown, Downtown | hard | **built** |
+| Industrial | Foundry, Pipeworks, Refinery | extreme | **built** |
 
 All fifteen are built. A theme's track is matched to `js/tracks.js` by id, and a
 name with no track behind it renders as a placeholder rather than being hidden,
@@ -264,9 +265,52 @@ the lane the second one blocks: there is no threading them, the car has to
 change lanes in the middle of the fastest road on the track. The six short
 streets get one apiece.
 
+### The industrial three
+
+A works rather than a town: pipe racks, sheds, gasholders and the
+hardstanding between them. The city took the road down to six cells; this
+theme keeps six on two tracks and takes it to five on the third, and puts a
+crash barrier on nearly every straight.
+
+**Foundry** is a zigzag ring with four teeth - two biting down from the top
+of the map and two up from the bottom - round one plant block that fills most
+of the middle. Fourteen corners in a hundred and ninety-four cells, and only
+two legs longer than twelve: the west street and the east. Both of those
+carry a **pair** of barriers against opposite kerbs, so the lane one leaves
+clear is the lane the other blocks and the car has to change lanes in the
+middle of the fastest road on the track.
+
+**Pipeworks** is five cells of road, the narrowest in the game, hooked round
+a rack that covers most of the map. Its barriers are a single cell thick
+rather than two, because two would leave three - and a three-cell gate is the
+one thing the cliffs proved is a trap rather than a difficulty.
+
+Its two haul roads are six cells rather than five, and that is a fix rather
+than a flourish. The first cut had five-cell pairs on them and the validator
+caught all six corners overshooting by 0.31 of a cell: **a lane change needs
+two turn radii of room to complete**, 1.6 cells at the default slide, and a
+five-cell road with a pair on it can only ever offer one. A five-cell road
+cannot be a lane-change road. Widening the two long streets by a cell each
+gave them the 2-cell change and cost nothing anywhere else.
+
+**Refinery** is the one track in the game with open junctions, and the only
+one that paints **arrows on the floor** - which is the deal. Five loading
+bays, three cells wide and three deep, are cut into the plant and open
+straight off the road: driving into one is a wrong turn you can actually
+make. A bay is a dead end walled on its other three sides, so the cost is a
+second and a reverse rather than a lost lap, and the arrow before it says so
+first.
+
+That cue works here for exactly one reason: the lap visits every piece of
+road once, so an arrow painted on a tile can only ever mean one thing. A
+track that crossed itself, or drove the same street twice, could not be
+signed at all - the arrow would have to say two things at the same junction.
+That is the rule the city rebuild established and it is why Refinery is
+allowed to have junctions at all.
+
 ### The ladder
 
-Twelve tracks, one continuous curve. Crashes per thousand laps of AI racing,
+Eighteen tracks, one continuous curve. Crashes per thousand laps of AI racing,
 measured the way the whole ladder has always been measured - beginner speed,
 slide 0.8, four cars (see **A note on the numbers** below):
 
@@ -277,15 +321,39 @@ slide 0.8, four cars (see **A note on the numbers** below):
 | Snow | 197 | 318 | 450 |
 | Cliffs | 430 | 617 | 467 |
 | City | 588 | 623 | 684 |
+| Industrial | 816 | 970 | 968 |
 
 In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 588, 617, 623,
-684. Forest and Desert interleave, so the first track of the desert is easier
-than the last of the forest and a new theme reads as a new theme rather than a
-wall. Snow, Cliffs and City interleave the same way, so arriving at a harder
-theme is a step rather than a cliff.
+684, 816, 968, 970. Forest and Desert interleave, so the first track of the
+desert is easier than the last of the forest and a new theme reads as a new
+theme rather than a wall. Snow, Cliffs and City interleave the same way, so
+arriving at a harder theme is a step rather than a cliff. Industrial does not
+interleave with City and is not meant to: EXTREME starts above where HARD
+finished.
 
-The two numbers out of order are Snow's first and Cliffs' last, and both are
-explained under **Where the numbers and the driving disagree**.
+**Pipeworks and Refinery measure the same.** 970 and 968 is a gap of two
+crashes in twelve hundred laps, which is nothing - this metric is good to
+about a quarter either way, so on the ladder they are tied. At the settings
+the game actually ships with (sweat, six cars) they separate the right way,
+948 to 1005 per nine hundred laps, and that is the number a player meets. The
+honest statement is that Refinery's extra difficulty is structural rather than
+numerical: sixteen corners against twelve, and five openings in the walls that
+Pipeworks does not have. It was not inflated to make the table read better; a
+crash count can always be pushed up by lengthening a barrier until the gate is
+a trap, and that is how Downtown ended up being rebuilt.
+
+The two other numbers out of order are Snow's first and Cliffs' last, and both
+are explained under **Where the numbers and the driving disagree**.
+
+**Foundry and Pipeworks swap places between the two metrics**, and the reason
+is worth keeping. Foundry is easier at beginner speed and harder at sweat;
+Pipeworks barely moves. What scales with speed is the lane change: Foundry's
+long streets each carry a pair of barriers that has to be threaded in the
+middle of the fastest road on the track, and the faster the car arrives the
+less room it has to get across. Pipeworks' barriers are singles on a fixed
+lane - nothing to thread, so nothing that gets worse when the car is quicker.
+Gate margin is a difficulty at any speed; a manoeuvre is a difficulty that
+grows with it.
 
 Three levers, in order of how much they are worth:
 
@@ -597,6 +665,14 @@ Three things learned the hard way getting them to read:
   is low and the occasional one stands right up out of it - the same trick
   `peaks` uses, because the shape is the same shape. The windows are what
   makes it a city rather than a bar chart.
+- **A works is not a skyline.** The industrial scene uses `works`: saw-tooth
+  sheds, gasholders with hoop rings, and chimneys standing well clear of
+  everything else. A town's tall things are wide and a works' tall things are
+  thin, and that one difference is most of what separates the two scenes.
+  `plume` stands smoke off the stacks as fifty-odd soft discs that widen and
+  fade as they rise, drawn between the bands so smoke from a far stack passes
+  behind the sheds in front of it. The first cut used sixteen big discs and
+  read as bubbles.
 - **Towers need a floor.** Each skyline band is filled as a solid mass **down
   to the foot of the canvas**, the way `terrace` is, rather than as towers
   standing on an invisible baseline. Towers with open sky under them float,
@@ -606,6 +682,14 @@ Three things learned the hard way getting them to read:
   which is what ground is. In front of all three, `street` lays a strip of wet
   tarmac with a row of sodium lamps and their glow on it, so the foot of the
   city is a surface and not an edge.
+- **A plant block is machinery.** `drawPipes` gives the industrial solids a
+  pipe run straight across every cell, edge to edge, so runs join up between
+  neighbours into lines that cross the whole block. The axis and the offset
+  are seeded from the ROW for a horizontal run and the COLUMN for a vertical
+  one rather than from the cell, which is the whole trick - a per-cell seed
+  would break every run at every cell edge. Flanges, bolts and the occasional
+  drum go on per cell. Barriers get hazard chevrons: a crash barrier is not a
+  pipe.
 - **Rock is not a mountain.** The cliffs scene uses `terrace` rather than
   `peaks`: a run of flat-topped blocks that each step up or down from the one
   before. Triangles read as alpine whatever colour they are, and the point of

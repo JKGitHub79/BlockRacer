@@ -216,6 +216,90 @@
     }
   }
 
+  /* A works: a run of low sheds with saw-tooth roofs, a gasholder or two and
+   * chimneys standing well above everything, filled DOWN TO THE FLOOR like
+   * the skyline and the terraces are so a nearer band covers the one behind
+   * it. The stacks are what make it read as a plant rather than as a town -
+   * a town's tall things are wide, a works' tall things are thin. */
+  function works(g, y, height, color, lit, seed, step) {
+    var rnd = rng(seed);
+    g.fillStyle = color;
+    g.fillRect(0, y, W, H - y);
+    for (var x = -step; x < W + step; x += step) {
+      var bx = x + rnd() * step * 0.2;
+      var kind = rnd();
+      if (kind < 0.30) {
+        // a chimney: thin, very tall, with a band near the top
+        var ch = height * (0.85 + rnd() * 0.75);
+        var cw = Math.max(3, step * (0.10 + rnd() * 0.07));
+        g.fillStyle = color;
+        g.fillRect(bx + step * 0.3, y - ch, cw, ch + 2);
+        if (lit) {
+          g.fillStyle = lit;
+          g.fillRect(bx + step * 0.3, y - ch + ch * 0.10, cw, Math.max(1, ch * 0.025));
+          g.fillRect(bx + step * 0.3, y - ch + ch * 0.19, cw, Math.max(1, ch * 0.025));
+        }
+        continue;
+      }
+      if (kind < 0.46) {
+        // a gasholder: a squat drum with hoop rings
+        var gh = height * (0.26 + rnd() * 0.22);
+        var gw = step * (0.62 + rnd() * 0.3);
+        g.fillStyle = color;
+        g.fillRect(bx, y - gh, gw, gh + 2);
+        if (lit) {
+          g.fillStyle = lit;
+          for (var r = 1; r <= 3; r++) {
+            g.fillRect(bx, y - gh + gh * (r / 4), gw, Math.max(1, gh * 0.03));
+          }
+        }
+        continue;
+      }
+      // a shed, with a saw-tooth roof and a strip of lit glazing under it
+      var sh = height * (0.16 + rnd() * 0.30);
+      var sw = step * (0.7 + rnd() * 0.5);
+      g.fillStyle = color;
+      g.fillRect(bx, y - sh, sw, sh + 2);
+      var teeth = Math.max(2, Math.round(sw / (step * 0.28)));
+      for (var i = 0; i < teeth; i++) {
+        var tw = sw / teeth;
+        g.beginPath();
+        g.moveTo(bx + i * tw, y - sh);
+        g.lineTo(bx + i * tw + tw, y - sh - height * 0.07);
+        g.lineTo(bx + i * tw + tw, y - sh);
+        g.closePath();
+        g.fill();
+      }
+      if (lit) {
+        g.fillStyle = lit;
+        for (var k = 0; k < teeth; k++) {
+          if (rnd() > 0.55) continue;
+          g.fillRect(bx + k * (sw / teeth) + sw / teeth * 0.2,
+                     y - sh + sh * 0.18, sw / teeth * 0.5, Math.max(1, sh * 0.10));
+        }
+      }
+    }
+  }
+
+  /* Smoke standing off the stacks. Drawn as a column of overlapping discs
+   * that widen and fade as they rise, seeded so a plume is the same plume on
+   * every redraw - it is scenery, not weather, and weather is the only thing
+   * in here allowed to move. */
+  function plume(g, x, base, height, seed, tint) {
+    var rnd = rng(seed);
+    var n = 54;
+    for (var i = 0; i < n; i++) {
+      var f = i / (n - 1);
+      var py = base - height * f - rnd() * height * 0.05;
+      var px = x + (rnd() - 0.5) * height * (0.10 + f * 0.36) + height * 0.26 * f * f;
+      var r = height * (0.020 + f * 0.075) * (0.6 + rnd() * 0.9);
+      g.fillStyle = 'rgba(' + tint + ',' + (0.052 * (1 - f * 0.82)).toFixed(3) + ')';
+      g.beginPath();
+      g.arc(px, py, r, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+
   function recede(g) {
     g.fillStyle = 'rgba(4,8,14,0.18)';
     g.fillRect(0, 0, W, H);
@@ -224,6 +308,32 @@
     v.addColorStop(1, 'rgba(3,6,11,0.5)');
     g.fillStyle = v;
     g.fillRect(0, H * 0.58, W, H * 0.42);
+  }
+
+  /* The ground a works stands on: oil-dark hardstanding with a run of
+   * floodlights down it. Same job as `street` in the city - the foot of the
+   * scene has to be a surface rather than an edge - but a yard is lit from
+   * masts rather than from lamp posts, so the pools are wider and colder. */
+  function yard(g, y, seed) {
+    var rnd = rng(seed);
+    var d = H - y;
+    g.fillStyle = '#0a0705';
+    g.fillRect(0, y, W, d);
+    g.fillStyle = 'rgba(255,186,96,0.06)';
+    g.fillRect(0, y, W, Math.max(1, d * 0.10));
+    var step = W * 0.16;
+    for (var x = step * 0.3; x < W; x += step) {
+      var lx = x + rnd() * step * 0.2;
+      var gy = y + d * 0.22;
+      var glow = g.createRadialGradient(lx, gy, 0, lx, gy, d * 1.3);
+      glow.addColorStop(0, 'rgba(232,226,208,0.26)');
+      glow.addColorStop(1, 'rgba(232,226,208,0)');
+      g.fillStyle = glow;
+      g.fillRect(lx - d * 1.3, y, d * 2.6, d);
+      g.fillStyle = 'rgba(246,242,226,0.85)';
+      g.fillRect(lx - Math.max(1, H * 0.003), gy - Math.max(1, H * 0.002),
+                 Math.max(2, H * 0.006), Math.max(2, H * 0.004));
+    }
   }
 
   /* The cards sit in a band across the middle of the screen, roughly the
@@ -307,6 +417,39 @@
       }
     },
 
+    /* Sodium haze rather than night: a works runs all night and the sky over
+     * one is never actually dark. The plumes go on BEFORE the nearer bands
+     * so smoke from a far stack passes behind the sheds in front of it, and
+     * the flare is the one warm point in the scene. */
+    industrial: {
+      weather: 'ash',
+      paint: function (g) {
+        sky(g, [[0, '#0b0a12'], [0.34, '#1d1720'], [0.62, '#42291f'],
+                [0.84, '#7d4620'], [1, '#b5702c']]);
+        works(g, H * (HORIZON + 0.02), H * 0.30, '#231c1c',
+              'rgba(255,196,110,0.34)', 41, W * 0.050);
+        plume(g, W * 0.17, H * (HORIZON - 0.06), H * 0.40, 11, '196,186,178');
+        plume(g, W * 0.63, H * (HORIZON - 0.10), H * 0.52, 23, '206,196,186');
+        works(g, H * (HORIZON + 0.13), H * 0.24, '#150f10',
+              'rgba(255,186,96,0.46)', 67, W * 0.040);
+        plume(g, W * 0.40, H * (HORIZON + 0.04), H * 0.34, 37, '170,158,150');
+        plume(g, W * 0.86, H * (HORIZON + 0.02), H * 0.30, 53, '180,168,158');
+        works(g, H * (HORIZON + 0.24), H * 0.17, '#070506',
+              'rgba(255,176,86,0.40)', 89, W * 0.031);
+        // the flare, and the light it throws on the smoke above it
+        var fx = W * 0.285, fy = H * (HORIZON + 0.235);
+        var fl = g.createRadialGradient(fx, fy, 0, fx, fy, H * 0.16);
+        fl.addColorStop(0, 'rgba(255,146,54,0.42)');
+        fl.addColorStop(1, 'rgba(255,146,54,0)');
+        g.fillStyle = fl;
+        g.fillRect(fx - H * 0.16, fy - H * 0.16, H * 0.32, H * 0.32);
+        g.fillStyle = 'rgba(255,214,150,0.92)';
+        g.fillRect(fx - W * 0.004, fy - H * 0.035, W * 0.008, H * 0.035);
+        yard(g, H * 0.955, 97);
+        recede(g);
+      }
+    },
+
     /* The front screen sits on its own night sky rather than borrowing a
      * theme's, so arriving at the game does not imply a theme. */
     night: {
@@ -343,7 +486,11 @@
     // Rain falls; it does not drift. No sway, and `wide` under one so the
     // mote comes out tall and thin instead of long and flat.
     rain:   { n: 110, color: '#a8c8ea', r: [1.6, 3.4], vx: [-40, -95], vy: [320, 540],
-              sway: 0, rate: 0.1, alpha: [0.10, 0.28], wide: 0.28 }
+              sway: 0, rate: 0.1, alpha: [0.10, 0.28], wide: 0.28 },
+    // Ash hangs. Big, slow, and swaying further than anything else here,
+    // because it is falling through its own smoke rather than through air.
+    ash:    { n: 45, color: '#d8cdbc', r: [1.0, 2.6], vx: [-20, -60], vy: [12, 44],
+              sway: 34, rate: 0.45, alpha: [0.06, 0.22], wide: 1.5 }
   };
 
   function ensureMotes(kind) {

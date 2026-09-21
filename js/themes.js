@@ -73,6 +73,18 @@
         { id: 'crosstown', name: 'CROSSTOWN', grade: 'HARD +' },
         { id: 'downtown',  name: 'DOWNTOWN',  grade: 'HARD ++' }
       ]
+    },
+    {
+      id: 'industrial',
+      name: 'INDUSTRIAL',
+      tagline: 'A works at night. Pipe racks, barriers and nowhere to put a wheel.',
+      scene: 'industrial',
+      accent: '#f5a623',
+      tracks: [
+        { id: 'foundry',   name: 'FOUNDRY',   grade: 'EXTREME' },
+        { id: 'pipeworks', name: 'PIPEWORKS', grade: 'EXTREME +' },
+        { id: 'refinery',  name: 'REFINERY',  grade: 'EXTREME ++' }
+      ]
     }
   ];
 })(typeof window !== 'undefined' ? window : globalThis);

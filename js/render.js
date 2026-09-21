@@ -105,7 +105,11 @@
     // Rain falls, it does not drift: no sway, and smeared the other way from
     // the dust - tall and thin rather than long and flat.
     rain:   { per: 1700, color: '#a8c8ea', r: [2.0, 4.6], vx: [-22, -48],
-              vy: [190, 330], sway: 0, swayRate: 0.1, alpha: [0.14, 0.36], smear: 0.26 }
+              vy: [190, 330], sway: 0, swayRate: 0.1, alpha: [0.14, 0.36], smear: 0.26 },
+    // Ash off the stacks: big, slow and almost weightless, so it hangs and
+    // wanders rather than falling. The opposite of grit in every number.
+    ash:    { per: 5200, color: '#d8cdbc', r: [1.2, 3.2], vx: [-12, -34],
+              vy: [6, 22], sway: 20, swayRate: 0.45, alpha: [0.10, 0.34], smear: 1.4 }
   };
 
   function ensureMotes() {
@@ -224,6 +228,143 @@
         g.fillRect(x + pad + ix * (w + gap), y + pad + iy * (w + gap), w, w);
       }
     }
+  }
+
+  /* ---- pipes ----------------------------------------------------------
+   *
+   * A plant block is neither terrain nor a building: it is machinery. Every
+   * cell gets a soot-stained bed and a pipe run straight across it, edge to
+   * edge, so the runs join up between neighbours into lines that cross the
+   * whole block - which is what a pipe rack looks like from above. The axis
+   * and the offset are seeded from the ROW for a horizontal run and from the
+   * COLUMN for a vertical one rather than from the cell, which is the whole
+   * trick: a per-cell seed would break every run at every cell edge.
+   *
+   * On top of that, per cell: a flange on some, a pair of bolts, and the
+   * occasional drum. Seeded like the stone and the windows, so a rack is the
+   * same rack every time the track is baked and does not reshuffle when the
+   * slide slider moves.
+   *
+   * Barriers get hazard chevrons instead. A crash barrier is not a pipe. */
+  function drawPipes(g, cx, cy, kind) {
+    var x = cx * S, y = cy * S;
+
+    if (kind === 3) {
+      g.save();
+      g.beginPath(); g.rect(x, y, S, S); g.clip();
+      g.fillStyle = 'rgba(16,12,8,0.82)';
+      var w = S * 0.34;
+      for (var i = -2; i < 3; i++) {
+        var o = i * w * 2 + ((cx + cy) % 2) * w;
+        g.beginPath();
+        g.moveTo(x + o, y + S);
+        g.lineTo(x + o + w, y + S);
+        g.lineTo(x + o + w + S, y);
+        g.lineTo(x + o + S, y);
+        g.closePath();
+        g.fill();
+      }
+      g.restore();
+      return;
+    }
+
+    // soot and scale: the whole cell a step darker or lighter
+    var t = cellNoise(cx, cy, 11);
+    g.fillStyle = t < 0.56
+      ? 'rgba(0,0,0,' + (0.05 + t * 0.34).toFixed(3) + ')'
+      : 'rgba(226,206,172,' + ((t - 0.56) * 0.26).toFixed(3) + ')';
+    g.fillRect(x, y, S, S);
+
+    // the run itself, seeded off the line it runs along so it joins up
+    var horiz = cellNoise(0, cy, 12) < 0.55;
+    var lane = horiz ? cellNoise(0, cy, 13) : cellNoise(cx, 0, 14);
+    var thick = Math.max(3, Math.round(S * (0.15 + lane * 0.10)));
+    var off = Math.round((0.16 + lane * 0.52) * S);
+    g.fillStyle = 'rgba(20,17,14,0.55)';
+    if (horiz) g.fillRect(x, y + off, S, thick);
+    else g.fillRect(x + off, y, thick, S);
+    // the lit top of the pipe, which is what makes it read as round
+    g.fillStyle = 'rgba(232,214,180,0.16)';
+    if (horiz) g.fillRect(x, y + off, S, Math.max(1, thick * 0.34));
+    else g.fillRect(x + off, y, Math.max(1, thick * 0.34), S);
+
+    // a flange across the run on about a quarter of cells
+    if (cellNoise(cx, cy, 15) < 0.26) {
+      g.fillStyle = 'rgba(238,222,190,0.22)';
+      var fw = Math.max(2, Math.round(S * 0.12));
+      var fp = Math.round(cellNoise(cx, cy, 16) * (S - fw));
+      if (horiz) g.fillRect(x + fp, y + off - 2, fw, thick + 4);
+      else g.fillRect(x + off - 2, y + fp, thick + 4, fw);
+    }
+
+    // a drum standing on the deck, now and then
+    if (cellNoise(cx, cy, 17) < 0.11) {
+      var r = S * 0.24;
+      var dx = x + S * 0.5, dy = y + S * 0.5;
+      g.fillStyle = 'rgba(10,9,8,0.55)';
+      g.beginPath(); g.arc(dx, dy, r, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(236,220,188,0.24)';
+      g.lineWidth = 1;
+      g.beginPath(); g.arc(dx, dy, r - 1, 0, Math.PI * 2); g.stroke();
+    }
+
+    // two bolts, so the deck is plate rather than paint
+    var b = Math.max(1, Math.round(S * 0.07));
+    g.fillStyle = 'rgba(240,226,196,0.13)';
+    g.fillRect(x + Math.round(cellNoise(cx, cy, 18) * (S - b - 3)) + 2,
+               y + Math.round(cellNoise(cx, cy, 19) * (S - b - 3)) + 2, b, b);
+    g.fillStyle = 'rgba(0,0,0,0.28)';
+    g.fillRect(x + Math.round(cellNoise(cx, cy, 20) * (S - b - 3)) + 2,
+               y + Math.round(cellNoise(cx, cy, 21) * (S - b - 3)) + 2, b, b);
+  }
+
+  /* ---- arrows on the floor ---------------------------------------------
+   *
+   * A track whose walls do not enclose the road - one with junctions, where
+   * there is a second way to go - has to say which way is the lap, or its
+   * difficulty becomes "not knowing where the road goes", which is not
+   * difficulty. A track opts in with `arrows: true`.
+   *
+   * They are painted along the ROUTE and point along it, which is the only
+   * cue that cannot be ambiguous on a lap that passes a junction: the arrow
+   * says what the racing line does here. They are skipped within a corner,
+   * where a chevron would point across the arc rather than along it, and
+   * they are baked, so they cost nothing per frame.
+   *
+   * This cue is a property of the TILE, so it can only ever serve a lap that
+   * visits each piece of road once. A track that crossed itself would need
+   * the arrow to say two things at the same junction, which is exactly why
+   * no track in the game does that any more. */
+  function drawArrows(g) {
+    if (!T.data.arrows) return;
+    var SPACING = 6.5;        // cells between chevrons
+    var CLEAR = 3.4;          // and none this close to a corner
+    var col = colorOf('arrow') || 'rgba(245,228,190,0.30)';
+    g.save();
+    g.strokeStyle = col;
+    g.lineWidth = Math.max(2, S * 0.11);
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    var pts = T.ROUTE, n = pts.length;
+    for (var i = 0; i < n; i++) {
+      var a = pts[i], b = pts[(i + 1) % n];
+      var len = Math.abs(b.x - a.x) + Math.abs(b.y - a.y);
+      var dx = (b.x - a.x) / len, dy = (b.y - a.y) / len;
+      var usable = len - CLEAR * 2;
+      if (usable <= 0) continue;
+      var count = Math.max(1, Math.round(usable / SPACING));
+      for (var k = 0; k < count; k++) {
+        var d = CLEAR + usable * (count === 1 ? 0.5 : k / (count - 1));
+        var px = (a.x + dx * d) * S, py = (a.y + dy * d) * S;
+        var w = S * 0.42, h = S * 0.40;      // half-width across, reach ahead
+        g.beginPath();
+        g.moveTo(px - dy * w - dx * h, py + dx * w - dy * h);
+        g.lineTo(px + dx * h, py + dy * h);
+        g.lineTo(px + dy * w - dx * h, py - dx * w - dy * h);
+        g.stroke();
+      }
+    }
+    g.restore();
   }
 
   function eachWall(fn) {
@@ -349,11 +490,14 @@
     g.stroke();
     g.restore();
 
+    drawArrows(g);
+
     // Walls, in two passes: every solid is filled flat first, then the
     // emblems are painted over the flat fill, then the lit edges go on top -
     // so the faces that make the blocks read as raised survive the livery.
     var stone = !!(T.theme && T.theme.rock);
     var lit = !!(T.theme && T.theme.windows);
+    var plant = !!(T.theme && T.theme.pipes);
     eachWall(function (cx, cy, kind) {
       // Four kinds of solid: the islands inside the circuit, the ground
       // outside it, the chicane blocks, and lava - whose cooled crust is
@@ -363,6 +507,7 @@
       g.fillRect(cx * S, cy * S, S, S);
       if (stone) drawStone(g, cx, cy);
       if (lit) drawWindows(g, cx, cy, kind);
+      if (plant) drawPipes(g, cx, cy, kind);
     });
 
     drawEmblems(g);
