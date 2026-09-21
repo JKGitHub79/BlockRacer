@@ -2126,6 +2126,261 @@
     ]
   };
 
+  /* ==================================================================== *
+   * ANCIENT RUINS - the seventh theme.
+   *
+   * Dressed stone, and shapes that are BUILT rather than laid out: a plan
+   * on a cross, a colonnade, a meander. Every theme so far took its shapes
+   * from what a road does - a ring, a weave, a grid. These three take them
+   * from what a building does, which is the whole idea.
+   * ==================================================================== */
+  var RUINS = {
+    /* `glyphs` turns on the dressed-stone texture in js/render.js: courses
+     * of ashlar with staggered joints, carved panels, column drums, cracks
+     * and lichen. The cliffs' `rock` is geology; this is masonry. */
+    glyphs:     true,
+    bg:         '#0d0a07',
+    road:       '#171310',   // worn flagstone, still near black
+    roadLine:   '#231c15',
+    wall:       '#6b533a',   // sandstone, lit warm
+    wallTop:    '#c9a06a',
+    outer:      '#3e2f20',   // the precinct beyond the circuit
+    outerTop:   '#7a5c3c',
+    jog:        '#5f6b3a',   // fallen masonry, gone over with lichen
+    jogTop:     '#a8bf62',
+    racingLine: 'rgba(255,214,150,0.26)',
+    check:      'rgba(255,200,110,0.07)',
+    checkNext:  'rgba(255,200,110,0.30)',
+    startLine:  '#f3e6cf'
+  };
+
+  /* ---- Ruins 1: SANCTUM ------------------------------------------------
+   * A temple on a cross plan, and the lap is the processional walk round
+   * it. The road is a band of constant width following a PLUS, so it has
+   * outside corners and inside ones alternating - four of the twelve are
+   * the armpits of the cross, where the wall you are leaning on becomes
+   * the wall you are turning into:
+   *
+   *              +-----+
+   *              |     |          twelve corners in a hundred and twenty
+   *        +-----+  #  +-----+    cells, which is the tightest corner
+   *        |        ###       |   rhythm in the game - no straight on it
+   *        +-----+  #  +-----+    is longer than sixteen
+   *              |     |
+   *              +-----+
+   * -------------------------------------------------------------------- */
+  var SANCTUM = {
+    id: 'sanctum',
+    name: 'SANCTUM',
+    blurb: 'The walk round a cross-plan temple. Twelve corners, no straights.',
+    grade: 'EXPERT',
+    cols: 48,
+    rows: 37,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'motes',
+    theme: RUINS,
+    walls: border(48, 37).concat([
+      { x0:  1, y0:  1, x1: 46, y1:  4, kind: 'edge' },     // the precinct wall
+      { x0:  1, y0:  5, x1: 15, y1: 11, kind: 'edge' },
+      { x0: 36, y0:  5, x1: 46, y1: 11, kind: 'edge' },
+      { x0:  1, y0: 12, x1:  4, y1: 35, kind: 'edge' },
+      { x0:  5, y0: 29, x1: 15, y1: 35, kind: 'edge' },
+      { x0: 36, y0: 29, x1: 46, y1: 35, kind: 'edge' },
+      { x0: 21, y0: 10, x1: 30, y1: 30, kind: 'infield' },  // the cross itself
+      { x0: 10, y0: 17, x1: 20, y1: 23, kind: 'infield' },
+      { x0: 31, y0: 17, x1: 41, y1: 23, kind: 'infield' },
+      /* Fallen masonry, one piece per straight, always on the far side.
+       * One cell thick: the road here is five, and two would leave three -
+       * which the cliffs proved is a trap rather than a difficulty. */
+      { x0: 10, y0: 12, x1: 16, y1: 12, kind: 'jog' },
+      { x0:  5, y0: 16, x1:  5, y1: 25, kind: 'jog' },
+      { x0: 10, y0: 28, x1: 16, y1: 28, kind: 'jog' },
+      { x0: 22, y0: 35, x1: 30, y1: 35, kind: 'jog' },
+      { x0: 37, y0: 24, x1: 41, y1: 24, kind: 'jog' },
+      { x0: 46, y0: 16, x1: 46, y1: 25, kind: 'jog' },
+      { x0: 36, y0: 16, x1: 42, y1: 16, kind: 'jog' },
+      { x0: 22, y0:  5, x1: 30, y1:  5, kind: 'jog' }
+    ]),
+    route: [
+      { x: 18.5, y:  8 },   // 0  south into the north arm
+      { x: 18.5, y: 15 },   // 1  west over the west arm
+      { x:  8,   y: 15 },   // 2  south round the end of it
+      { x:  8,   y: 26 },   // 3  east
+      { x: 18.5, y: 26 },   // 4  south into the armpit
+      { x: 18.5, y: 33 },   // 5  east along the bottom
+      { x: 33.5, y: 33 },   // 6  north
+      { x: 33.5, y: 27 },   // 7  east under the east arm
+      { x: 44,   y: 27 },   // 8  north round its end, over the line
+      { x: 44,   y: 14 },   // 9  west
+      { x: 33.5, y: 14 },   // 10 north
+      { x: 33.5, y:  8 }    // 11 west along the top, back to the north arm
+    ],
+    startLeg: 8,
+    checkpoints: [
+      { x0: 26, y0:  6, x1: 27, y1: 10 },   // west along the top
+      { x0: 13, y0: 13, x1: 14, y1: 17 },   // west over the west arm
+      { x0: 13, y0: 24, x1: 14, y1: 28 },   // east under it
+      { x0: 21, y0: 31, x1: 22, y1: 36 }    // east along the bottom
+    ],
+    finish: { x0: 42, y0: 20.6, x1: 46, y1: 21.4, dir: { x: 0, y: -1 } },
+    startGrid: [
+      { x: 43.2, y: 22.5, wp: 9 },
+      { x: 45.2, y: 22.5, wp: 9 },
+      { x: 43.2, y: 24.4, wp: 9 },
+      { x: 45.2, y: 24.4, wp: 9 }
+    ]
+  };
+
+
+  /* ---- Ruins 2: COLONNADE ----------------------------------------------
+   * Three columns of stone hanging into the middle of the map from the
+   * top, and the lap threads between them: up one side, down the next, up
+   * the third. A comb rather than a ring.
+   *
+   *        +--+  +--+  +--+  +----+
+   *        |  |  |  |  |  |  |    |   the two long streets - the bottom
+   *        |  +--+  +--+  |  |    |   and the west - carry a PAIR each and
+   *        |              |  +----+   the lap changes lanes between them
+   *        +--------------+--------+
+   * -------------------------------------------------------------------- */
+  var COLONNADE = {
+    id: 'colonnade',
+    name: 'COLONNADE',
+    blurb: 'Three stone columns into the middle, and the lap threads between.',
+    grade: 'EXPERT +',
+    cols: 51,
+    rows: 40,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'motes',
+    theme: RUINS,
+    walls: border(51, 40).concat([
+      { x0: 17, y0:  1, x1: 22, y1: 22, kind: 'edge' },     // the middle column
+      { x0: 39, y0:  1, x1: 49, y1: 22, kind: 'edge' },     // and the east one
+      { x0:  6, y0:  6, x1: 11, y1: 33, kind: 'infield' },
+      { x0: 28, y0:  6, x1: 33, y1: 33, kind: 'infield' },
+      { x0: 12, y0: 28, x1: 27, y1: 33, kind: 'infield' },
+      { x0: 34, y0: 28, x1: 44, y1: 33, kind: 'infield' },
+      // one fallen course per straight, always taken on the far side
+      { x0:  8, y0: 34, x1: 24, y1: 34, kind: 'jog' },
+      { x0: 49, y0: 27, x1: 49, y1: 35, kind: 'jog' },
+      { x0: 38, y0: 23, x1: 46, y1: 23, kind: 'jog' },
+      { x0: 34, y0:  8, x1: 34, y1: 21, kind: 'jog' },
+      { x0: 27, y0:  1, x1: 35, y1:  1, kind: 'jog' },
+      { x0: 27, y0:  8, x1: 27, y1: 21, kind: 'jog' },
+      { x0: 16, y0: 27, x1: 24, y1: 27, kind: 'jog' },
+      { x0: 12, y0:  8, x1: 12, y1: 21, kind: 'jog' },
+      { x0:  5, y0:  5, x1: 13, y1:  5, kind: 'jog' },
+      { x0:  1, y0: 10, x1:  1, y1: 28, kind: 'jog' }
+    ]),
+    route: [
+      { x:  4, y: 37 },   // 0  east along the bottom, over the line
+      { x: 47, y: 37 },   // 1  north up the east street
+      { x: 47, y: 26 },   // 2  west
+      { x: 37, y: 26 },   // 3  north up the first column
+      { x: 37, y:  4 },   // 4  west along the top
+      { x: 25, y:  4 },   // 5  south down the second
+      { x: 25, y: 25 },   // 6  west
+      { x: 15, y: 25 },   // 7  north up the third
+      { x: 15, y:  3 },   // 8  west along the top again
+      { x:  4, y:  3 }    // 9  south down the west street
+    ],
+    startLeg: 0,
+    checkpoints: [
+      { x0: 42, y0: 24, x1: 43, y1: 28 },   // west off the east street
+      { x0: 23, y0: 12, x1: 27, y1: 13 },   // south down the second column
+      { x0: 13, y0: 12, x1: 17, y1: 13 },   // north up the third
+      { x0:  2, y0: 21, x1:  6, y1: 22 }    // south down the west street
+    ],
+    finish: { x0: 27.6, y0: 34, x1: 28.4, y1: 39, dir: { x: 1, y: 0 } },
+    startGrid: [
+      { x: 26.5, y: 36.0, wp: 1 },
+      { x: 26.5, y: 38.0, wp: 1 },
+      { x: 24.6, y: 36.0, wp: 1 },
+      { x: 24.6, y: 38.0, wp: 1 }
+    ]
+  };
+
+
+  /* ---- Ruins 3: LABYRINTH ----------------------------------------------
+   * A meander - the border pattern cut into every frieze in the theme,
+   * driven rather than looked at. Five walls of stone standing in from
+   * alternate sides and the road folding back between them:
+   *
+   *        +-------------------------+   five cells of road, twelve
+   *        |  +--+  +--+  +--+  +--+ |   corners, and eighteen-cell
+   *        |  |  |  |  |  |  |  |  | |   folds - the only track in the
+   *        |  |  +--+  +--+  +--+  | |   game where every corner is the
+   *        +--+                    +-+   same corner, taken twelve times
+   * -------------------------------------------------------------------- */
+  var LABYRINTH = {
+    id: 'labyrinth',
+    name: 'LABYRINTH',
+    blurb: 'A meander in stone. Five folds, five cells of road, no let-up.',
+    grade: 'EXPERT ++',
+    cols: 52,
+    rows: 34,
+    aiPace: 0.95,
+    aiOffsetScale: 1.5,
+    aiMistakeScale: 1,
+    weather: 'motes',
+    theme: RUINS,
+    walls: border(52, 34).concat([
+      { x0:  6, y0:  6, x1: 45, y1:  9, kind: 'infield' },
+      { x0:  6, y0: 10, x1:  9, y1: 27, kind: 'infield' },
+      { x0: 24, y0: 10, x1: 27, y1: 27, kind: 'infield' },
+      { x0: 42, y0: 10, x1: 45, y1: 27, kind: 'infield' },
+      { x0: 15, y0: 15, x1: 18, y1: 32, kind: 'edge' },
+      { x0: 33, y0: 15, x1: 36, y1: 32, kind: 'edge' },
+      /* One cell thick, not two: on a five-cell road two would leave three,
+       * and a three-cell gate is a trap rather than a difficulty. One
+       * leaves four, the same gate the city runs, on a narrower road. */
+      { x0:  1, y0:  9, x1:  1, y1: 23, kind: 'jog' },
+      { x0:  5, y0: 32, x1: 10, y1: 32, kind: 'jog' },
+      { x0: 14, y0: 16, x1: 14, y1: 27, kind: 'jog' },
+      { x0: 14, y0: 10, x1: 19, y1: 10, kind: 'jog' },
+      { x0: 19, y0: 16, x1: 19, y1: 27, kind: 'jog' },
+      { x0: 23, y0: 28, x1: 28, y1: 28, kind: 'jog' },
+      { x0: 32, y0: 16, x1: 32, y1: 27, kind: 'jog' },
+      { x0: 32, y0: 14, x1: 37, y1: 14, kind: 'jog' },
+      { x0: 37, y0: 16, x1: 37, y1: 27, kind: 'jog' },
+      { x0: 41, y0: 32, x1: 46, y1: 32, kind: 'jog' },
+      { x0: 50, y0:  9, x1: 50, y1: 23, kind: 'jog' },
+      { x0: 19, y0:  1, x1: 31, y1:  1, kind: 'jog' }
+    ]),
+    route: [
+      { x:  4, y:  4 },   // 0  south down the west street
+      { x:  4, y: 30 },   // 1  east along the bottom
+      { x: 12, y: 30 },   // 2  north, the first fold
+      { x: 12, y: 13 },   // 3  east
+      { x: 22, y: 13 },   // 4  south, the second
+      { x: 22, y: 31 },   // 5  east
+      { x: 30, y: 31 },   // 6  north, the third
+      { x: 30, y: 12 },   // 7  east
+      { x: 40, y: 12 },   // 8  south, the fourth
+      { x: 40, y: 30 },   // 9  east
+      { x: 48, y: 30 },   // 10 north up the east street
+      { x: 48, y:  4 }    // 11 west along the top, over the line
+    ],
+    startLeg: 11,
+    checkpoints: [
+      { x0:  2, y0: 12, x1:  6, y1: 13 },   // south down the west street
+      { x0: 10, y0: 20, x1: 14, y1: 21 },   // north out of the first fold
+      { x0: 28, y0: 24, x1: 32, y1: 25 },   // north out of the third
+      { x0: 44, y0: 28, x1: 45, y1: 32 }    // east towards the east street
+    ],
+    finish: { x0: 37.6, y0: 1, x1: 38.4, y1: 6, dir: { x: -1, y: 0 } },
+    startGrid: [
+      { x: 39.5, y: 3.0, wp: 0 },
+      { x: 39.5, y: 5.0, wp: 0 },
+      { x: 41.4, y: 3.0, wp: 0 },
+      { x: 41.4, y: 5.0, wp: 0 }
+    ]
+  };
+
   /* ------------------------------------------------------------------ *
    * DIRECTION
    *
@@ -2199,6 +2454,7 @@
     SCREE, OVERHANG, QUARRY,
     GRIDLOCK, CROSSTOWN, DOWNTOWN,
     FOUNDRY, PIPEWORKS, REFINERY,
+    SANCTUM, COLONNADE, LABYRINTH,
     // and the seven built before the themes, kept raceable under LEGACY
     CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE
   ].map(function (t) { return t.mirror ? flipX(t) : t; });

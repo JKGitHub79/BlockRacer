@@ -59,6 +59,7 @@ Five themes, ascending in difficulty, three tracks each:
 | Cliffs | Scree, Overhang, Quarry | challenging | **built** |
 | City | Gridlock, Crosstown, Downtown | hard | **built** |
 | Industrial | Foundry, Pipeworks, Refinery | extreme | **built** |
+| Ancient Ruins | Sanctum, Colonnade, Labyrinth | expert | **built** |
 
 All fifteen are built. A theme's track is matched to `js/tracks.js` by id, and a
 name with no track behind it renders as a placeholder rather than being hidden,
@@ -300,11 +301,37 @@ other three sides, so the cost is a second and a reverse rather than a lost
 lap, and the lap itself visits every piece of road exactly once and never
 crosses.
 
+### The ruins three
+
+Dressed stone, and shapes that are BUILT rather than laid out. Every theme
+before this took its shapes from what a road does - a ring, a weave, a grid.
+These three take them from what a building does.
+
+**Sanctum** is a temple on a cross plan and the lap is the processional walk
+round it: a band of constant width following a PLUS, so outside corners and
+inside ones alternate and four of the twelve are the armpits of the cross,
+where the wall you are leaning on becomes the wall you are turning into.
+Twelve corners in a hundred and twenty-two cells is the tightest corner
+rhythm in the game - no straight on it is longer than sixteen.
+
+**Colonnade** is three columns of stone hanging into the middle of the map
+from the top, and the lap threads between them: up one side, down the next,
+up the third. A comb rather than a ring.
+
+**Labyrinth** is a meander - the border pattern cut into every frieze in the
+theme, driven rather than looked at. Five walls standing in from alternate
+sides and the road folding back between them, with eighteen-cell folds and
+the same corner taken twelve times.
+
+All three are five cells wide, and their barriers are a single cell thick for
+the reason Pipeworks established: on a five-cell road two would leave three,
+and a three-cell gate is a trap rather than a difficulty.
+
 ### The ladder
 
-Eighteen tracks, one continuous curve. Crashes per thousand laps of AI racing,
-measured the way the whole ladder has always been measured - beginner speed,
-slide 0.8, four cars (see **A note on the numbers** below):
+Twenty-one tracks, one continuous curve. Crashes per thousand laps of AI
+racing, measured the way the whole ladder has always been measured - beginner
+speed, slide 0.8, four cars (see **A note on the numbers** below):
 
 | | 1 | 2 | 3 |
 | --- | --- | --- | --- |
@@ -314,14 +341,41 @@ slide 0.8, four cars (see **A note on the numbers** below):
 | Cliffs | 430 | 617 | 467 |
 | City | 588 | 623 | 684 |
 | Industrial | 816 | 970 | 968 |
+| Ancient Ruins | 734 | 755 | 729 |
+
+**Ancient Ruins does not sit above Industrial, and the table says so.** It was
+built to, and it does not: on the ladder the three measure 734, 755 and 729,
+which is one number three times over inside this metric's noise, and all of it
+under Foundry's 816. At the settings the game ships with they do separate in
+the right order - 553, 586, 620 - but that is still under Industrial's 761,
+760 and 789.
+
+The reason is worth recording, because it is the edge of the toolkit rather
+than a mistake in one track. Difficulty on a corridor comes from three things:
+gate margin, the number of lane changes, and corner count. These three are
+five cells wide, which is as narrow as the game goes before the AI stops
+finishing; every straight already carries a barrier; and a **lane change needs
+two turn radii of room**, 1.6 cells at the default slide, which a five-cell
+road cannot offer - so the strongest lever Foundry and Refinery use is not
+available here at all. What is left is barrier length, and that lever has no
+middle: lengthening Sanctum's barriers one cell further takes it from 765 to
+1282, and Labyrinth's from 729 to 14,866, because past a point a barrier stops
+being a gate and becomes a wall the AI cannot get round. There is no setting
+between "a little easier than Industrial" and "impossible".
+
+Getting this theme above Industrial means going back to **six-cell roads with
+barrier pairs on the long legs**, which is the Foundry recipe: a manoeuvre in
+the middle of a straight rather than a gate on one side of it. That is a
+rebuild of two of the three, not a tuning pass.
 
 In order: 58, 69, 88, 124, 144, 190, 197, 318, 430, 450, 467, 588, 617, 623,
-684, 816, 968, 970. Forest and Desert interleave, so the first track of the
+684, 729, 734, 755, 816, 968, 970. Forest and Desert interleave, so the first track of the
 desert is easier than the last of the forest and a new theme reads as a new
 theme rather than a wall. Snow, Cliffs and City interleave the same way, so
 arriving at a harder theme is a step rather than a cliff. Industrial does not
 interleave with City and is not meant to: EXTREME starts above where HARD
-finished.
+finished. Ancient Ruins interleaves with Industrial, which is not what was
+asked for - see above.
 
 Pipeworks and Refinery measure the same: 970 and 968 is two crashes in twelve
 hundred laps, well inside this metric's noise, so on the ladder they are tied.
@@ -653,6 +707,19 @@ Three things learned the hard way getting them to read:
   is low and the occasional one stands right up out of it - the same trick
   `peaks` uses, because the shape is the same shape. The windows are what
   makes it a city rather than a bar chart.
+- **Old stone is dressed, not raw.** The cliffs' `drawStone` is geology - a
+  bed, a seam and two chips. `drawRuins` is masonry: three courses of ashlar
+  per cell with the joints staggered course to course, which is what makes
+  stone read as built rather than as landscape, plus a carved panel on a
+  fifth of the blocks, a column drum on some, cracks and lichen. Fallen
+  masonry - the jog kind - is drums lying where they came down, because a
+  barrier in a ruin is not something anyone put there.
+- **A ruin needs columns to read as one.** The `ruinband` primitive picks per
+  slot between a stepped pyramid, a columned facade under a pediment, an
+  obelisk and a seated figure on a plinth. The columns are the tell: nothing
+  else in the scenery has a repeated vertical rhythm, and a row of them reads
+  as built by somebody at forty pixels tall. A fifth of the columns are
+  missing, which is the other half of reading as a ruin.
 - **A works is not a skyline.** The industrial scene uses `works`: saw-tooth
   sheds, gasholders with hoop rings, and chimneys standing well clear of
   everything else. A town's tall things are wide and a works' tall things are

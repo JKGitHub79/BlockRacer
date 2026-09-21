@@ -300,6 +300,112 @@
     }
   }
 
+  /* A skyline of ruins, filled DOWN TO THE FLOOR like the works and the
+   * skyline are. Four things stand in a band, picked per slot: a stepped
+   * pyramid, a columned facade under a pediment, an obelisk, and a seated
+   * figure on a plinth. The columns are the tell - nothing else in the
+   * scenery has a repeated vertical rhythm, and a row of them reads as
+   * built by somebody even at forty pixels tall. */
+  function ruinband(g, y, height, color, lit, seed, step) {
+    var rnd = rng(seed);
+    g.fillStyle = color;
+    g.fillRect(0, y, W, H - y);
+    for (var x = -step; x < W + step; x += step) {
+      var bx = x + rnd() * step * 0.22;
+      var kind = rnd();
+
+      if (kind < 0.30) {
+        // a stepped pyramid: each tier narrower and shorter than the last
+        var tiers = 3 + Math.floor(rnd() * 3);
+        var pw = step * (0.95 + rnd() * 0.5);
+        var ph = height * (0.45 + rnd() * 0.55);
+        for (var t = 0; t < tiers; t++) {
+          var f = t / tiers;
+          g.fillStyle = color;
+          g.fillRect(bx + pw * 0.5 * f, y - ph * (t + 1) / tiers,
+                     pw * (1 - f), ph / tiers + 1);
+          if (lit && t === tiers - 1) {
+            g.fillStyle = lit;                      // a fire on the top step
+            g.fillRect(bx + pw * 0.5 - Math.max(1, pw * 0.035), y - ph - height * 0.05,
+                       Math.max(2, pw * 0.07), height * 0.05);
+          }
+        }
+        continue;
+      }
+
+      if (kind < 0.62) {
+        // a columned facade: a plinth, a rhythm of columns, an architrave
+        var fw = step * (0.8 + rnd() * 0.55);
+        var fh = height * (0.34 + rnd() * 0.34);
+        var plinth = fh * 0.13, arch = fh * 0.17;
+        g.fillStyle = color;
+        g.fillRect(bx, y - plinth, fw, plinth + 2);
+        g.fillRect(bx - fw * 0.05, y - fh, fw * 1.1, arch);
+        var n = 4 + Math.floor(rnd() * 4);
+        var cw = fw / (n * 2 - 1);
+        for (var c = 0; c < n; c++) {
+          // some of them have come down, which is the point of a ruin
+          if (rnd() < 0.22) continue;
+          g.fillRect(bx + c * cw * 2, y - fh + arch, cw, fh - arch - plinth + 1);
+        }
+        // and a pediment over about half of them
+        if (rnd() < 0.5) {
+          g.beginPath();
+          g.moveTo(bx - fw * 0.05, y - fh);
+          g.lineTo(bx + fw * 0.5, y - fh - height * 0.13);
+          g.lineTo(bx + fw * 1.05, y - fh);
+          g.closePath();
+          g.fill();
+        }
+        continue;
+      }
+
+      if (kind < 0.80) {
+        // an obelisk, tapering, with a cap
+        var ow = Math.max(3, step * (0.09 + rnd() * 0.05));
+        var oh = height * (0.7 + rnd() * 0.7);
+        g.fillStyle = color;
+        g.beginPath();
+        g.moveTo(bx + step * 0.35, y + 2);
+        g.lineTo(bx + step * 0.35 + ow, y + 2);
+        g.lineTo(bx + step * 0.35 + ow * 0.62, y - oh);
+        g.lineTo(bx + step * 0.35 + ow * 0.38, y - oh);
+        g.closePath();
+        g.fill();
+        continue;
+      }
+
+      // a seated figure on a plinth: knees, torso, head
+      var sw = step * (0.4 + rnd() * 0.2), sh = height * (0.34 + rnd() * 0.22);
+      g.fillStyle = color;
+      g.fillRect(bx + step * 0.2, y - sh * 0.22, sw, sh * 0.22 + 2);      // plinth
+      g.fillRect(bx + step * 0.2, y - sh * 0.52, sw, sh * 0.30);          // knees
+      g.fillRect(bx + step * 0.2 + sw * 0.18, y - sh * 0.88, sw * 0.5, sh * 0.38); // torso
+      g.fillRect(bx + step * 0.2 + sw * 0.24, y - sh, sw * 0.36, sh * 0.16);       // head
+    }
+  }
+
+  /* The sand the ruins stand in: a pale floor with a scatter of fallen
+   * blocks half-buried in it, so the foot of the scene is a surface rather
+   * than an edge - the same job `street` and `yard` do for their themes. */
+  function sand(g, y, seed) {
+    var rnd = rng(seed);
+    var d = H - y;
+    var grad = g.createLinearGradient(0, y, 0, H);
+    grad.addColorStop(0, '#6b5233');
+    grad.addColorStop(1, '#3b2c1b');
+    g.fillStyle = grad;
+    g.fillRect(0, y, W, d);
+    g.fillStyle = 'rgba(255,224,168,0.10)';
+    g.fillRect(0, y, W, Math.max(1, d * 0.12));
+    for (var i = 0; i < 26; i++) {
+      var bw = W * (0.008 + rnd() * 0.020);
+      var bx = rnd() * W, by = y + d * (0.2 + rnd() * 0.7);
+      g.fillStyle = rnd() < 0.5 ? 'rgba(0,0,0,0.22)' : 'rgba(255,230,180,0.10)';
+      g.fillRect(bx, by, bw, Math.max(2, bw * 0.5));
+    }
+  }
+
   function recede(g) {
     g.fillStyle = 'rgba(4,8,14,0.18)';
     g.fillRect(0, 0, W, H);
@@ -450,6 +556,26 @@
       }
     },
 
+    /* Late light on old stone: the sun is low and behind the ruins, so every
+     * band is a silhouette and the colour is all sky. Three bands of it,
+     * each filled to the floor, and sand in front. */
+    ruins: {
+      weather: 'motes',
+      paint: function (g) {
+        sky(g, [[0, '#1a1030'], [0.26, '#43204a'], [0.52, '#8c3f45'],
+                [0.74, '#c87a41'], [1, '#e9be76']]);
+        sun(g, W * 0.70, H * 0.60, H * 0.075, '#ffe9b8', 'rgba(255,196,110,0.30)');
+        ruinband(g, H * (HORIZON + 0.02), H * 0.30, '#7b5638',
+                 'rgba(255,196,110,0.40)', 29, W * 0.066);
+        ruinband(g, H * (HORIZON + 0.13), H * 0.25, '#4b3222',
+                 'rgba(255,186,96,0.42)', 61, W * 0.052);
+        ruinband(g, H * (HORIZON + 0.24), H * 0.19, '#241709',
+                 null, 97, W * 0.041);
+        sand(g, H * 0.95, 131);
+        recede(g);
+      }
+    },
+
     /* The front screen sits on its own night sky rather than borrowing a
      * theme's, so arriving at the game does not imply a theme. */
     night: {
@@ -490,7 +616,11 @@
     // Ash hangs. Big, slow, and swaying further than anything else here,
     // because it is falling through its own smoke rather than through air.
     ash:    { n: 45, color: '#d8cdbc', r: [1.0, 2.6], vx: [-20, -60], vy: [12, 44],
-              sway: 34, rate: 0.45, alpha: [0.06, 0.22], wide: 1.5 }
+              sway: 34, rate: 0.45, alpha: [0.06, 0.22], wide: 1.5 },
+    // Dust hanging in still air: the slowest thing here, and it drifts up as
+    // often as down because nothing is moving it.
+    motes:  { n: 50, color: '#f2dcb0', r: [0.6, 1.8], vx: [-10, -30], vy: [-14, 18],
+              sway: 18, rate: 0.32, alpha: [0.07, 0.26], wide: 1 }
   };
 
   function ensureMotes(kind) {

@@ -85,6 +85,18 @@
         { id: 'pipeworks', name: 'PIPEWORKS', grade: 'EXTREME +' },
         { id: 'refinery',  name: 'REFINERY',  grade: 'EXTREME ++' }
       ]
+    },
+    {
+      id: 'ruins',
+      name: 'ANCIENT RUINS',
+      tagline: 'Dressed stone and old shapes. A cross, a colonnade, a meander.',
+      scene: 'ruins',
+      accent: '#6ec9c4',
+      tracks: [
+        { id: 'sanctum',   name: 'SANCTUM',   grade: 'EXPERT' },
+        { id: 'colonnade', name: 'COLONNADE', grade: 'EXPERT +' },
+        { id: 'labyrinth', name: 'LABYRINTH', grade: 'EXPERT ++' }
+      ]
     }
   ];
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -109,7 +109,11 @@
     // Ash off the stacks: big, slow and almost weightless, so it hangs and
     // wanders rather than falling. The opposite of grit in every number.
     ash:    { per: 5200, color: '#d8cdbc', r: [1.2, 3.2], vx: [-12, -34],
-              vy: [6, 22], sway: 20, swayRate: 0.45, alpha: [0.10, 0.34], smear: 1.4 }
+              vy: [6, 22], sway: 20, swayRate: 0.45, alpha: [0.10, 0.34], smear: 1.4 },
+    // Dust hanging in the light of a ruin. Slower than anything else here
+    // and it drifts UP as often as down, because nothing is moving the air.
+    motes:  { per: 4000, color: '#f2dcb0', r: [0.7, 2.0], vx: [-6, -18],
+              vy: [-9, 11], sway: 11, swayRate: 0.32, alpha: [0.12, 0.40], smear: 1 }
   };
 
   function ensureMotes() {
@@ -318,6 +322,98 @@
                y + Math.round(cellNoise(cx, cy, 21) * (S - b - 3)) + 2, b, b);
   }
 
+  /* ---- ruins ----------------------------------------------------------
+   *
+   * Dressed stone rather than the cliffs' raw rock: courses of ashlar with
+   * the joints staggered from one course to the next, which is what makes
+   * masonry read as built rather than as geology. On top of that, per cell
+   * and seeded from its own coordinates: a carved glyph panel on some, a
+   * column drum on others, a crack on a few, and a wash of lichen.
+   *
+   * Fallen blocks - the jog kind - get toppled column drums lying in a row
+   * and more lichen. A barrier here is masonry that came down, not a thing
+   * anyone put there. */
+  function drawRuins(g, cx, cy, kind) {
+    var x = cx * S, y = cy * S;
+
+    // the bed: sun-bleached or shadowed, a step either way per cell
+    var t = cellNoise(cx, cy, 51);
+    g.fillStyle = t < 0.52
+      ? 'rgba(0,0,0,' + (0.04 + t * 0.30).toFixed(3) + ')'
+      : 'rgba(255,236,198,' + ((t - 0.52) * 0.34).toFixed(3) + ')';
+    g.fillRect(x, y, S, S);
+
+    if (kind === 3) {
+      // toppled drums, lying where they fell
+      var n = 2 + (cellNoise(cx, cy, 52) < 0.5 ? 0 : 1);
+      var flat = cellNoise(cx, cy, 53) < 0.5;
+      for (var i = 0; i < n; i++) {
+        var f = (i + 0.5) / n;
+        var dx = flat ? x + S * f : x + S * (0.32 + cellNoise(cx, cy, 54 + i) * 0.36);
+        var dy = flat ? y + S * (0.32 + cellNoise(cx, cy, 57 + i) * 0.36) : y + S * f;
+        var r = S * 0.19;
+        g.fillStyle = 'rgba(28,32,16,0.45)';
+        g.beginPath(); g.arc(dx, dy, r, 0, Math.PI * 2); g.fill();
+        g.strokeStyle = 'rgba(232,240,196,0.26)';
+        g.lineWidth = 1;
+        g.beginPath(); g.arc(dx, dy, r - 1, 0, Math.PI * 2); g.stroke();
+      }
+      return;
+    }
+
+    // three courses of ashlar, joints staggered course to course
+    var courses = 3, ch = S / courses;
+    for (var c = 0; c < courses; c++) {
+      var cy2 = y + c * ch;
+      g.fillStyle = 'rgba(0,0,0,0.26)';
+      if (c) g.fillRect(x, cy2, S, 1);                 // the bed joint
+      var off = ((cx * courses + c) % 2) * 0.5;        // stagger
+      for (var j = 0; j <= 1; j++) {
+        var jx = x + ((j + off) % 1.5) * S;
+        if (jx >= x && jx < x + S) g.fillRect(jx, cy2, 1, ch);
+      }
+    }
+
+    // a carved panel on about a fifth of the blocks
+    if (cellNoise(cx, cy, 58) < 0.20) {
+      var pad = Math.max(2, Math.round(S * 0.16));
+      g.fillStyle = 'rgba(0,0,0,0.22)';
+      g.fillRect(x + pad, y + pad, S - pad * 2, S - pad * 2);
+      g.fillStyle = 'rgba(255,232,186,0.20)';
+      for (var r2 = 0; r2 < 3; r2++) {
+        for (var c2 = 0; c2 < 3; c2++) {
+          if (cellNoise(cx * 3 + c2, cy * 3 + r2, 59) > 0.45) continue;
+          g.fillRect(x + pad + 1 + c2 * ((S - pad * 2 - 2) / 3),
+                     y + pad + 1 + r2 * ((S - pad * 2 - 2) / 3),
+                     Math.max(1, (S - pad * 2 - 2) / 3 - 1),
+                     Math.max(1, (S - pad * 2 - 2) / 3 - 1));
+        }
+      }
+    } else if (cellNoise(cx, cy, 60) < 0.13) {
+      // or a column drum standing on the course
+      var r3 = S * 0.27, mx = x + S * 0.5, my = y + S * 0.5;
+      g.fillStyle = 'rgba(255,238,204,0.14)';
+      g.beginPath(); g.arc(mx, my, r3, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(0,0,0,0.32)';
+      g.lineWidth = 1;
+      g.beginPath(); g.arc(mx, my, r3, 0, Math.PI * 2); g.stroke();
+    }
+
+    // a crack, and a wash of lichen in the shade
+    if (cellNoise(cx, cy, 61) < 0.22) {
+      g.strokeStyle = 'rgba(0,0,0,0.30)';
+      g.lineWidth = 1;
+      g.beginPath();
+      g.moveTo(x + cellNoise(cx, cy, 62) * S, y);
+      g.lineTo(x + cellNoise(cx, cy, 63) * S, y + S);
+      g.stroke();
+    }
+    if (cellNoise(cx, cy, 64) < 0.22) {
+      g.fillStyle = 'rgba(122,150,74,0.16)';
+      g.fillRect(x, y + S * 0.62, S, S * 0.38);
+    }
+  }
+
   function eachWall(fn) {
     for (var cy = 0; cy < T.rows; cy++) {
       for (var cx = 0; cx < T.cols; cx++) {
@@ -447,6 +543,7 @@
     var stone = !!(T.theme && T.theme.rock);
     var lit = !!(T.theme && T.theme.windows);
     var plant = !!(T.theme && T.theme.pipes);
+    var dressed = !!(T.theme && T.theme.glyphs);
     eachWall(function (cx, cy, kind) {
       // Four kinds of solid: the islands inside the circuit, the ground
       // outside it, the chicane blocks, and lava - whose cooled crust is
@@ -457,6 +554,7 @@
       if (stone) drawStone(g, cx, cy);
       if (lit) drawWindows(g, cx, cy, kind);
       if (plant) drawPipes(g, cx, cy, kind);
+      if (dressed) drawRuins(g, cx, cy, kind);
     });
 
     drawEmblems(g);
