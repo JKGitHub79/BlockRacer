@@ -665,6 +665,50 @@ ever driven on the track.
 `showResults` hands off to `showTrialResults`. Nothing in the physics, the
 track code or the renderer knows which mode it is in.
 
+## The screen the race is played on
+
+The board is sized to whatever the stage has left, keeping the track's shape, so
+making the track bigger is entirely a question of what is around it.
+
+**Lying down**, the board is short of height and nothing else - it sits in a box
+wider than its shape needs, with empty gutters either side. Every pixel of the
+top bar was a pixel off the board, and the bar's height is set by the HOME
+button, which has to stay 42px to be pressable, so shrinking it was never going
+to work. The bar comes out of the flow instead: HOME floats in the gutter,
+wearing the same translucent panel the BACK button wears on the menus, and the
+stage takes the whole height. The spare width is collected on one side - the
+board is pushed up against the HUD - so the gutter HOME sits in is one piece
+wide enough to hold it, which on the smallest landscape phone is the difference
+between clearing the board and sitting on the corner of it. The keyboard
+shortcuts go as well, on any device with `hover: none`: they were costing a row
+of the bar on every phone to tell nobody anything.
+
+**Standing up**, none of that helps. Every track is wider than it is tall, so
+upright the board runs out of width long before it runs out of height, and
+trimming the chrome above it buys exactly nothing. What it can have is the
+gutter - the body's side padding, which the menus need and a full-bleed board
+does not.
+
+| | board was | board is |
+| --- | --- | --- |
+| iPhone SE landscape | 35% | **59%** |
+| Galaxy S24 landscape | 37% | **49%** |
+| iPhone 13 landscape | 36% | **48%** |
+| iPad portrait | 64% | **68%** |
+| iPhone 13 portrait | 40% | **42%** |
+
+Upright is where it stops, and it stops for a reason layout cannot fix: at 42%
+the board is already the full width of the screen. The band below the panel is
+not waste either - it is where your thumbs are, and on that screen a thumb is a
+turn. The only thing that would go further is turning the track sideways in
+portrait, which changes how the game is read rather than how it is laid out.
+
+Making `in-race` take the side padding away exposed an ordering bug worth
+recording. `Screens.race` calls `Game.setTrack`, which fits the board, and only
+then shows the race screen, which is what puts the class on - so the board was
+being sized for the layout it was leaving rather than the one it was entering.
+`Screens.show` fits again once the class is on.
+
 ## The starting grid
 
 **You start at the back.** `T.gridFor` hands its slots back front-to-back, so
@@ -1672,7 +1716,7 @@ visibly touched.
 
 They answer different questions, so they are shaped differently.
 
-**Skins** are round chips, grouped under a heading per theme. The chip is not an
+**Skins** are round chips. The chip is not an
 artist's impression - it calls the same painter the car body calls, through a
 circular clip, at the car's own aspect ratio. That last part matters more than it
 sounds: every painter sizes its spots and stripes off the height it is handed, so
@@ -1685,9 +1729,20 @@ painters floor a size at a pixel or two - a carbon weave cell, a star - and
 scaling the context turns those floors into slabs the size of the whole chip.
 
 **Vehicles** are wide cards, and each one wears the skin you have equipped, so
-the two tabs answer each other. There is exactly one vehicle per theme, so the
-theme is a caption on the tile rather than a heading above it - a heading above a
-single tile turns eleven cars into eleven rows of mostly nothing.
+the two tabs answer each other.
+
+Both tabs carry the theme as a **caption on the tile** rather than as a heading
+above a run of them. Skins started with a full-width heading per theme, which
+reads well and costs a row break every three tiles: on anything wider than three
+columns - which is every screen but a phone held upright - that left most of
+each row empty while the vehicles tab beside it filled the width. The caption
+says the same thing and the grid fills. The order is still the ladder's.
+
+The BACK button is parked in the top-left corner rather than in the flow, which
+works while there is a margin beside the content. On a short screen there is
+not - a centred title or a line of prose runs the full width and its first words
+end up under the button. The two screens that scroll start below it instead.
+They have the room; they were never going to fit in one screenful anyway.
 
 What makes these read as cars from above rather than as slabs is one number:
 `body`, the share of the width the painted shell takes. The rest is tyre. An

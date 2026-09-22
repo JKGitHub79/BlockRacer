@@ -83,6 +83,7 @@ body {
 }
 
 .shell {
+  position: relative;      /* the top bar is taken out of the flow in landscape */
   width: 100%;
   max-width: 1280px;
   display: flex;
@@ -513,6 +514,59 @@ body.mode-trial .stat.trial-only { display: flex; }
   .lapline { margin-bottom: 4px; }
   .hint { margin-top: 6px; }
   .results td, .results th { padding: 4px 0; }
+}
+
+/* ---- lying down: the top bar comes out of the flow -------------------
+ *
+ * In landscape the board is short of HEIGHT and nothing else - it sits in a
+ * box wider than its own shape needs, with empty gutters either side of it.
+ * So every pixel the top bar takes is a pixel off the board, and the bar's
+ * height is set by the HOME button, which has to stay 42px to be pressable.
+ * Shrinking that was never going to work.
+ *
+ * It is absolute instead. HOME goes in the gutter beside the board, wearing
+ * the same translucent panel the BACK button wears on the menus, and the
+ * stage gets the whole height.
+ *
+ * The wordmark goes with it. It is on the front door, on every menu and in
+ * the tab title; it does not also need to be on the one screen where the
+ * height is the entire problem. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .topbar {
+    position: absolute;
+    top: var(--sa-t);
+    left: var(--sa-l);
+    margin: 0;
+    z-index: 3;
+  }
+  .topbar h1 { display: none; }
+  /* The board is height-bound here, so there is always spare width beside it.
+     Push it up against the HUD and the whole of that spare width collects on
+     the left, in one piece, which is where HOME now floats - on the smallest
+     landscape phone that is the difference between the button clearing the
+     board and sitting on the corner of it. */
+  .canvas-wrap { justify-content: flex-end; }
+  /* On a narrow landscape screen the wrap is sized to the board instead of
+     filling the row, so the spare width is the stage's to hand out and the
+     same rule has to go there as well. */
+  .stage { justify-content: flex-end; }
+  .homebtn {
+    background: rgba(10, 16, 28, 0.74);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* ---- standing up: the board goes to the edge -------------------------
+ *
+ * Upright the board is limited by the WIDTH of the screen - every track is
+ * wider than it is tall, so it runs out of width long before it runs out of
+ * height, and trimming the chrome above it buys nothing at all. What it can
+ * have is the gutter: eight pixels of body padding the menus need and a
+ * full-bleed board does not. */
+@media (orientation: portrait) {
+  body.in-race { --pad-x: 0px; }
+  body.in-race .board { border-radius: 0; border-left: 0; border-right: 0; }
 }
 
 /* Narrow AND short: the HUD drops to the essentials so the board keeps the
@@ -1126,6 +1180,9 @@ body.in-race #backdrop { display: none; }
  * track painted by ::-webkit-slider-runnable-track instead gives a 28px
  * target that looks exactly the same. */
 @media (hover: none) {
+  /* Keyboard shortcuts on a device with no keyboard. They were costing a row
+     of the top bar on every phone to tell nobody anything. */
+  .keys { display: none; }
   .homebtn { min-height: 42px; padding: 10px 14px; }
   .back { min-height: 42px; }
   .arrow { min-width: 44px; }
@@ -1172,6 +1229,16 @@ body.in-race #backdrop { display: none; }
  * its aspect ratio, which is the way round that cannot overflow. The rest
  * of the screen's furniture goes on a diet at the same time. */
 @media (max-height: 460px) {
+  /* Parking the button in the corner works while there is a margin beside
+     the content. On a short screen there is not: a centred title or a line
+     of prose runs the full width and its first words end up under the
+     button. The two screens that scroll start below it instead - they have
+     the room, because they were never going to fit in one screenful anyway.
+     The screens that must fit whole are untouched, and nothing on them was
+     under the button to begin with. */
+  .options .screen-inner, .shop .screen-inner {
+    padding-top: 46px;
+  }
   .screen { padding:
     calc(8px + var(--sa-t)) calc(12px + var(--sa-r))
     calc(8px + var(--sa-b)) calc(12px + var(--sa-l)); }

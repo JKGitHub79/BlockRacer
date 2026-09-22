@@ -32,7 +32,14 @@
     ['main', 'options', 'play', 'mode', 'shop'].forEach(function (s) {
       el[s].classList.toggle('on', s === name);
     });
+    /* The board is sized to the space the stage has, and `in-race` is one of
+     * the things that decides how much space that is - upright it takes the
+     * body's side padding away so the board can reach the edge of the screen.
+     * The class therefore has to be on BEFORE anything measures, and it goes
+     * on after Game.setTrack has already fitted once. Fit again, here, where
+     * the layout is the one the race will actually be played in. */
     document.body.classList.toggle('in-race', name === 'race');
+    if (name === 'race' && global.Renderer) global.Renderer.fit();
     Backdrop.set(name === 'play' ? THEMES[Screens.theme].scene : SCENE_FOR[name] || 'night');
     if (name === 'play') this.paintCards();
     if (name === 'options') this.buildLegacy();
@@ -274,27 +281,26 @@
         .forEach(function (key) { heads[key] = t; });
     });
 
-    /* Skins come in runs of three, so they are worth a heading each. There
-     * is exactly ONE vehicle per theme, and a heading above a single tile
-     * turns eleven cars into eleven rows of mostly nothing - so the vehicle
-     * tab carries its theme as a caption on the tile and fills the grid. */
-    var lastHead = null;
+    /* Both tabs carry the theme as a caption on the tile.
+     *
+     * Skins had a full-width heading per theme, which reads well but costs a
+     * row break every three tiles: on anything wider than three columns -
+     * which is every screen but a phone held upright - that left most of
+     * each row empty while the vehicles tab beside it filled the width. The
+     * caption says the same thing, in the same place the vehicle tab already
+     * said it, and the grid fills. The order is still the ladder's. */
     list.forEach(function (item) {
       var locked = !(skins ? Cos.skinUnlocked(item) : Cos.vehicleUnlocked(item));
       if (!locked) unlocked++;
       var key = skins ? item.track : item.theme;
       var head = key ? heads[key] : null;
       var label = head ? head.name : 'ALWAYS YOURS';
-      if (skins && label !== lastHead) {
-        grid.appendChild(themeHeading(label, head && head.accent));
-        lastHead = label;
-      }
       var tile = shopTile({
         id: item.id,
         name: item.name,
         locked: locked,
         equipped: item.id === equippedId,
-        caption: skins ? null : label,
+        caption: label,
         accent: head && head.accent,
         need: skins ? Cos.skinRequirement(item) : Cos.vehicleRequirement(item),
         w: skins ? 112 : 228,
