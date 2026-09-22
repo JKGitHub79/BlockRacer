@@ -44,6 +44,127 @@
   var PLAYER_CAR = FIELD.filter(function (c) { return c.player; })[0];
   var OPPONENTS = FIELD.filter(function (c) { return !c.player; });
 
+  /* ---- keeping your colour yours --------------------------------------
+   *
+   * A skin you picked is no use if an opponent is wearing it, or wearing
+   * something you cannot tell from it at thirty pixels while both of you are
+   * moving. So the field is recoloured around whatever you have equipped.
+   *
+   * The distance is CIE Lab rather than RGB, because RGB thinks #4ade80 and
+   * #34d399 are a long way apart and your eye does not - it puts them at 19,
+   * which is about the gap between two greens you would mix up in a corner.
+   * Measured against the shipped field: its own closest pair is 7 (GRID and
+   * CIPHER, which really are near-identical purples) and the median gap to a
+   * nearest neighbour is 19.
+   *
+   * SELF is therefore well above that at 32: nothing may sit inside "same
+   * sort of colour" of you. PEER is lower, at 15, and applies only to the
+   * cars that had to move - an opponent the player's colour does not touch
+   * keeps exactly the colour it shipped with, so a stock skin leaves most of
+   * the grid alone and the one thing that changes is the thing that had to.
+   */
+  var SELF_GAP = 32;
+  var PEER_GAP = 15;
+
+  function srgbLin(c) {
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }
+
+  function toLab(hex) {
+    var h = hex.charAt(0) === '#' ? hex.slice(1) : hex;
+    var r = srgbLin(parseInt(h.substr(0, 2), 16) / 255);
+    var g = srgbLin(parseInt(h.substr(2, 2), 16) / 255);
+    var b = srgbLin(parseInt(h.substr(4, 2), 16) / 255);
+    var x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
+    var y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+    var z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+    function f(t) { return t > 0.008856 ? Math.pow(t, 1 / 3) : 7.787 * t + 16 / 116; }
+    x = f(x); y = f(y); z = f(z);
+    return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+  }
+
+  function gap(a, b) {
+    var p = toLab(a), q = toLab(b);
+    return Math.sqrt((p[0] - q[0]) * (p[0] - q[0]) +
+                     (p[1] - q[1]) * (p[1] - q[1]) +
+                     (p[2] - q[2]) * (p[2] - q[2]));
+  }
+
+  /* Rotate a colour round the hue wheel, keeping how bright and how saturated
+   * it is. That is what makes a moved car still look like it belongs to this
+   * field rather than like a colour from somewhere else. */
+  function spin(hex, deg) {
+    var h = hex.charAt(0) === '#' ? hex.slice(1) : hex;
+    var r = parseInt(h.substr(0, 2), 16) / 255;
+    var g = parseInt(h.substr(2, 2), 16) / 255;
+    var b = parseInt(h.substr(4, 2), 16) / 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    var l = (mx + mn) / 2;
+    var sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    var hue = 0;
+    if (d !== 0) {
+      if (mx === r) hue = ((g - b) / d) % 6;
+      else if (mx === g) hue = (b - r) / d + 2;
+      else hue = (r - g) / d + 4;
+      hue *= 60;
+    }
+    hue = ((hue + deg) % 360 + 360) % 360;
+    var c = (1 - Math.abs(2 * l - 1)) * sat, x2 = c * (1 - Math.abs((hue / 60) % 2 - 1));
+    var m = l - c / 2, rr, gg, bb;
+    if (hue < 60) { rr = c; gg = x2; bb = 0; }
+    else if (hue < 120) { rr = x2; gg = c; bb = 0; }
+    else if (hue < 180) { rr = 0; gg = c; bb = x2; }
+    else if (hue < 240) { rr = 0; gg = x2; bb = c; }
+    else if (hue < 300) { rr = x2; gg = 0; bb = c; }
+    else { rr = c; gg = 0; bb = x2; }
+    function hx(v) {
+      var n = Math.round((v + m) * 255);
+      n = n < 0 ? 0 : n > 255 ? 255 : n;
+      return (n < 16 ? '0' : '') + n.toString(16);
+    }
+    return '#' + hx(rr) + hx(gg) + hx(bb);
+  }
+
+  /* The opponents' colours for a field of `n`, given the colour you are
+   * wearing. Anything already clear of you is left exactly as it shipped;
+   * anything too close is spun round the wheel to the first angle that clears
+   * both you and every car already placed. If nothing in a half-turn works -
+   * which takes a very crowded field - the best of the candidates is used, so
+   * this always returns a full grid and never fails to start a race. */
+  function paletteFor(n, mine) {
+    var count = Math.min(n, OPPONENTS.length);
+    var out = new Array(count), taken = [], move = [], i, j, k;
+
+    /* Pass one places everything that does NOT have to move, and it has to
+     * come first: a car spun away from you must clear the whole rest of the
+     * grid, not just the part of it that happened to be placed already.
+     * Checking only what came before let two greens land 3 apart. */
+    for (i = 0; i < count; i++) {
+      var base = OPPONENTS[i].color;
+      if (gap(base, mine) >= SELF_GAP) { out[i] = base; taken.push(base); }
+      else move.push(i);
+    }
+
+    for (k = 0; k < move.length; k++) {
+      i = move[k];
+      var from = OPPONENTS[i].color, pick = from, best = null, bestScore = -1;
+      for (var step = 1; step <= 12 && !best; step++) {
+        var tries = [spin(from, step * 15), spin(from, -step * 15)];
+        for (var t = 0; t < tries.length; t++) {
+          var cand = tries[t], mineGap = gap(cand, mine), peer = 1e9;
+          for (j = 0; j < taken.length; j++) peer = Math.min(peer, gap(cand, taken[j]));
+          var score = Math.min(mineGap / SELF_GAP, peer / PEER_GAP);
+          if (score > bestScore) { bestScore = score; pick = cand; }
+          if (mineGap >= SELF_GAP && peer >= PEER_GAP) { best = cand; break; }
+        }
+      }
+      if (best) pick = best;
+      out[i] = pick;
+      taken.push(pick);
+    }
+    return out;
+  }
+
   /* Which grid slot the player takes: the back row, and the middle of it.
    * Starting last is the point of the rule; starting last AND hard against
    * a kerb is a second penalty nobody asked for, and on a six-lane grid the
@@ -117,20 +238,20 @@
 
 
   function fieldFor(n) {
+    var Cos = global.Cosmetics;
+    var mine = Cos ? Cos.equippedSkin().color : PLAYER_CAR.color;
+    /* The opponents keep their NAMES whatever happens - VECTOR is VECTOR and
+     * the results table has to go on saying so. Only the paint moves. */
+    var palette = paletteFor(n - 1, mine);
     var spec = [];
     for (var i = 0; i < n - 1 && i < OPPONENTS.length; i++) {
-      spec.push({ name: OPPONENTS[i].name, color: OPPONENTS[i].color, player: false });
+      spec.push({ name: OPPONENTS[i].name, color: palette[i], player: false });
     }
     /* The player's colour comes from the equipped skin, so the halo, the
      * running-order chip and the results all follow the skin without any of
      * them having to know that skins exist. The default skin is the colour
      * the car has always been. */
-    var Cos = global.Cosmetics;
-    spec.push({
-      name: PLAYER_CAR.name,
-      color: Cos ? Cos.equippedSkin().color : PLAYER_CAR.color,
-      player: true
-    });
+    spec.push({ name: PLAYER_CAR.name, color: mine, player: true });
     return spec;
   }
 

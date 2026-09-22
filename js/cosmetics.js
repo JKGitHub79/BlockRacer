@@ -451,14 +451,6 @@
       g.fillRect(wx, -W / 2, wl, ww);
       g.fillRect(wx, W / 2 - ww, wl, ww);
     }
-    // a sliver of grey down the outside, so a black tyre on a black road
-    // still shows where the car ends
-    g.fillStyle = 'rgba(158,172,196,0.45)';
-    for (i = 0; i < v.wheels.length; i++) {
-      wx = -L / 2 + L * v.wheels[i] - wl / 2;
-      g.fillRect(wx, -W / 2, wl, Math.max(0.6, ww * 0.22));
-      g.fillRect(wx, W / 2 - Math.max(0.6, ww * 0.22), wl, Math.max(0.6, ww * 0.22));
-    }
   }
 
   function shell(g, L, W, v, fill, flash) {
@@ -874,6 +866,46 @@
       return;
     }
     skin.paint(g, x, y, w, h);
+  };
+
+  /* The player's identification ring, as a PATH rather than as a rectangle.
+   *
+   * There has been a white outline round your car since long before any of
+   * this, and while every car was a rectangle a rectangle fitted it exactly.
+   * It does not fit a saucer, a wedge or an open-wheeler: a box drawn round
+   * a round car is a box you notice instead of a car you find. So the ring
+   * traces the silhouette - body and tyres both - and the car goes on looking
+   * like a car with an edge on it rather than a car in a crate.
+   *
+   * `grow` pushes it out from the body. Canvas stores a path in device space,
+   * so the scale used to build it is gone by the time anything is stroked and
+   * the line width is unaffected by it. */
+  function silhouette(g, L, W, v, grow) {
+    var bw = (v.body === undefined ? BODY : v.body) * W;
+    g.save();
+    g.scale((L + grow * 2) / L, (W + grow * 2) / W);
+    g.beginPath();
+    /* The BODY only. Taking the wheels in as well put a white margin round
+     * each tyre, which at thirty pixels reads as four corner brackets - a
+     * car in a clamp rather than a car with an edge on it. The tyres are
+     * dark and sit against the body, so they read as part of the car with
+     * no help; it is the painted shell that needs separating from the road. */
+    v.path(g, -L / 2, -bw / 2, L, bw);
+    g.restore();
+  }
+
+  /* The ring is FILLED, not stroked, and it goes on BEFORE the car.
+   *
+   * Stroking it traces every sub-path, so each tyre came out in its own white
+   * bracket and the car looked clamped rather than outlined. Filling the same
+   * path merges the body and the four wheels into one shape - that is what
+   * the nonzero winding rule is for - and then the car, drawn on top, covers
+   * everything except the margin. What is left is the outline of the whole
+   * silhouette and nothing else. */
+  Cos.fillSilhouette = function (g, L, W, vehicle, grow, style) {
+    silhouette(g, L, W, vehicle, grow);
+    g.fillStyle = style;
+    g.fill();
   };
 
   /* The car, in its own space: nose at +x, centred on the origin. */

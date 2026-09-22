@@ -1193,6 +1193,29 @@
      * the same reason every other texture is: a patterned body competing
      * with a hard black-and-white board is noise where the mode wants none. */
     var Cos = global.Cosmetics;
+
+    /* The rings that say which car is yours go UNDER the body, as filled
+     * shapes in the car's own outline, biggest first. The body then covers
+     * all but the margin, which is what leaves an outline that follows a
+     * saucer round instead of boxing it in. */
+    if (car.isPlayer) {
+      var ring = (Cos && Cos.fillSilhouette) ? function (grow, style) {
+        Cos.fillSilhouette(g, L, W, Cos.equippedVehicle(), grow, style);
+      } : function (grow, style) {
+        g.fillStyle = style;
+        g.fillRect(-L / 2 - grow, -W / 2 - grow, L + grow * 2, W + grow * 2);
+      };
+      if (car.crashed) {
+        g.globalAlpha = 0.55 + 0.45 * Math.sin(Date.now() / 90);
+        ring(5.5, '#ff5470');
+        g.globalAlpha = 1;
+      }
+      /* In high contrast it is a white ring outside a black one, so it reads
+       * against a black road and against white scenery alike. */
+      if (hc) { ring(7, '#ffffff'); ring(4.5, '#000000'); }
+      ring(2, 'rgba(255,255,255,0.9)');
+    }
+
     if (car.isPlayer && Cos) {
       Cos.drawCar(g, L, W, Cos.equippedSkin(), Cos.equippedVehicle(),
                   car.crashFlash, hc ? car.color : null);
@@ -1208,7 +1231,9 @@
      * that works against both: white reads against the road, and the body
      * colour inside it reads against the outline. Without one, a dark car on
      * a black road is a hole. */
-    if (hc) {
+    /* An opponent's hard edge in high contrast. The player already has one
+     * from the rings under the body, in the shape of whatever they drive. */
+    if (hc && !car.isPlayer) {
       g.strokeStyle = '#ffffff';
       g.lineWidth = 2;
       g.strokeRect(-L / 2 - 1, -W / 2 - 1, L + 2, W + 2);
@@ -1226,28 +1251,7 @@
       g.fillRect(L / 2 - (hc ? 4 : 3), -W / 2, hc ? 4 : 3, W);
     }
 
-    if (car.isPlayer) {
-      /* Yours carries a second ring, in black and white rather than in a
-       * colour, so which car is yours is a question of shape and not of hue.
-       * The halo is a colour and is therefore not enough on its own here. */
-      if (hc) {
-        g.strokeStyle = '#000000';
-        g.lineWidth = 4;
-        g.strokeRect(-L / 2 - 6, -W / 2 - 6, L + 12, W + 12);
-        g.strokeStyle = '#ffffff';
-        g.lineWidth = 2;
-        g.strokeRect(-L / 2 - 6, -W / 2 - 6, L + 12, W + 12);
-      }
-      g.strokeStyle = 'rgba(255,255,255,0.9)';
-      g.lineWidth = 1.5;
-      g.strokeRect(-L / 2 - 1.5, -W / 2 - 1.5, L + 3, W + 3);
-      if (car.crashed) {
-        g.globalAlpha = 0.55 + 0.45 * Math.sin(Date.now() / 90);
-        g.strokeStyle = '#ff5470';
-        g.lineWidth = 2;
-        g.strokeRect(-L / 2 - 5, -W / 2 - 5, L + 10, W + 10);
-      }
-    }
+
     g.restore();
   }
 

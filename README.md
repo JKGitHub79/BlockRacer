@@ -1563,6 +1563,56 @@ reads instantly but it also sits on top of the track, hides the car it is meant
 to point at when the field bunches, and looks like a HUD element in a game that
 has deliberately kept everything on the board.
 
+### The outline round your car
+
+There has been a white edge on the player's car since long before the shop, and
+it was a `strokeRect`. That was exactly right while every car was a rectangle.
+It is not right round a saucer, a wedge or an open-wheeler, where a rectangle
+reads as a crate the car is sitting in rather than as an edge on the car.
+
+It follows the car's own outline now, and how it does that matters:
+
+- It is **filled, not stroked**. Stroking traces every sub-path separately, so
+  taking the tyres in put each one in its own white bracket. Filling merges the
+  shapes into one - that is what the nonzero winding rule is for.
+- It goes on **before the body**, one size bigger, and the car covers all of it
+  but the margin. What is left is the outline of the silhouette and nothing
+  else, with no internal lines anywhere.
+- It traces the **body only**. The tyres are dark and sit against the body, so
+  they read as part of the car with no help; it is the painted shell that needs
+  separating from the road.
+
+The crash ring and both high-contrast rings are the same three fills in the same
+order, biggest first, so all of them follow whatever you are driving.
+
+### Nobody else gets your colour
+
+A skin you picked is no use if an opponent is wearing it, or wearing something
+you cannot tell from it at thirty pixels while both of you are moving. So the
+field is recoloured around whatever you have equipped.
+
+The distance is **CIE Lab**, not RGB, because RGB thinks `#4ade80` and `#34d399`
+are a long way apart and your eye does not - it puts them at 19, about the gap
+between two greens you would mix up in a corner. Measured against the shipped
+field: its own closest pair is 7 (GRID and CIPHER, which really are near
+-identical purples) and the median gap to a nearest neighbour is 19.
+
+- No opponent may come within **32** of you. That is well clear of "same sort of
+  colour", and it is checked for all 31 skins at 6 and 16 cars: the worst case
+  across all 62 fields is 32.1.
+- An opponent your colour does not touch **keeps the colour it shipped with**.
+  Only the cars that have to move, move: equip Flame and the single change in a
+  six-car field is SPRITE going from orange to amber. Equip the default cyan and
+  a six-car grid is identical to the one the game has always had.
+- A car that does move is **spun round the hue wheel**, keeping how bright and
+  how saturated it was, so it still looks like it belongs to this field.
+
+The un-moved colours are placed **first** and the moved ones are then fitted
+around all of them. Doing it in one pass - checking only against what had been
+placed already - let two greens land 3 apart, which is worse than anything in
+the shipped field. Opponents keep their names whatever happens: VECTOR is
+VECTOR, and the results table has to go on saying so.
+
 ## The shop
 
 Thirty skins and ten vehicles, and not one of them is for sale. **SHOP** on the
@@ -1645,6 +1695,31 @@ off-roader is a narrow body on fat wheels, a single-seater is a cigar with the
 wheels hanging off it, and neither is one pixel wider than a hatchback. Add
 headlights at the nose and a pair of red lamps at the tail and the direction of
 travel is readable at thirty pixels without a marker.
+
+### The garage
+
+The shop is the only screen that is not about a place you drive, so it is the
+only interior in the set: a workshop with the lights on, built middle-outwards.
+The centre is a lit bay - a pale wash on the back wall and a pool of light on
+the floor - and it gets darker and busier the further out it goes, so a grid of
+round chips has somewhere clean to sit and the edges still say workshop. Tool
+cabinets and tyre stacks hug the far left and right, deliberately low contrast,
+because on a phone the tiles cover most of this and anything loud out there
+would be fighting the thing it is behind.
+
+Two things were wrong on the first pass and are worth writing down. The bay was
+a *rectangle* of light on the wall, which put a hard vertical seam down each
+side of the screen; it is a horizontal gradient now, so it fades out instead of
+stopping. And the light cones opened to half the screen each, at which point
+they stop reading as light and start reading as big pale triangles - they are
+tight now, and the outer two are dim enough that the middle of the room is
+plainly the brightest thing on it.
+
+The floor is drawn with the rows closing up towards the horizon and the columns
+spreading outwards from the middle. That is enough of a perspective to read as a
+floor without this becoming a different kind of drawing from the ten landscapes
+it sits beside - everything here is still flat blocks from a seeded generator,
+identical across a resize.
 
 ### Locked is shown, not hidden
 

@@ -886,6 +886,106 @@
    * below them - so the scenery is seen rather than half-hidden. */
   var HORIZON = 0.76;
 
+  /* ---- garage fittings -------------------------------------------------
+   * Three props, each drawn from the outside edge inwards so that widening
+   * the window adds more workshop rather than stretching what is there.
+   * `side` is +1 for the right of the screen and -1 for the left. */
+
+  /* Tool cabinets and shelving stacks along a wall. Drawers are lines rather
+   * than boxes and handles are two pixels: at this size a drawn-out cabinet
+   * turns to mush, and the silhouette is what says workshop. */
+  function cabinets(g, floorY, side) {
+    var rnd = rng(side > 0 ? 881 : 953);
+    var unit = Math.max(H * 0.085, 42);
+    var edge = side > 0 ? W : 0;
+    var run = Math.min(W * 0.26, unit * 3.4);
+    var x = 0;
+    while (x < run) {
+      var w = unit * (0.85 + rnd() * 0.7);
+      var h = unit * (1.05 + rnd() * 0.85);
+      var bx = side > 0 ? edge - x - w : edge + x;
+      var top = floorY - h;
+      // the body, and a lighter top so it reads as a box and not a hole
+      g.fillStyle = rnd() < 0.4 ? '#242f43' : '#1e2736';
+      g.fillRect(bx, top, w, h);
+      g.fillStyle = 'rgba(160,190,228,0.20)';
+      g.fillRect(bx, top, w, Math.max(1.5, h * 0.045));
+      g.fillStyle = 'rgba(0,0,0,0.30)';
+      g.fillRect(bx, floorY - Math.max(2, h * 0.06), w, Math.max(2, h * 0.06));
+      var drawers = 2 + ((rnd() * 3) | 0), d;
+      for (d = 1; d <= drawers; d++) {
+        var dy = top + (h * 0.90) * (d / (drawers + 0.6)) + h * 0.06;
+        g.fillStyle = 'rgba(0,0,0,0.34)';
+        g.fillRect(bx + w * 0.08, dy, w * 0.84, Math.max(1, h * 0.018));
+        g.fillStyle = 'rgba(160,190,225,0.22)';   // the handle
+        g.fillRect(bx + w * 0.34, dy - Math.max(1, h * 0.022), w * 0.32,
+                   Math.max(1, h * 0.016));
+      }
+      if (rnd() < 0.45) {    // a cyan job light on top of some of them
+        g.fillStyle = 'rgba(94,242,255,0.35)';
+        g.fillRect(bx + w * 0.18, top - Math.max(2, h * 0.05), w * 0.28,
+                   Math.max(2, h * 0.04));
+      }
+      x += w + unit * 0.08;
+    }
+  }
+
+  /* A stack of tyres, drawn as flattened rings from the floor up. Reading as
+   * rubber is all in the gap: a solid stack is a bollard. */
+  function tyres(g, floorY, side, seed) {
+    var rnd = rng(seed);
+    var r = Math.max(H * 0.045, 22);
+    var stacks = 2;
+    for (var s = 0; s < stacks; s++) {
+      var cx = side > 0 ? W - r * (1.4 + s * 2.5) : r * (1.4 + s * 2.5);
+      var n = 3 + ((rnd() * 3) | 0);
+      var lift = r * 0.42;
+      for (var i = 0; i < n; i++) {
+        var cy = floorY + r * 0.30 - i * lift;
+        g.fillStyle = i === n - 1 ? '#1b2231' : '#141a25';
+        g.beginPath();
+        g.ellipse(cx, cy, r, r * 0.42, 0, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = 'rgba(150,178,214,0.10)';   // the sidewall catching light
+        g.fillRect(cx - r, cy - r * 0.42, r * 2, Math.max(1, r * 0.07));
+      }
+      g.fillStyle = 'rgba(120,150,190,0.16)';     // the rim of the top one
+      g.beginPath();
+      g.ellipse(cx, floorY + r * 0.30 - (n - 1) * lift, r * 0.34, r * 0.15, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+
+  /* The overhead lights: three strips across the roof, each with a cone of
+   * light under it. The middle one is brightest and sits over the bay. */
+  function strips(g, bayW) {
+    var y = H * 0.085;
+    /* The spread is deliberately tight. A cone that opens to half the screen
+     * stops reading as light and starts reading as a big pale triangle, and
+     * the outer two are dim enough that the middle of the room is plainly
+     * the brightest thing on the screen. */
+    [[-1, 0.34], [0, 1], [1, 0.34]].forEach(function (s) {
+      var cx = W / 2 + s[0] * bayW * 0.66;
+      var w = bayW * 0.26, lit = s[1], foot = H * 0.62;
+      var cone = g.createLinearGradient(cx, y, cx, foot);
+      cone.addColorStop(0, 'rgba(210,232,255,' + (0.17 * lit).toFixed(3) + ')');
+      cone.addColorStop(0.75, 'rgba(210,232,255,' + (0.04 * lit).toFixed(3) + ')');
+      cone.addColorStop(1, 'rgba(210,232,255,0)');
+      g.fillStyle = cone;
+      g.beginPath();
+      g.moveTo(cx - w * 0.5, y);
+      g.lineTo(cx + w * 0.5, y);
+      g.lineTo(cx + w * 0.92, foot);
+      g.lineTo(cx - w * 0.92, foot);
+      g.closePath();
+      g.fill();
+      g.fillStyle = 'rgba(12,17,26,0.9)';         // the housing
+      g.fillRect(cx - w * 0.54, y - H * 0.022, w * 1.08, H * 0.022);
+      g.fillStyle = 'rgba(226,242,255,' + (0.45 + 0.45 * lit).toFixed(2) + ')';
+      g.fillRect(cx - w * 0.5, y, w, Math.max(2, H * 0.008));
+    });
+  }
+
   var SCENES = {
     /* Depth is value, not size: the far band is hazed almost to the colour of
      * the sky behind it and the near band is nearly black. Three bands of the
@@ -1085,6 +1185,110 @@
 
     /* The front screen sits on its own night sky rather than borrowing a
      * theme's, so arriving at the game does not imply a theme. */
+    /* ---- the garage -------------------------------------------------
+     *
+     * The only interior in the set, because the shop is the only screen that
+     * is not about a place you drive - it is about a car standing still with
+     * the lights on it. Same rules as the landscapes though: flat blocks, a
+     * seeded layout so it is identical across a resize, and everything is
+     * painted rather than shipped.
+     *
+     * It is built middle-outwards. The centre is a lit bay - a pale panel on
+     * the back wall and a pool of light on the floor - and everything else
+     * gets darker and busier the further out it goes, so a grid of round
+     * chips in the middle of the screen has somewhere clean to sit and the
+     * edges still say workshop. The props are deliberately low contrast: on
+     * a phone the tiles cover most of this, and anything loud out there
+     * would be fighting the thing it is behind.
+     */
+    garage: {
+      weather: null,
+      paint: function (g) {
+        var floorY = H * 0.62;
+
+        // back wall, darkest at the top where the roof is
+        sky(g, [[0, '#080c15'], [0.30, '#111828'], [0.62, '#1b2435']]);
+
+        // the lit bay: a pale panel centred on the wall, and the same light
+        // spilling down the wall behind it
+        var bayW = Math.min(W * 0.62, H * 1.5);
+        // Horizontal, not a rectangle: a hard edge down the wall reads as a
+        // seam in the drawing rather than as light falling on a wall.
+        var wall = g.createLinearGradient(W / 2 - bayW * 0.62, 0, W / 2 + bayW * 0.62, 0);
+        wall.addColorStop(0, 'rgba(120,150,190,0)');
+        wall.addColorStop(0.28, 'rgba(120,150,190,0.13)');
+        wall.addColorStop(0.72, 'rgba(120,150,190,0.13)');
+        wall.addColorStop(1, 'rgba(120,150,190,0)');
+        g.fillStyle = wall;
+        g.fillRect(0, H * 0.10, W, floorY - H * 0.10);
+
+        // wall panelling: vertical seams, and a cyan service stripe at
+        // waist height because every wall in this game has one
+        g.fillStyle = 'rgba(0,0,0,0.22)';
+        for (var px = (W / 2) % (H * 0.18); px < W; px += H * 0.18) {
+          g.fillRect(px, 0, Math.max(1, H * 0.004), floorY);
+        }
+        g.fillStyle = 'rgba(94,242,255,0.10)';
+        g.fillRect(0, floorY - H * 0.085, W, Math.max(1.5, H * 0.009));
+
+        cabinets(g, floorY, 1);
+        cabinets(g, floorY, -1);
+
+        // the floor: concrete, lighter where the lights fall
+        var fl = g.createLinearGradient(0, floorY, 0, H);
+        fl.addColorStop(0, '#222b3d');
+        fl.addColorStop(0.45, '#1a2231');
+        fl.addColorStop(1, '#10161f');
+        g.fillStyle = fl;
+        g.fillRect(0, floorY, W, H - floorY);
+
+        /* Floor tiles. The rows get further apart towards the bottom of the
+         * screen and the columns spread outwards from the middle, which is
+         * enough of a perspective to read as a floor without this becoming a
+         * different kind of drawing from everything else in the file. */
+        g.strokeStyle = 'rgba(150,175,210,0.09)';
+        g.lineWidth = 1;
+        var rows = 7, ri;
+        for (ri = 1; ri <= rows; ri++) {
+          var f = ri / rows;
+          var ty = floorY + (H - floorY) * f * f;
+          g.beginPath(); g.moveTo(0, ty); g.lineTo(W, ty); g.stroke();
+        }
+        var cols = 9, ci;
+        for (ci = -cols; ci <= cols; ci++) {
+          g.beginPath();
+          g.moveTo(W / 2 + ci * (W * 0.045), floorY);
+          g.lineTo(W / 2 + ci * (W * 0.16), H);
+          g.stroke();
+        }
+
+        // the bay markings: two painted lines the car would stand between
+        g.strokeStyle = 'rgba(255,214,120,0.16)';
+        g.lineWidth = Math.max(2, H * 0.006);
+        [-1, 1].forEach(function (side) {
+          g.beginPath();
+          g.moveTo(W / 2 + side * bayW * 0.30, floorY + (H - floorY) * 0.06);
+          g.lineTo(W / 2 + side * bayW * 0.60, H);
+          g.stroke();
+        });
+
+        // the pool of light on the floor, which is the whole point of the bay
+        var pool = g.createRadialGradient(W / 2, floorY + (H - floorY) * 0.35, 0,
+                                          W / 2, floorY + (H - floorY) * 0.35,
+                                          Math.max(bayW * 0.75, H * 0.5));
+        pool.addColorStop(0, 'rgba(198,224,255,0.20)');
+        pool.addColorStop(0.5, 'rgba(198,224,255,0.07)');
+        pool.addColorStop(1, 'rgba(198,224,255,0)');
+        g.fillStyle = pool;
+        g.fillRect(0, floorY - H * 0.05, W, H);
+
+        tyres(g, floorY, 1, 307);
+        tyres(g, floorY, -1, 419);
+        strips(g, bayW);
+        recede(g);
+      }
+    },
+
     night: {
       weather: null,
       paint: function (g) {

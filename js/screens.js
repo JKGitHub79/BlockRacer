@@ -25,7 +25,7 @@
 
   var el = {};
 
-  var SCENE_FOR = { main: 'night', options: 'night', mode: 'night', shop: 'night' };
+  var SCENE_FOR = { main: 'night', options: 'night', mode: 'night', shop: 'garage' };
 
   Screens.show = function (name) {
     this.current = name;
