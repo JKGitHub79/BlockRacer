@@ -1036,11 +1036,19 @@
    * scaled down, and the drawing stays sharp at any size. */
   Renderer.fit = function () {
     var canvas = this.canvas;
-    var stage = canvas.parentNode.parentNode.parentNode;   // .board > .canvas-wrap > .stage
+    var board = canvas.parentNode;                         // .board
+    var stage = board.parentNode.parentNode;               // .canvas-wrap > .stage
     var hud = stage.querySelector('.hud');
     var css = global.getComputedStyle(stage);
     var column = css.flexDirection === 'column';
     var gap = parseFloat(css.gap) || 0;
+
+    /* Anything this function wrote last time goes back to the stylesheet's
+     * value BEFORE anything is measured. Everything below reads the layout,
+     * and reading back your own previous answer is how a fit turns into a
+     * loop. With this reset, fitting twice gives the same board as fitting
+     * once, whatever order things happen in. */
+    if (hud) { hud.style.flexBasis = ''; }
 
     // Measure the stage and subtract the panel, rather than measuring the box
     // the board sits in. The board's own size must never be an input here or
@@ -1048,8 +1056,16 @@
     var availW = stage.clientWidth - (column || !hud ? 0 : hud.offsetWidth + gap);
     var availH = stage.clientHeight - (!column || !hud ? 0 : hud.offsetHeight + gap);
 
-    // 2px for the board's border, so the frame is never clipped
-    var scale = Math.min((availW - 2) / T.width, (availH - 2) / T.height);
+    /* The board's own border, measured rather than assumed. It used to be a
+     * hardcoded 2, which is right when the frame has a side on it and wrong
+     * upright, where the board runs off both edges of the screen and the left
+     * and right borders are taken off - two pixels of screen width, which is
+     * the one direction upright has none to spare in. */
+    var bs = global.getComputedStyle(board);
+    var bx = (parseFloat(bs.borderLeftWidth) || 0) + (parseFloat(bs.borderRightWidth) || 0);
+    var by = (parseFloat(bs.borderTopWidth) || 0) + (parseFloat(bs.borderBottomWidth) || 0);
+
+    var scale = Math.min((availW - bx) / T.width, (availH - by) / T.height);
     if (!(scale > 0)) scale = 1;
 
     var cssW = Math.max(1, Math.floor(T.width * scale));
@@ -1065,6 +1081,47 @@
     // maps track pixels onto it has to be set again here.
     this.ctx = canvas.getContext('2d');
     this.ctx.setTransform(canvas.width / T.width, 0, 0, canvas.height / T.height, 0, 0);
+
+    /* ---- and the panel takes up the slack ----------------------------
+     *
+     * The board keeps the track's shape, and no track is anywhere near the
+     * shape of a phone: they run from 1.10 to 1.85 wide and a phone lying
+     * down is 2.2. So the board always runs out of one dimension with the
+     * other to spare - lying down it fills the height with a third of the
+     * width left over, standing up it fills the width with half the height
+     * left over - and that leftover was simply empty.
+     *
+     * It goes to the panel now. The panel is written to AFTER the board has
+     * been sized and is reset above before anything is measured, which is
+     * what makes this safe. Doing it in CSS with `flex: 1 1 auto` looks like
+     * the same idea and is not: the panel's size is an INPUT to the board's
+     * size, so every pass would hand the board a border's width less than
+     * the last and the board would walk down to nothing. That was tried.
+     *
+     * Lying down the panel also leaves a strip for the HOME button, which is
+     * floating in that gutter rather than sitting in a bar of its own.
+     *
+     * LYING DOWN ONLY. Upright there is half a screen of slack, and a panel
+     * stretched over it is eight readouts spread across five hundred pixels
+     * with holes between them - which looks worse than the empty band did,
+     * and makes the board look smaller into the bargain. Upright the slack
+     * goes round the board instead (see the stylesheet). */
+    if (hud && !column) {
+      var reserve = 0;
+      var bar = document.querySelector('.topbar');
+      var home = document.getElementById('btn-home');
+      if (bar && home && global.getComputedStyle(bar).position === 'absolute') {
+        reserve = home.offsetWidth + 18;
+      }
+      var slack = stage.clientWidth - cssW - bx - gap - hud.offsetWidth - reserve;
+      /* flex-basis, not width or height. The panel is a flex item with a
+       * basis of its own in the stylesheet, and a basis beats a width - the
+       * first version of this set the width, the panel ignored it, and the
+       * gutter stayed exactly as empty as before. Basis is the main-axis
+       * size either way round: the stage is a row lying down and a column
+       * standing up, so one property covers both. */
+      if (slack > 1) hud.style.flexBasis = (hud.offsetWidth + slack) + 'px';
+    }
   };
 
   /* Bake the current track's scenery and size the board to it. Called on boot

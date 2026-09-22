@@ -532,6 +532,10 @@ body.mode-trial .stat.trial-only { display: flex; }
  * the tab title; it does not also need to be on the one screen where the
  * height is the entire problem. */
 @media (orientation: landscape) and (max-height: 560px) {
+  /* With the bar gone there is nothing above the board to need a margin, and
+     the board is short of height and nothing else. The safe-area inset is
+     still added on top of this, so a notch is still cleared. */
+  body.in-race { --pad-y: 0px; }
   .topbar {
     position: absolute;
     top: var(--sa-t);
@@ -1327,17 +1331,33 @@ body.in-race #backdrop { display: none; }
   .topbar h1 em { margin-left: 6px; font-size: 9px; }
   .homebtn { padding: 7px 10px; font-size: 10px; }
 
-  /* Board at the top at the full width the screen has, panel directly under
-     it, and whatever is left over is one band at the BOTTOM rather than two
-     bands of nothing with the game floating between them.
+  /* Board at the full width the screen has - which upright is all it can
+     ever have, because every track is wider than it is tall and so the board
+     runs out of width with half the height still going spare.
 
-     The panel must stay `flex: 0 0 auto`. Renderer.fit sizes the board to
-     the stage minus the panel, so a panel that grows to fill takes the space
-     from the board and then the board shrinks and the panel grows again -
-     an attempt at letting it fill left the board at nine per cent of a
-     phone screen. The empty band is also where your thumbs are, and on this
-     screen a thumb is a turn. */
-  .stage { flex-direction: column; justify-content: flex-start; gap: 8px; }
+     That half-screen of slack has been three things. It was two bands with
+     the game floating between them; then one band at the bottom, which is
+     tidier; then the panel was stretched over it, which was worse than
+     either - eight readouts spread across five hundred pixels with holes
+     between them, and a board that looked smaller for being next to it.
+
+     It is around the board now, split above and below. Board and panel stay
+     together and the PAIR is centred, so the game sits in the middle of the
+     screen where your eyes and thumbs already are, rather than pinned to the
+     top with the whole of the bottom empty. Two bands of a hundred and
+     thirty read as margin; one band of two hundred and seventy reads as a
+     hole, which is what pinning it to either end gives you.
+
+     The panel must stay `flex: 0 0 auto` whatever else changes here.
+     Renderer.fit sizes the board to the stage minus the panel, so a panel
+     that grows to fill takes the space from the board, and then the board
+     shrinks and the panel grows again - an attempt at letting it fill left
+     the board at nine per cent of a phone screen.
+
+     Tapping the panel still turns the car: the pointer handler only steps
+     aside for buttons, inputs and menu screens, and the panel is none of
+     them. So none of this costs any thumb. */
+  .stage { flex-direction: column; justify-content: center; gap: 8px; }
   .canvas-wrap { flex: 0 0 auto; }
   .hud { flex: 0 0 auto; padding: 10px 12px; }
   .stat { margin-bottom: 0; }

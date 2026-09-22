@@ -691,23 +691,73 @@ does not.
 
 | | board was | board is |
 | --- | --- | --- |
-| iPhone SE landscape | 35% | **59%** |
-| Galaxy S24 landscape | 37% | **49%** |
-| iPhone 13 landscape | 36% | **48%** |
+| iPhone SE landscape | 35% | **62%** |
+| Galaxy S24 landscape | 37% | **51%** |
+| iPhone 13 landscape | 36% | **51%** |
 | iPad portrait | 64% | **68%** |
 | iPhone 13 portrait | 40% | **42%** |
 
-Upright is where it stops, and it stops for a reason layout cannot fix: at 42%
-the board is already the full width of the screen. The band below the panel is
-not waste either - it is where your thumbs are, and on that screen a thumb is a
-turn. The only thing that would go further is turning the track sideways in
-portrait, which changes how the game is read rather than how it is laid out.
+Those landscape figures are the WORST case, because they are measured on Quarry,
+which at 1.10 is the squarest track in the game. Across the rest of the ladder on
+an 844x390 phone the board runs from 59% (Downtown, 1.27) to 70% (Labyrinth,
+1.53) of the whole screen.
+
+### The panel takes up the slack
+
+No track is anywhere near the shape of a phone. They run from 1.10 to 1.85 wide,
+median 1.27; a phone lying down is 2.16. So the board always fills one dimension
+and leaves the other short - and that leftover used to be plain empty screen,
+a third of the width sitting black beside the board.
+
+It goes to the panel now, which grows to swallow it, less a strip for the HOME
+button to float in. Two things about how:
+
+- It is written **after** the board has been sized, and every value this
+  function wrote last time is cleared **before** anything is measured. That is
+  what makes it safe to run twice.
+- It sets **`flex-basis`**, not `width`. The panel is a flex item with a basis
+  of its own in the stylesheet, and a basis beats a width: the first version set
+  the width, the panel ignored it, and the gutter stayed exactly as empty as
+  before.
+
+Doing it in CSS with `flex: 1 1 auto` looks like the same idea and is not. The
+panel's size is an **input** to the board's size, so each pass would hand the
+board a border's width less than the last and the board would walk down to
+nothing. That was tried once before, here, and left the board at nine per cent
+of a phone screen.
+
+**Lying down only.** Upright there is half a screen of slack, and a panel
+stretched over that is eight readouts spread across five hundred pixels with
+holes between them - it looks worse than the empty band did and makes the board
+look smaller into the bargain. That was tried too. Upright, the slack goes
+*around* the board: panel and board stay together and the pair is centred, so
+the game sits in the middle of the screen where your eyes and thumbs already
+are. Two bands of a hundred and thirty read as margin; one band of two hundred
+and seventy reads as a hole, which is what pinning the pair to either end gives.
+
+Upright is also where it stops, for a reason layout cannot fix: the board is
+already the full width of the screen, and at 1.10 to 1.85 wide every track runs
+out of width with half the height to spare. It is 30-42% depending on the track
+and that is the ceiling. The only thing that would go further is **turning the
+track sideways in portrait** - which would take it to 59-86%, since the controls
+are relative and a rotated view still turns the way you press. It is a change to
+how the game is read rather than how it is laid out, so it is not in.
+
+None of this costs any thumb. The pointer handler steps aside for buttons,
+inputs and menu screens only, so a tap on the panel or on the margin still turns
+the car exactly as a tap on the board does.
 
 Making `in-race` take the side padding away exposed an ordering bug worth
 recording. `Screens.race` calls `Game.setTrack`, which fits the board, and only
 then shows the race screen, which is what puts the class on - so the board was
 being sized for the layout it was leaving rather than the one it was entering.
 `Screens.show` fits again once the class is on.
+
+The board's own border is measured rather than assumed, too. It was a hardcoded
+two pixels, which is right when the frame has a side on it and wrong upright,
+where the board runs off both edges of the screen and the left and right borders
+are taken off - two pixels of screen width, in the one direction upright has
+none to spare in.
 
 ## The starting grid
 
