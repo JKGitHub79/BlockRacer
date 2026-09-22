@@ -673,15 +673,50 @@ Starting third of four was a hangover from the field being a fixed list with
 YOU sitting in the middle of it. Racing from the back means the race has
 somewhere to go.
 
-**You start in the middle of the back row.** Being last is the point; being
-last *and* on the outside kerb is a second handicap nobody asked for, and which
-lane you got depended on how the track happened to declare its slots. `startRace`
-now picks the slot whose lateral offset is closest to the middle of the back row
-- longitudinal and lateral are measured along and across `T.startDir`, so it
-works on a grid pointing any of the four ways - and hands that one to you. The
-opponents fill the rest in their usual order, so the grid is the same shape it
-was; only which car sits where has changed. At two cars there is nothing to
-choose and you take the one remaining slot.
+**You start in the middle of the back row - unless the middle points at a
+wall.** Being last is the point; being last *and* on the outside kerb is a
+second handicap nobody asked for. `startRace` measures each slot along and
+across `T.startDir`, so it works on a grid pointing any of the four ways,
+takes the back row, and hands you one of those. The opponents fill the rest in
+their usual order, so the grid is the same shape it was; only which car sits
+where has changed. At two cars there is nothing to choose.
+
+Which of the back row you get is decided by **road ahead first and the middle
+second**, and that order is the whole of it. The player is the one car nobody
+is steering at lights out: the opponents are already aiming at the racing
+line, but you hold whatever heading the grid gave you until you press
+something. A slot with a chicane block four cells in front of it crashes you
+before you have done anything wrong. So `clearRun` walks a car-sized box
+forward from each back-row slot until it meets scenery, the slots within a car
+length of the longest are treated as tied, and the most central of *those* is
+yours. On a clear straight - which is most of them - that still comes out as
+the middle of the road.
+
+Asking for the middle first is what the first version did, and it was wrong on
+eight circuits. On Pipeworks the central back-row slot had 4.7 cells in front
+of it and the one beside it had 37.7.
+
+**A row that cannot be filled is centred, not left-aligned.** Six cars on a
+five-lane road is five across and one alone behind, and `rowsFrom` used to put
+that one in lane zero - hard against the scenery, in the lane nothing else on
+the track uses, and on several circuits pointing at a chicane block. It is the
+back row, so it is the row the player gets. Both faults landed on the same
+car, which is why it looked like one bug.
+
+Measured by starting a race at six cars and **touching nothing**, the time the
+player gets before hitting anything:
+
+| | before | after |
+| --- | --- | --- |
+| Salt Flats | 0.28s | 1.59s |
+| Canyon Run | 0.23s | 1.92s |
+| Glacier | 0.27s | 0.98s |
+| Whiteout | 0.23s | 1.38s |
+
+A quarter of a second is lights-out and into the scenery. Pinefall, Hollow,
+Canopy, Duneline and Frostline were already clear and are unchanged. Across
+every track and every field size from two cars to sixteen, the worst straight
+run from the player's slot goes from 3.8 cells to 8.7.
 
 On the grid the running order is taken from the grid itself rather than from
 `progressAlong`. That projects a car onto the racing line; on most tracks the

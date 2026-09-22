@@ -254,17 +254,27 @@
     // otherwise clear row - a chicane block reaching back into the start
     // straight - is just left empty.
     while (slots.length < n) {
-      var placed = 0;
-      for (var i = 0; i < lanes && slots.length < n; i++) {
+      var open = [];
+      for (var i = 0; i < lanes; i++) {
         var lat = lo + i * step;
-        if (!carFits(lat, lon, latKey)) continue;
-        var slot = { wp: nearestWp(lat, latKey) };
-        slot[latKey] = lat;
+        if (carFits(lat, lon, latKey)) open.push(lat);
+      }
+      if (!open.length) break;
+
+      /* A row that cannot be filled is CENTRED, not pushed up against one
+       * kerb. Six cars on a five-lane road is five across and one alone
+       * behind, and that one used to be put in lane zero - hard against the
+       * scenery, in the lane nothing else on the track uses, and on several
+       * circuits pointing straight at a chicane block. It is the back row,
+       * so it is the row the player gets. */
+      var want = Math.min(open.length, n - slots.length);
+      var first = Math.floor((open.length - want) / 2);
+      for (var k = 0; k < want; k++) {
+        var slot = { wp: nearestWp(open[first + k], latKey) };
+        slot[latKey] = open[first + k];
         slot[lonKey] = lon;
         slots.push(slot);
-        placed++;
       }
-      if (!placed) break;
       lon -= pitch * fwd;
     }
     return slots;

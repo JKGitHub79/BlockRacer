@@ -52,7 +52,36 @@
    * The field is still built with the player LAST, so everything that reads
    * `cars` in order - the countdown standings especially - still has them
    * at the back. Only which piece of tarmac they get is permuted. */
-  function middleBackSlot(grid) {
+  /* How much clear road a slot has straight in front of it.
+   *
+   * The player is the one car on the grid that nobody is steering at lights
+   * out: the opponents are already aiming at the racing line, but the player
+   * holds whatever heading the grid gave them until they press something. So
+   * a slot with a chicane block four cells in front of it is a slot that
+   * crashes them before they have done anything wrong. */
+  function clearRun(slot) {
+    var d = T.startDir;
+    var hx = d.x !== 0 ? C.carLength / 2 : C.carWidth / 2;
+    var hy = d.x !== 0 ? C.carWidth / 2 : C.carLength / 2;
+    var run = 0;
+    while (run < 24) {
+      var x = slot.x + d.x * (run + 0.25), y = slot.y + d.y * (run + 0.25);
+      if (T.boxHitsWall(x - hx, y - hy, x + hx, y + hy)) break;
+      run += 0.25;
+    }
+    return run;
+  }
+
+  /* Which of the grid's slots the player gets: the back row, then the most
+   * road ahead, then the middle.
+   *
+   * Order matters. Asking for the middle first is what produced the bug this
+   * replaces - on Pipeworks the central back-row slot had 4.7 cells in front
+   * of it and the one beside it had 37.7, so "the middle" meant driving into
+   * a gate at lights out. Slots within a car length of the best are treated
+   * as tied, so on a clear straight - which is most of them - this still
+   * comes out as the middle of the road. */
+  function playerSlot(grid) {
     var d = T.startDir;
     var lon = function (s) { return s.x * d.x + s.y * d.y; };
     var lat = function (s) { return s.x * -d.y + s.y * d.x; };
@@ -65,14 +94,27 @@
     }
     // the middle of the whole grid's WIDTH, not of the back row alone: a
     // back row holding one car would otherwise call that car central
-    var mid = (lo + hi) / 2, best = grid.length - 1, bd = Infinity;
+    var mid = (lo + hi) / 2;
+
+    var row = [], runs = [], most = 0;
     for (i = 0; i < grid.length; i++) {
       if (lon(grid[i]) > back + 0.01) continue;
-      var dd = Math.abs(lat(grid[i]) - mid);
-      if (dd < bd) { bd = dd; best = i; }
+      var r = clearRun(grid[i]);
+      row.push(i);
+      runs.push(r);
+      if (r > most) most = r;
+    }
+    if (!row.length) return grid.length - 1;
+
+    var best = row[0], bd = Infinity;
+    for (i = 0; i < row.length; i++) {
+      if (runs[i] < most - C.carLength) continue;
+      var dd = Math.abs(lat(grid[row[i]]) - mid);
+      if (dd < bd) { bd = dd; best = row[i]; }
     }
     return best;
   }
+
 
   function fieldFor(n) {
     var spec = [];
@@ -130,7 +172,7 @@
     /* Slot order: the AI take theirs as laid out, and the player - last in
      * the field - takes the middle of the back row rather than whatever was
      * left over at the end of it. */
-    var slots = [], pSlot = field.length > 1 ? middleBackSlot(grid.slice(0, field.length)) : 0;
+    var slots = [], pSlot = field.length > 1 ? playerSlot(grid.slice(0, field.length)) : 0;
     for (var k = 0; k < field.length; k++) if (k !== pSlot) slots.push(k);
     slots.push(pSlot);
 
