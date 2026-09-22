@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.42.1', built: '2026-09-21' };
+window.BR = { version: '0.43.0', built: '2026-09-21' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -196,6 +196,20 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       </div>
 
       <div class="opt">
+        <p class="lapline">HIGH CONTRAST &middot; <b id="menu-contrast">OFF</b></p>
+        <div id="contrast-buttons" class="laps">
+          <button data-contrast="0">NORMAL</button>
+          <button data-contrast="1">HIGH CONTRAST</button>
+        </div>
+        <p class="hint">Black road, white scenery, and a hard edge round every
+          car. It replaces the palette of every track rather than being a
+          track of its own, and it separates by brightness rather than by
+          colour, so it works whatever your colour vision is. The gates go
+          striped rather than tinted for the same reason. The weather, the
+          painted landscape behind the menus and everything else that is only
+          decoration come off while it is on.</p>
+      </div>
+      <div class="opt">
         <p class="lapline">YOUR CAR &middot; <b id="menu-glow">ON</b></p>
         <div id="glow-buttons" class="laps">
           <button data-glow="1">GLOW</button>
@@ -287,7 +301,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
     </div>
 
     <p class="screen-foot">Settings apply to every race &middot;
-      <code>?track=2&amp;laps=7&amp;cars=8&amp;ai=9&amp;steer=45&amp;glow=0</code> races that track straight away</p>
+      <code>?track=2&amp;laps=7&amp;cars=8&amp;ai=9&amp;steer=45&amp;contrast=1</code> races that track straight away</p>
   </div>
 </section>
 

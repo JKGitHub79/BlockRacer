@@ -1187,6 +1187,21 @@
    * repainted, which is a few dozen rectangles. */
   Backdrop.draw = function (t) {
     if (!ctx || !this.scene || !measure()) return;
+
+    /* High contrast takes the landscape away as well as the scenery on the
+     * board. Every menu caption sits straight on this canvas, and a painted
+     * dusk behind pale text is the same problem the mode exists to solve -
+     * solving it for the road and leaving it for the words would be half a
+     * job. Flat black, and nothing drifting across it. */
+    if (global.CONFIG && global.CONFIG.contrast) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      baked = null;
+      bakedFor = '';
+      return;
+    }
+
     var spec = SCENES[this.scene];
 
     if (!baked || bakedFor !== this.scene + W + 'x' + H) {

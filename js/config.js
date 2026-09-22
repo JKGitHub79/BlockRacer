@@ -82,6 +82,17 @@
      * and the player's car only - an AI with a halo would be a tell. */
     playerGlow: true,
 
+    /* HIGH CONTRAST. Off by default; an option, not a theme. When it is on it
+     * replaces the palette of whichever track you are driving, so it reaches
+     * all thirty-seven of them rather than being a thirty-eighth.
+     *
+     * It is built on LUMINANCE and not on hue, which is the whole point: a
+     * palette that separates by colour is exactly what fails for the people
+     * who need this. Black road against a white solid is a contrast ratio of
+     * about 20:1 and reads the same to every kind of colour vision, including
+     * none at all. */
+    contrast: false,
+
     /* Seconds for the body to straighten up again out of full lean. Purely
      * cosmetic: the car flicks to its full oversteer instantly and then
      * unwinds no faster than this, so the drift stays on screen long enough
@@ -339,6 +350,25 @@
   var glowParam = /[?&]glow=([01])/.exec(search);
   if (glowParam) CONFIG.playerGlow = glowParam[1] === '1';
 
+  /* Its own key, like every other preference, so RESET DATA leaves it alone.
+   * Somebody who needs this does not want it wiped with their medals. */
+  var CONTRAST_KEY = 'blockracer.contrast.v1';
+  CONFIG.saveContrast = function () {
+    try {
+      if (global.localStorage) {
+        global.localStorage.setItem(CONTRAST_KEY, CONFIG.contrast ? '1' : '0');
+      }
+    } catch (e) { /* storage blocked or full */ }
+  };
+  try {
+    var savedContrast = global.localStorage && global.localStorage.getItem(CONTRAST_KEY);
+    if (savedContrast === '0' || savedContrast === '1') {
+      CONFIG.contrast = savedContrast === '1';
+    }
+  } catch (e) { /* unreadable storage: keep the default */ }
+  var contrastParam = /[?&]contrast=([01])/.exec(search);
+  if (contrastParam) CONFIG.contrast = contrastParam[1] === '1';
+
   /* A turn is a right angle, so the lean the pose asks for is a fraction of
    * one. Everything that draws a car works in radians; the slider works in
    * degrees because that is what the pose is called. */
@@ -369,6 +399,28 @@
   } catch (e) { /* unreadable storage: keep the default */ }
   var steerParam = /[?&]steer=(\d+)/.exec(search);
   if (steerParam) CONFIG.oversteer = CONFIG.clampOversteer(parseInt(steerParam[1], 10));
+
+  /* The one palette that outranks a theme's own. Everything not listed here
+   * falls through to the theme, which is deliberate: the car colours and the
+   * start line are already high contrast and do not need replacing. */
+  CONFIG.contrastPalette = {
+    bg:         '#000000',
+    road:       '#000000',   // the only thing you may drive on, and it is
+    roadLine:   '#26262a',   // the only black thing on the board
+    wall:       '#f4f6fa',
+    wallTop:    '#ffffff',
+    outer:      '#f4f6fa',
+    outerTop:   '#ffffff',
+    jog:        '#f4f6fa',   // gates are walls, and are told apart from the
+    jogTop:     '#ffffff',   // rest by a hatch rather than by a colour
+    racingLine: 'rgba(255,255,255,0.28)',
+    check:      'rgba(255,255,255,0.07)',
+    checkNext:  'rgba(255,255,255,0.24)',
+    startLine:  '#ffffff'
+  };
+  CONFIG.contrastColors = function () {
+    return CONFIG.contrast ? CONFIG.contrastPalette : null;
+  };
 
   CONFIG.roadColors = function () {
     return CONFIG.roadTints[CONFIG.roadTint].colors || null;

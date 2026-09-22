@@ -341,6 +341,7 @@
     el.aiRange.min = C.minAiLevel;
     el.aiRange.max = C.maxAiLevel;
     el.glowButtons = document.getElementById('glow-buttons');
+    el.contrastButtons = document.getElementById('contrast-buttons');
     el.steerRange = document.getElementById('oversteer-range');
     el.steerRange.min = C.minOversteer;   // one place decides how far it goes
     el.steerRange.max = C.maxOversteer;
@@ -551,6 +552,19 @@
   /* The halo under your own car. Cosmetic and live: nothing reads it but
    * the car painter, so it takes effect on the very next frame and there is
    * nothing to rebake and nothing to reset. */
+  /* Turning this on changes what every solid is painted, so the track has to
+   * be baked again - the same thing the road swatches do, for the same
+   * reason. The thumbnails are rebuilt when the play screen is next shown. */
+  Game.setContrast = function (on) {
+    C.contrast = !!on;
+    C.saveContrast();
+    Array.prototype.forEach.call(el.contrastButtons.children, function (b) {
+      b.classList.toggle('on', (b.dataset.contrast === '1') === C.contrast);
+    });
+    document.getElementById('menu-contrast').textContent = C.contrast ? 'ON' : 'OFF';
+    global.Renderer.setTrack();
+  };
+
   Game.setPlayerGlow = function (on) {
     C.playerGlow = !!on;
     C.savePlayerGlow();
@@ -671,6 +685,7 @@
     this.setSlide(C.slide);
     this.setOversteer(C.oversteer);
     this.setPlayerGlow(C.playerGlow);
+    this.setContrast(C.contrast);
     this.setSpeed(C.speedLevel);
     this.setRoad(C.roadTint);
     this.setAiLevel(C.aiLevel);
@@ -717,6 +732,12 @@
       b.addEventListener('click', function (e) {
         e.stopPropagation();
         Game.setPlayerGlow(b.dataset.glow === '1');
+      });
+    });
+    Array.prototype.forEach.call(el.contrastButtons.children, function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        Game.setContrast(b.dataset.contrast === '1');
       });
     });
     Array.prototype.forEach.call(el.roadButtons.children, function (b) {

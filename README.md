@@ -1520,6 +1520,62 @@ reads instantly but it also sits on top of the track, hides the car it is meant
 to point at when the field bunches, and looks like a HUD element in a game that
 has deliberately kept everything on the board.
 
+## High contrast
+
+**Off by default, and an option rather than a theme.** There are thirty-seven
+tracks and ten looks; adding an eleventh look would have meant one more thing
+to choose between, and somebody who needs this needs it on Pinefall and on
+Mothership alike. So it is a switch on the options screen that replaces the
+palette of whichever track you are driving, and it reaches all of them.
+
+**It separates by brightness, not by hue, which is the whole point.** A
+palette that tells you things apart by colour is exactly what fails for the
+people this is for. So the road is `#000000` and every solid is `#f4f6fa`:
+measured off the live canvas those are the two commonest colours on the board,
+and the contrast ratio between them is about **19:1**, against a WCAG AAA bar
+of 7:1. It reads the same with any kind of colour vision, including none, and
+it survives a black and white photograph - which is the quickest test there
+is, and the one this was checked against.
+
+What changes when it is on:
+
+- **The road is black and every solid is white**, with a pure-white lit lip
+  where they meet. Nothing else on the board is black, so black means "you
+  may drive here" and nothing else.
+- **Gate blocks go striped, not tinted.** They have to be tellable from the
+  rest of the scenery, and in a mode built for people who cannot rely on hue
+  they cannot be tellable *by* hue - so they are the same white as every
+  other solid with a black hatch across them. A difference in pattern rather
+  than in colour.
+- **Every car gets a hard edge**: white inside, black outside. The road under
+  a car is black and the scenery beside it is white, so a car needs an
+  outline that works against both; without one a dark car on a black road is
+  a hole. Yours carries a second ring in black and white on top of that,
+  because the halo is a colour and a colour is not enough here.
+- **Every wall painter is turned off** - the stone, the windows, the pipes,
+  the ashlar, the basalt, the starfield, the growth. They are all texture,
+  and texture on a solid that is meant to read as one flat "not road" is
+  noise competing with the only distinction that matters. The livery goes
+  with them.
+- **So does everything that is only decoration**: the weather, the molten
+  lava, the saucer and its lasers, and the painted landscape behind the
+  menus. Menu captions sit straight on that landscape, and solving the
+  problem for the road while leaving it for the words would be half a job,
+  so the backdrop goes flat black too.
+- **The track cards change with it**, because the card is where you choose.
+  They stop being ten looks and become thirty-seven black and white maps,
+  which is a loss of flavour and a gain in legibility, and in this mode that
+  is the right way round.
+
+It has its own `localStorage` key and **survives RESET DATA**, which wipes
+what you have won rather than what you have chosen - somebody who needs this
+does not want it cleared along with their medals. `?contrast=1` sets it from
+the URL.
+
+The one thing it does not touch is the three-second countdown, which dims the
+whole board to 55% so the numeral over it can be read. That is the one moment
+the contrast is deliberately lower, and nothing is moving while it lasts.
+
 ## Road colour
 
 Six swatches on the start menu, next to the slide slider, for trying a colour

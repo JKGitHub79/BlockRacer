@@ -22,6 +22,8 @@
    * tint only ever carries road entries, so a track keeps its walls and its
    * weather whichever tarmac it is laid on. */
   function colorOf(name) {
+    var hc = C.contrastColors();
+    if (hc && hc[name]) return hc[name];
     var tint = C.roadColors();
     return (tint && tint[name]) || (T.theme && T.theme[name]) || C.colors[name];
   }
@@ -624,6 +626,32 @@
     }
   }
 
+  /* ---- high contrast ---------------------------------------------------
+   *
+   * The gate blocks have to be tellable from the rest of the scenery, and in
+   * a mode built for people who cannot rely on hue they cannot be tellable
+   * BY hue. So they are the same white as every other solid and carry a
+   * black hatch instead: a difference in pattern, which survives every kind
+   * of colour vision and also survives a black and white photograph, which
+   * is the quickest test there is. */
+  function drawHatch(g, cx, cy, kind) {
+    if (kind !== 3) return;
+    var x = cx * S, y = cy * S, i;
+    g.save();
+    g.beginPath();
+    g.rect(x, y, S, S);
+    g.clip();
+    g.strokeStyle = '#000000';
+    g.lineWidth = Math.max(2, S * 0.10);
+    for (i = -1; i < 3; i++) {
+      g.beginPath();
+      g.moveTo(x + i * S * 0.5, y);
+      g.lineTo(x + i * S * 0.5 + S, y + S);
+      g.stroke();
+    }
+    g.restore();
+  }
+
   function eachWall(fn) {
     for (var cy = 0; cy < T.rows; cy++) {
       for (var cx = 0; cx < T.cols; cx++) {
@@ -750,13 +778,17 @@
     // Walls, in two passes: every solid is filled flat first, then the
     // emblems are painted over the flat fill, then the lit edges go on top -
     // so the faces that make the blocks read as raised survive the livery.
-    var stone = !!(T.theme && T.theme.rock);
-    var lit = !!(T.theme && T.theme.windows);
-    var plant = !!(T.theme && T.theme.pipes);
-    var dressed = !!(T.theme && T.theme.glyphs);
-    var basalt  = !!(T.theme && T.theme.crust);
-    var sky     = !!(T.theme && T.theme.vacuum);
-    var grown   = !!(T.theme && T.theme.hive);
+    /* Every wall painter is turned off here. They are all texture, and
+     * texture on a solid that is meant to read as a single flat "not road"
+     * is noise competing with the one distinction that matters. */
+    var flat = !!C.contrastColors();
+    var stone = !flat && !!(T.theme && T.theme.rock);
+    var lit = !flat && !!(T.theme && T.theme.windows);
+    var plant = !flat && !!(T.theme && T.theme.pipes);
+    var dressed = !flat && !!(T.theme && T.theme.glyphs);
+    var basalt  = !flat && !!(T.theme && T.theme.crust);
+    var sky     = !flat && !!(T.theme && T.theme.vacuum);
+    var grown   = !flat && !!(T.theme && T.theme.hive);
     eachWall(function (cx, cy, kind) {
       // Four kinds of solid: the islands inside the circuit, the ground
       // outside it, the chicane blocks, and lava - whose cooled crust is
@@ -772,9 +804,10 @@
       if (basalt) drawCrust(g, cx, cy, kind);
       if (sky) drawStars(g, cx, cy);
       if (grown) drawHive(g, cx, cy, kind);
+      if (flat) drawHatch(g, cx, cy, kind);
     });
 
-    drawEmblems(g);
+    if (!flat) drawEmblems(g);
 
     /* The lit edges. Everywhere but space these make a solid read as a block
      * standing up off the road: three sides catch the light and the fourth,
@@ -1047,8 +1080,10 @@
     var data = global.TRACKS[index];
     if (!data || !host) return;
     var tint = C.roadColors();
+    var hc = C.contrastColors();
     var pick = function (name) {
-      return (tint && tint[name]) || (data.theme && data.theme[name]) || C.colors[name];
+      return (hc && hc[name]) || (tint && tint[name]) ||
+             (data.theme && data.theme[name]) || C.colors[name];
     };
 
     /* Every thumbnail is the same shape, whatever shape the track is, and the
@@ -1147,20 +1182,47 @@
     g.fillStyle = 'rgba(0,0,0,0.45)';
     g.fillRect(-L / 2 + (2 * cos + 3 * sin), -W / 2 + (3 * cos - 2 * sin), L, W);
 
+    var hc = !!C.contrastColors();
+
     g.fillStyle = car.crashFlash > 0.05
       ? 'rgba(255,255,255,' + (0.35 + 0.65 * car.crashFlash) + ')'
       : car.color;
     g.fillRect(-L / 2, -W / 2, L, W);
 
+    /* In high contrast every car gets a hard white edge. The road under it is
+     * black and the scenery beside it is white, so a car needs an outline
+     * that works against both: white reads against the road, and the body
+     * colour inside it reads against the outline. Without one, a dark car on
+     * a black road is a hole. */
+    if (hc) {
+      g.strokeStyle = '#ffffff';
+      g.lineWidth = 2;
+      g.strokeRect(-L / 2 - 1, -W / 2 - 1, L + 2, W + 2);
+      g.strokeStyle = '#000000';
+      g.lineWidth = 1.5;
+      g.strokeRect(-L / 2 - 2.5, -W / 2 - 2.5, L + 5, W + 5);
+    }
+
     // cabin, set back from the nose so the front end is obvious
-    g.fillStyle = 'rgba(10,14,22,0.55)';
+    g.fillStyle = hc ? 'rgba(0,0,0,0.80)' : 'rgba(10,14,22,0.55)';
     g.fillRect(-L * 0.34, -W * 0.3, L * 0.4, W * 0.6);
 
     // nose stripe
-    g.fillStyle = 'rgba(255,255,255,0.85)';
-    g.fillRect(L / 2 - 3, -W / 2, 3, W);
+    g.fillStyle = hc ? '#ffffff' : 'rgba(255,255,255,0.85)';
+    g.fillRect(L / 2 - (hc ? 4 : 3), -W / 2, hc ? 4 : 3, W);
 
     if (car.isPlayer) {
+      /* Yours carries a second ring, in black and white rather than in a
+       * colour, so which car is yours is a question of shape and not of hue.
+       * The halo is a colour and is therefore not enough on its own here. */
+      if (hc) {
+        g.strokeStyle = '#000000';
+        g.lineWidth = 4;
+        g.strokeRect(-L / 2 - 6, -W / 2 - 6, L + 12, W + 12);
+        g.strokeStyle = '#ffffff';
+        g.lineWidth = 2;
+        g.strokeRect(-L / 2 - 6, -W / 2 - 6, L + 12, W + 12);
+      }
       g.strokeStyle = 'rgba(255,255,255,0.9)';
       g.lineWidth = 1.5;
       g.strokeRect(-L / 2 - 1.5, -W / 2 - 1.5, L + 3, W + 3);
@@ -1181,7 +1243,8 @@
     g.drawImage(trackCanvas, 0, 0, T.width, T.height);
 
     var now = (global.performance ? performance.now() : Date.now()) / 1000;
-    Renderer.drawLava(g, now);
+    var plain = !!C.contrastColors();
+    if (!plain) Renderer.drawLava(g, now);
     drawCheckpoints(g, game.player);
 
     // tyre marks first so they sit under the sparks and the cars
@@ -1201,8 +1264,10 @@
 
     game.cars.forEach(function (car) { drawCar(g, car); });
     // over the cars, because it is over the cars
-    Renderer.drawFlyby(g, now);
-    Renderer.drawWeather(g, now);
+    if (!plain) {
+      Renderer.drawFlyby(g, now);
+      Renderer.drawWeather(g, now);
+    }
 
     if (game.state === 'countdown') {
       var n = Math.ceil(game.countdown);
