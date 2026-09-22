@@ -29,7 +29,8 @@ const VERBOSE = process.argv.includes('--all');
  * has to be reachable. */
 /* `fits: true` means the screen has to be wholly visible without scrolling.
  * The options screen is exempt - it is a long list of settings and scrolling
- * it is normal - and the results panel scrolls its table inside itself. */
+ * it is normal - the shop is a grid of forty-two things and scrolls for the
+ * same reason - and the results panel scrolls its table inside itself. */
 const SCREENS = [
   { name: 'main',    go: 'Screens.show("main")', fits: true, box: '#screen-main',
     must: ['#btn-play', '#btn-options'] },
@@ -40,6 +41,12 @@ const SCREENS = [
     must: ['#theme-cards .card', '#theme-prev', '#theme-next'] },
   { name: 'options', go: 'Screens.show("options")', box: '#screen-options',
     must: ['#slide-range', '#cars-range', '#ai-range', '#btn-reset'] },
+  { name: 'shop',    go: 'Screens.shopTab = "skins"; Screens.show("shop")',
+    box: '#screen-shop',
+    must: ['#shop-tabs button', '#shop-grid .shop-item', '#shop-count'] },
+  { name: 'shop-v',  go: 'Screens.shopTab = "vehicles"; Screens.show("shop")',
+    box: '#screen-shop',
+    must: ['#shop-tabs button', '#shop-grid .shop-item canvas'] },
   { name: 'race',    go: 'Game.setCars(8); Screens.race(11, "play")', fits: true,
     must: ['#game', '.hud', '#btn-home'] },
   { name: 'results', go: 'Game.state = "racing"; Game.showResults()',

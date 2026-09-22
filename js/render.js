@@ -1184,10 +1184,24 @@
 
     var hc = !!C.contrastColors();
 
-    g.fillStyle = car.crashFlash > 0.05
-      ? 'rgba(255,255,255,' + (0.35 + 0.65 * car.crashFlash) + ')'
-      : car.color;
-    g.fillRect(-L / 2, -W / 2, L, W);
+    /* The player's car is the only one that wears cosmetics, which is what
+     * the shop is for: an opponent in your skin would make the one car you
+     * need to find harder to find. Everything else - the shadow, the rings,
+     * the halo, the crash flash - is unchanged and runs over the top of it.
+     *
+     * In high contrast the skin is dropped for the car's flat colour, for
+     * the same reason every other texture is: a patterned body competing
+     * with a hard black-and-white board is noise where the mode wants none. */
+    var Cos = global.Cosmetics;
+    if (car.isPlayer && Cos) {
+      Cos.drawCar(g, L, W, Cos.equippedSkin(), Cos.equippedVehicle(),
+                  car.crashFlash, hc ? car.color : null);
+    } else {
+      g.fillStyle = car.crashFlash > 0.05
+        ? 'rgba(255,255,255,' + (0.35 + 0.65 * car.crashFlash) + ')'
+        : car.color;
+      g.fillRect(-L / 2, -W / 2, L, W);
+    }
 
     /* In high contrast every car gets a hard white edge. The road under it is
      * black and the scenery beside it is white, so a car needs an outline
@@ -1203,13 +1217,14 @@
       g.strokeRect(-L / 2 - 2.5, -W / 2 - 2.5, L + 5, W + 5);
     }
 
-    // cabin, set back from the nose so the front end is obvious
-    g.fillStyle = hc ? 'rgba(0,0,0,0.80)' : 'rgba(10,14,22,0.55)';
-    g.fillRect(-L * 0.34, -W * 0.3, L * 0.4, W * 0.6);
-
-    // nose stripe
-    g.fillStyle = hc ? '#ffffff' : 'rgba(255,255,255,0.85)';
-    g.fillRect(L / 2 - (hc ? 4 : 3), -W / 2, hc ? 4 : 3, W);
+    // An opponent's cabin and nose stripe. The player's vehicle draws its
+    // own, because where they go depends on what shape it is.
+    if (!(car.isPlayer && Cos)) {
+      g.fillStyle = hc ? 'rgba(0,0,0,0.80)' : 'rgba(10,14,22,0.55)';
+      g.fillRect(-L * 0.34, -W * 0.3, L * 0.4, W * 0.6);
+      g.fillStyle = hc ? '#ffffff' : 'rgba(255,255,255,0.85)';
+      g.fillRect(L / 2 - (hc ? 4 : 3), -W / 2, hc ? 4 : 3, W);
+    }
 
     if (car.isPlayer) {
       /* Yours carries a second ring, in black and white rather than in a

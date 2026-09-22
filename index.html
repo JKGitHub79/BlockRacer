@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.43.1', built: '2026-09-21' };
+window.BR = { version: '0.44.0', built: '2026-09-22' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -113,10 +113,10 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
         <span class="door-name">PLAY</span>
         <span class="door-sub">Pick a theme and race</span>
       </button>
-      <button class="door door-locked" disabled>
-        <span class="door-mark">&#9632;</span>
+      <button id="btn-shop" class="door">
+        <span class="door-mark">&#9670;</span>
         <span class="door-name">SHOP</span>
-        <span class="door-sub">Coming soon</span>
+        <span class="door-sub">Skins &amp; vehicles you have won</span>
       </button>
     </nav>
 
@@ -145,6 +145,23 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 
     <p class="screen-foot">Medals and lap records are kept separately &middot;
       one is not the other</p>
+  </div>
+</section>
+
+<!-- ============================= shop ================================ -->
+<section id="screen-shop" class="screen shop">
+  <button class="back" data-back="main">&larr; BACK</button>
+  <div class="screen-inner">
+    <h2 class="screen-title">SHOP</h2>
+    <p class="shop-sub">Everything here is won, not bought. Nothing here changes how the car drives.</p>
+
+    <nav id="shop-tabs" class="shop-tabs">
+      <button class="shop-tab on" data-tab="skins">SKINS</button>
+      <button class="shop-tab" data-tab="vehicles">VEHICLES</button>
+    </nav>
+
+    <p id="shop-count" class="shop-count">&nbsp;</p>
+    <div id="shop-grid" class="shop-grid"></div>
   </div>
 </section>
 
@@ -309,7 +326,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 /* Loaded through the version so the browser fetches fresh files after a
  * deploy. document.write keeps them strictly in order, which they need. */
 ['viewport', 'tracks', 'themes', 'config', 'track', 'car', 'ai', 'input', 'audio',
- 'progress', 'backdrop', 'render', 'screens', 'game']
+ 'progress', 'cosmetics', 'backdrop', 'render', 'screens', 'game']
   .forEach(function (name) {
     document.write('<script src="js/' + name + '.js?v=' + BR.version + '"><\/script>');
   });

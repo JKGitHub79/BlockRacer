@@ -1156,6 +1156,10 @@ sliders were the worst: the element IS the 6px track, so the whole hit area was
 six pixels tall. They are 40px now, with the visible track painted by
 `::-webkit-slider-runnable-track` so they look exactly the same.
 
+The layout audit is what keeps this honest as screens get added. The shop's two
+tabs went in at 37px tall and the audit failed them on every tablet in the list
+before anyone had to press one.
+
 ## Controls
 
 | Key | Action |
@@ -1558,6 +1562,106 @@ The alternative was a marker floating above the car - an arrow or a ring. That
 reads instantly but it also sits on top of the track, hides the car it is meant
 to point at when the field bunches, and looks like a HUD element in a game that
 has deliberately kept everything on the board.
+
+## The shop
+
+Thirty skins and ten vehicles, and not one of them is for sale. **SHOP** on the
+start menu opens two tabs - `SKINS` and `VEHICLES` - and everything in both is
+won by finishing races.
+
+**A skin is unlocked by a first place on one track.** Three tracks per theme,
+three skins per theme, in the order the ladder runs: Forest gives Green, Camo and
+Cow; Desert gives Yellow, Tiger and Leopard; and so on to Alien, which gives
+Toxic, Alien and Rainbow. **A vehicle is unlocked by a theme's Gold Star**, which
+means a first place on all three of its tracks - one car per theme, ten in all.
+
+Neither is stored. `Cosmetics.skinUnlocked` is `Progress.medal(track) === 1` and
+`Cosmetics.vehicleUnlocked` is `Progress.star(theme) === 1`, both read live. This
+is the same trick the theme stars use and it buys the same two things: a medal
+you won before any of this existed unlocks its skin the first time the file
+loads, with no migration and nothing to backfill, and `RESET DATA` clears the
+shop by clearing what the shop is made of. What *is* saved is the pair you have
+equipped, under `blockracer.cosmetics.v1`, because that is a preference and not
+an achievement:
+
+```json
+{"skin":"cow","vehicle":"pickup"}
+```
+
+and it is validated on the way out, so a wipe that takes away the skin you were
+wearing drops you back to the default rather than leaving you invisible.
+
+### Nothing here changes how the car drives
+
+This is the whole constraint, and it is worth being exact about what it means.
+A vehicle is a **shape** and a skin is a **fill**. The box the car collides with
+is built in `js/car.js` from `CONFIG.carLength` and `CONFIG.carWidth` and from
+nothing else, and no file that runs the physics - `car.js`, `ai.js`, `config.js`,
+`track.js` - contains the word `Cosmetics`. The one line in `js/game.js` that
+does reads a *colour*, for the halo and the running-order chip.
+
+Two checks hold it there rather than trusting the arrangement:
+
+- **The same drive, eleven times.** A time trial has no opponents, so it is
+  deterministic: a fixed turn script through 4,000 physics steps produces one
+  trace of positions, headings and speeds. Run it once per vehicle on a forest, a
+  city and an alien track and the eleven traces are byte-identical, crash counts
+  included. Swapping the skin changes nothing either.
+- **Nothing paints outside the box.** Each vehicle is drawn at 200x scale and the
+  ink measured: every one reaches 100% of the collision box and no more. This
+  caught a real bug - the body outline was a *centred* stroke, so half a
+  line-width of it landed outside the body on every side. It is stroked inside
+  the clip at double width now, and the wings that reach the edge of the box stop
+  there.
+
+Drawing inside the box is also the safe direction to be wrong in. A car can look
+like it should have hit something it did not; it can never clear something it
+visibly touched.
+
+### What the two tabs are for
+
+They answer different questions, so they are shaped differently.
+
+**Skins** are round chips, grouped under a heading per theme. The chip is not an
+artist's impression - it calls the same painter the car body calls, through a
+circular clip, at the car's own aspect ratio. That last part matters more than it
+sounds: every painter sizes its spots and stripes off the height it is handed, so
+painting a 1.25 x 0.67 pattern into a square makes the blobs half again too big.
+Cow came out as a black car with a white bite in it until the chip was cut from a
+car-shaped rectangle instead.
+
+The chip is handed a rectangle in **pixels**, not a scaled context. Several
+painters floor a size at a pixel or two - a carbon weave cell, a star - and
+scaling the context turns those floors into slabs the size of the whole chip.
+
+**Vehicles** are wide cards, and each one wears the skin you have equipped, so
+the two tabs answer each other. There is exactly one vehicle per theme, so the
+theme is a caption on the tile rather than a heading above it - a heading above a
+single tile turns eleven cars into eleven rows of mostly nothing.
+
+What makes these read as cars from above rather than as slabs is one number:
+`body`, the share of the width the painted shell takes. The rest is tyre. An
+off-roader is a narrow body on fat wheels, a single-seater is a cigar with the
+wheels hanging off it, and neither is one pixel wider than a hatchback. Add
+headlights at the nose and a pair of red lamps at the tail and the direction of
+travel is readable at thirty pixels without a marker.
+
+### Locked is shown, not hidden
+
+A locked tile is dimmed, desaturated, `disabled`, and says exactly what would
+unlock it - `Win 1st place on WHITEOUT`, `Earn the SNOW Gold Star`. It stays the
+same size as an unlocked one, so the grid does not reflow as you win things. The
+last unlock in each run - Gold, Lava, Black Hole, Rainbow, the Saucer - gets a
+lit gold rim the ordinary ones do not have.
+
+The grid is rebuilt from `Cosmetics` every time the screen is shown rather than
+once at boot, because what is unlocked is a function of medals that change while
+you are playing. Coming back from a race you have just won shows the skin already
+unlocked, with no event to wire up and nothing to invalidate.
+
+Cosmetics are the player's alone. An AI car is painted by `js/render.js` exactly
+as it always was, and `car.isPlayer` is the only thing that routes a car through
+this file at all.
 
 ## High contrast
 

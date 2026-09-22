@@ -1280,3 +1280,157 @@ body.in-race #backdrop { display: none; }
   #standings li { padding: 1px 0; }
   #standings .lp { display: inline; }
 }
+
+/* ---- shop ------------------------------------------------------------ *
+ *
+ * The same vocabulary as the track carousel: a panel, a hairline border, a
+ * lit border when it is the one you have chosen, and the art doing the
+ * talking. It is not a settings screen with pictures on it.
+ */
+.shop .screen-inner { max-width: 1100px; }
+
+.shop-sub {
+  margin: -4px 0 18px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--dim);
+}
+
+.shop-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.shop-tab {
+  /* 44px is the smallest thing a thumb reliably hits, and these two are the
+     only way to move between the lists - the layout audit holds them to it. */
+  min-height: 44px;
+  padding: 10px 26px;
+  font: inherit;
+  font-size: clamp(11px, 1.6vw, 14px);
+  letter-spacing: 3px;
+  color: var(--dim);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.shop-tab:hover { color: var(--ink); border-color: var(--accent); }
+/* The selected tab is not a shade darker, it is lit: at a glance you should
+   never have to work out which list you are looking at. */
+.shop-tab.on {
+  color: var(--accent);
+  background: rgba(94, 242, 255, 0.12);
+  border-color: rgba(94, 242, 255, 0.65);
+}
+
+.shop-count {
+  margin: 0 0 14px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--dim);
+}
+
+.shop-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+}
+/* Vehicles are silhouettes, so their tiles are landscape - the shape is the
+   whole point and a square would crop it. */
+.shop-grid.vehicles { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
+
+.shop-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px 12px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.15s, border-color 0.15s, background 0.15s;
+}
+/* Guarded, because a touch leaves the hover state stuck on the last tile you
+   pressed - and a lit border is how this screen says EQUIPPED. */
+@media (hover: hover) {
+  .shop-item:hover { transform: translateY(-3px); border-color: var(--accent); }
+}
+
+.shop-item canvas { display: block; }
+/* The theme a vehicle comes from, on the tile rather than in a heading:
+   one car per theme would otherwise be one tile per row. */
+.shop-cap {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--theme, var(--dim));
+  opacity: 0.85;
+  margin-top: -4px;
+}
+.shop-name {
+  font-size: 11px;
+  letter-spacing: 2px;
+  line-height: 1.3;
+}
+.shop-need {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  line-height: 1.35;
+  color: var(--dim);
+}
+.shop-state {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+
+/* Locked is dimmed but never hidden: the whole point of showing it is that
+   you can see what winning the next thing gets you. The tile stays the same
+   size so the grid does not reflow as you unlock things. */
+.shop-item.locked { cursor: not-allowed; opacity: 0.55; }
+@media (hover: hover) {
+  .shop-item.locked:hover { transform: none; border-color: var(--line); }
+}
+.shop-item.locked canvas { filter: grayscale(0.85) brightness(0.55); }
+
+.shop-item.on {
+  border-color: rgba(94, 242, 255, 0.7);
+  background: rgba(94, 242, 255, 0.10);
+}
+
+/* The last few unlocks in a run are the ones worth crossing the screen for,
+   so they get a lit rim the ordinary ones do not have. */
+.shop-item.prestige:not(.locked) {
+  border-color: rgba(255, 210, 74, 0.55);
+  box-shadow: 0 0 18px rgba(255, 210, 74, 0.14) inset;
+}
+.shop-item.prestige:not(.locked) .shop-name { color: #ffd24a; }
+.shop-item.prestige.on {
+  border-color: rgba(255, 210, 74, 0.9);
+  background: rgba(255, 210, 74, 0.12);
+}
+
+/* A run of tiles belonging to one theme, so the grid reads as the ladder it
+   is rather than as thirty unrelated circles. */
+.shop-head {
+  grid-column: 1 / -1;
+  margin: 10px 0 -2px;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--theme, var(--dim));
+  text-align: left;
+  opacity: 0.9;
+}
+.shop-head:first-child { margin-top: 0; }
+
+@media (max-width: 480px) {
+  .shop-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 9px; }
+  .shop-grid.vehicles { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); }
+  .shop-tab { padding: 9px 16px; letter-spacing: 2px; }
+}

@@ -25,17 +25,18 @@
 
   var el = {};
 
-  var SCENE_FOR = { main: 'night', options: 'night', mode: 'night' };
+  var SCENE_FOR = { main: 'night', options: 'night', mode: 'night', shop: 'night' };
 
   Screens.show = function (name) {
     this.current = name;
-    ['main', 'options', 'play', 'mode'].forEach(function (s) {
+    ['main', 'options', 'play', 'mode', 'shop'].forEach(function (s) {
       el[s].classList.toggle('on', s === name);
     });
     document.body.classList.toggle('in-race', name === 'race');
     Backdrop.set(name === 'play' ? THEMES[Screens.theme].scene : SCENE_FOR[name] || 'night');
     if (name === 'play') this.paintCards();
     if (name === 'options') this.buildLegacy();
+    if (name === 'shop') this.paintShop();
     global.Input.clear();
   };
 
@@ -191,6 +192,126 @@
     });
   };
 
+  /* ---- shop ------------------------------------------------------------
+   *
+   * Built from Cosmetics every time it is shown rather than once at boot,
+   * because what is unlocked is a function of the medals and the medals
+   * change while you are playing. Coming back from a race you have just won
+   * therefore shows the skin already unlocked, with no event to wire up and
+   * nothing to invalidate.
+   */
+  Screens.shopTab = 'skins';
+
+  // The last item of each theme's run, which is the one worth crossing the
+  // screen for. Purely a look: they unlock the same way as the rest.
+  var PRESTIGE = { gold: 1, lava: 1, void: 1, rainbow: 1, galaxy: 1, alien: 1,
+                   chrome: 1, neon: 1, saucer: 1, racer: 1, classic: 1 };
+
+  function shopTile(opts) {
+    var b = document.createElement('button');
+    b.className = 'shop-item' +
+      (opts.locked ? ' locked' : '') +
+      (opts.equipped ? ' on' : '') +
+      (PRESTIGE[opts.id] ? ' prestige' : '');
+    var art = document.createElement('canvas');
+    art.width = opts.w;
+    art.height = opts.h;
+    art.style.width = (opts.w / 2) + 'px';
+    art.style.height = (opts.h / 2) + 'px';
+    b.appendChild(art);
+    var name = document.createElement('span');
+    name.className = 'shop-name';
+    name.textContent = opts.name;
+    b.appendChild(name);
+    if (opts.caption) {
+      var cap = document.createElement('span');
+      cap.className = 'shop-cap';
+      if (opts.accent) cap.style.setProperty('--theme', opts.accent);
+      cap.textContent = opts.caption;
+      b.appendChild(cap);
+    }
+    var line = document.createElement('span');
+    line.className = opts.locked ? 'shop-need' : 'shop-state';
+    line.textContent = opts.locked ? opts.need : (opts.equipped ? 'EQUIPPED' : 'EQUIP');
+    b.appendChild(line);
+    if (opts.locked) {
+      b.disabled = true;
+      b.setAttribute('aria-label', opts.name + ' - locked. ' + opts.need);
+    } else {
+      b.addEventListener('click', opts.onPick);
+    }
+    return { button: b, art: art };
+  }
+
+  function themeHeading(text, accent) {
+    var h = document.createElement('p');
+    h.className = 'shop-head';
+    h.textContent = text;
+    if (accent) h.style.setProperty('--theme', accent);
+    return h;
+  }
+
+  Screens.paintShop = function () {
+    var Cos = global.Cosmetics;
+    var grid = el.shopGrid;
+    var skins = this.shopTab === 'skins';
+    grid.innerHTML = '';
+    grid.className = 'shop-grid' + (skins ? '' : ' vehicles');
+    Array.prototype.forEach.call(el.shopTabs.children, function (b) {
+      b.classList.toggle('on', (b.dataset.tab === 'skins') === skins);
+    });
+
+    var list = skins ? Cos.SKINS : Cos.VEHICLES;
+    var equippedId = (skins ? Cos.equippedSkin() : Cos.equippedVehicle()).id;
+    var unlocked = 0;
+
+    /* The runs are labelled by theme, so the grid reads as the ladder it is
+     * rather than as thirty unrelated circles. The default sits under its
+     * own heading because it belongs to no theme and is never locked. */
+    var heads = {}, i;
+    THEMES.forEach(function (t) {
+      (skins ? t.tracks.map(function (x) { return x.id; }) : [t.id])
+        .forEach(function (key) { heads[key] = t; });
+    });
+
+    /* Skins come in runs of three, so they are worth a heading each. There
+     * is exactly ONE vehicle per theme, and a heading above a single tile
+     * turns eleven cars into eleven rows of mostly nothing - so the vehicle
+     * tab carries its theme as a caption on the tile and fills the grid. */
+    var lastHead = null;
+    list.forEach(function (item) {
+      var locked = !(skins ? Cos.skinUnlocked(item) : Cos.vehicleUnlocked(item));
+      if (!locked) unlocked++;
+      var key = skins ? item.track : item.theme;
+      var head = key ? heads[key] : null;
+      var label = head ? head.name : 'ALWAYS YOURS';
+      if (skins && label !== lastHead) {
+        grid.appendChild(themeHeading(label, head && head.accent));
+        lastHead = label;
+      }
+      var tile = shopTile({
+        id: item.id,
+        name: item.name,
+        locked: locked,
+        equipped: item.id === equippedId,
+        caption: skins ? null : label,
+        accent: head && head.accent,
+        need: skins ? Cos.skinRequirement(item) : Cos.vehicleRequirement(item),
+        w: skins ? 112 : 228,
+        h: skins ? 112 : 124,
+        onPick: function () {
+          if (skins) Cos.equipSkin(item.id); else Cos.equipVehicle(item.id);
+          Screens.paintShop();
+        }
+      });
+      grid.appendChild(tile.button);
+      if (skins) Cos.paintSkinChip(tile.art, item);
+      else Cos.paintVehicleCard(tile.art, item, Cos.equippedSkin());
+    });
+
+    el.shopCount.textContent = unlocked + ' OF ' + list.length + ' UNLOCKED';
+  };
+
   Screens.stepTheme = function (dir) {
     this.theme = (this.theme + dir + THEMES.length) % THEMES.length;
     Backdrop.set(THEMES[this.theme].scene);
@@ -230,6 +351,10 @@
     el.options = document.getElementById('screen-options');
     el.play = document.getElementById('screen-play');
     el.mode = document.getElementById('screen-mode');
+    el.shop = document.getElementById('screen-shop');
+    el.shopGrid = document.getElementById('shop-grid');
+    el.shopTabs = document.getElementById('shop-tabs');
+    el.shopCount = document.getElementById('shop-count');
     el.cards = document.getElementById('theme-cards');
     el.themeName = document.getElementById('theme-name');
     el.themeTag = document.getElementById('theme-tagline');
@@ -255,6 +380,15 @@
     });
     document.getElementById('btn-options').addEventListener('click', function () {
       Screens.show('options');   // which rebuilds the legacy rows
+    });
+    document.getElementById('btn-shop').addEventListener('click', function () {
+      Screens.show('shop');      // which repaints from the medals
+    });
+    Array.prototype.forEach.call(el.shopTabs.children, function (b) {
+      b.addEventListener('click', function () {
+        Screens.shopTab = b.dataset.tab;
+        Screens.paintShop();
+      });
     });
     document.getElementById('theme-prev').addEventListener('click', function () {
       Screens.stepTheme(-1);

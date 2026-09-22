@@ -121,7 +121,16 @@
     for (var i = 0; i < n - 1 && i < OPPONENTS.length; i++) {
       spec.push({ name: OPPONENTS[i].name, color: OPPONENTS[i].color, player: false });
     }
-    spec.push({ name: PLAYER_CAR.name, color: PLAYER_CAR.color, player: true });
+    /* The player's colour comes from the equipped skin, so the halo, the
+     * running-order chip and the results all follow the skin without any of
+     * them having to know that skins exist. The default skin is the colour
+     * the car has always been. */
+    var Cos = global.Cosmetics;
+    spec.push({
+      name: PLAYER_CAR.name,
+      color: Cos ? Cos.equippedSkin().color : PLAYER_CAR.color,
+      player: true
+    });
     return spec;
   }
 
