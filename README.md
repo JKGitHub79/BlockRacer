@@ -505,13 +505,17 @@ track and the volcano's last are ten crashes apart in twelve hundred laps,
 which is a handover rather than a step - the one place in the top half of the
 ladder where two themes touch, and the right place for it, because arriving at
 the last theme should not be a wall. At the settings the game actually ships
-with - sweat, six cars - the order holds: 688, 805, 1075 against the volcano's
-689, 646, 764.
+with - sweat, six cars - the order holds: 659, 893, 1004 against the volcano's
+697, 646, 739. **These are six-car numbers and the grid changed under them**
+when partial rows were centred (see **The starting grid**): where the cars
+line up decides what they run into on lap one, so every figure measured at
+more than four cars moved a little. The ladder table above is measured at
+four, where the declared grid is used verbatim, and did not move at all.
 
 Alien is the one theme that does **not** hand over gently, and is not meant
 to. Its first track is 376 crashes above Space's last, which is the largest
 step anywhere on the curve, and the grade says IMPOSSIBLE on the card before
-you press anything. At the shipped settings it reads 1173, 1559, 1765.
+you press anything. At the shipped settings it reads 1248, 1531, 1758.
 
 Pipeworks and Refinery measure the same: 970 and 968 is two crashes in twelve
 hundred laps, well inside this metric's noise, so on the ladder they are tied.
