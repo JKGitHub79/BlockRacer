@@ -23,7 +23,8 @@ on: RACE or TIME TRIAL. It comes first because the answer changes what the
 track cards have to say - a medal in a race, a lap record in a trial.
 
 **Play.** One theme at a time, three tracks across, arrows either side and the
-left/right keys doing the same. The theme's landscape is behind it. Themes come
+left/right keys doing the same. After ALIEN and before FOREST there is one more
+stop, **PROGRESS** - see below. The theme's landscape is behind it. Themes come
 from `js/themes.js` and the screen is built entirely from that list, so a fourth
 theme is a data entry and no screen code changes. A pill above the theme name
 says which mode you are picking for, because the carousel is otherwise
@@ -37,9 +38,18 @@ car - plus the legacy tracks.
 **Shop.** Thirty skins and ten vehicles, every one of them won rather than
 bought. See **The shop** below.
 
-**Race.** A HOME button sits at the top left. It pauses and offers HOME or
-CONTINUE, and `ESC` does the same. Leaving a race used to be one keystroke with
-no way back.
+**Race.** A HOME button sits at the top left. It pauses and offers HOME,
+RESTART and CONTINUE - in that order, so RESTART is always the middle one, and
+on the narrowest phones the tracking comes in rather than the row wrapping and
+losing that. `ESC` pauses too. Leaving a race used to be one keystroke with no
+way back.
+
+RESTART is the same call RACE AGAIN and the `R` key already make: same track,
+mode, laps, field, speed and slide, from the lights, with the laps, clock and
+ghost recorder reset. It touches nothing that is saved. Medals are only written
+by a finished race and lap records only by a completed lap, so a record banked
+earlier in the run stays banked and nothing half-driven is kept - which the
+tests check by comparing every saved key before and after.
 
 `Screens.show(name)` is the whole router. Screens are full-bleed and opaque
 rather than panels over the board, because a phone in landscape leaves the board
@@ -1708,6 +1718,32 @@ around all of them. Doing it in one pass - checking only against what had been
 placed already - let two greens land 3 apart, which is worse than anything in
 the shipped field. Opponents keep their names whatever happens: VECTOR is
 VECTOR, and the results table has to go on saying so.
+
+## Progress
+
+The carousel is the ten themes plus one more stop at the position after the
+last. Because it wraps, that one slot is exactly "between Alien and Forest":
+right from Alien lands on it, right again lands on Forest.
+
+It shows three things and no more: the gold, silver and bronze totals; tracks
+completed out of 30, as a bar split by medal so the three totals can be read
+off it too; and gold stars out of 10, as the ten themes' own stars in a row -
+the same star the theme headings use, coloured by the same `Progress.star`.
+
+**Nothing on it is stored.** It is read from `Progress.medal` and
+`Progress.star` every time it is painted, so it cannot drift from the cards it
+summarises, an old save shows its true totals the first time the page opens,
+and a medal won a minute ago is already counted when you come back. A track
+counts as completed once it has a medal on it - a podium is the only result
+the game keeps, so it is the only one this page can count - and only the thirty
+themed tracks are counted.
+
+**It is deliberately not dressed as a theme.** Every theme is lit in its own
+accent over its own landscape, with its star beside its name and three track
+cards. PROGRESS is the plain steel white of the menus, over the menus' night
+sky, with no star beside its name, a pill that says OVERALL instead of the
+mode, and one panel instead of three cards. It is in the layout audit as a
+must-fit screen, on all 72 sizes.
 
 ## The ghost
 

@@ -1074,6 +1074,16 @@
       e.stopPropagation();
       Game.resumeRace();
     });
+    /* The same track, the same mode, the same settings, from the lights.
+     * startRace is what RACE AGAIN and the R key already use: it resets the
+     * field, the laps, the clock and the ghost recorder, and touches nothing
+     * that is saved - medals are only ever written by a finished race and a
+     * lap record only by a completed lap, so a record banked earlier in the
+     * run stays banked and nothing half-driven is kept. */
+    document.getElementById('btn-pause-restart').addEventListener('click', function (e) {
+      e.stopPropagation();
+      Game.startRace();
+    });
     document.getElementById('btn-pause-home').addEventListener('click', function (e) {
       e.stopPropagation();
       el.pause.classList.remove('show');

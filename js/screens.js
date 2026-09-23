@@ -18,6 +18,9 @@
   var Screens = {
     current: null,
     theme: 0,
+    // On the PROGRESS page rather than a theme. `theme` is left pointing at
+    // the last theme shown, so anything that reads THEMES[theme] stays safe.
+    progress: false,
     // Where a race was started from, so finishing it goes back there rather
     // than dumping you at the front door.
     from: 'play'
@@ -44,7 +47,7 @@
      * the layout is the one the race will actually be played in. */
     document.body.classList.toggle('in-race', name === 'race');
     if (name === 'race' && global.Renderer) global.Renderer.fit();
-    Backdrop.set(name === 'play' ? THEMES[Screens.theme].scene : SCENE_FOR[name] || 'night');
+    Backdrop.set(name === 'play' ? playScene() : SCENE_FOR[name] || 'night');
     if (name === 'play') this.paintCards();
     if (name === 'options') this.buildLegacy();
     if (name === 'shop') this.paintShop();
@@ -105,7 +108,7 @@
     var id = global.TRACKS[index] && global.TRACKS[index].id;
     THEMES.forEach(function (theme, t) {
       theme.tracks.forEach(function (entry) {
-        if (entry.id === id) Screens.theme = t;
+        if (entry.id === id) { Screens.theme = t; Screens.progress = false; }
       });
     });
   }
@@ -139,7 +142,16 @@
     return themeOrder().indexOf(index) >= 0 ? 'play' : 'options';
   };
 
+  // The progress page stands on the plain night sky of the menus rather than
+  // a landscape: it belongs to no theme, and should not look like one.
+  function playScene() {
+    return Screens.progress ? 'night' : THEMES[Screens.theme].scene;
+  }
+
   Screens.paintCards = function () {
+    if (this.progress) return this.paintProgress();
+    el.play.classList.remove('progress-page');
+    el.themeIndexLabel.textContent = 'THEME';
     var theme = THEMES[this.theme];
     el.themeName.textContent = theme.name;
     el.themeTag.textContent = theme.tagline;
@@ -322,10 +334,102 @@
     el.shopCount.textContent = unlocked + ' OF ' + list.length + ' UNLOCKED';
   };
 
+  /* The carousel is the ten themes plus one more stop, PROGRESS, at the
+   * position after the last theme. Because the carousel wraps, that one slot
+   * is exactly "between Alien and Forest": right from Alien lands on it, and
+   * right again lands on Forest. */
   Screens.stepTheme = function (dir) {
-    this.theme = (this.theme + dir + THEMES.length) % THEMES.length;
-    Backdrop.set(THEMES[this.theme].scene);
+    var stops = THEMES.length + 1;
+    var at = this.progress ? THEMES.length : this.theme;
+    at = (at + dir + stops) % stops;
+    this.progress = at === THEMES.length;
+    if (!this.progress) this.theme = at;
+    Backdrop.set(playScene());
     this.paintCards();
+  };
+
+  /* ---- progress ---------------------------------------------------------
+   *
+   * Everything on this page is READ from the medals every time it is shown -
+   * Progress.medal per track, Progress.star per theme - and nothing about it
+   * is stored. So it cannot drift from the cards it summarises, an old save
+   * shows its true totals the first time the page opens, and a medal won a
+   * minute ago is already counted when you come back to it.
+   *
+   * A track counts as completed once it has a medal on it: a podium is the
+   * only result the game keeps, so it is the only one this page can count.
+   * Only the themed tracks are counted - the legacy seven are not part of
+   * the ladder. */
+  var STAR_PATH = 'M12 2.2 15.1 8.5 22 9.5l-5 4.9 1.2 6.9L12 18l-6.2 3.3L7 14.4l-5-4.9 6.9-1z';
+
+  Screens.progressTotals = function () {
+    var P = global.Progress;
+    var out = { gold: 0, silver: 0, bronze: 0, done: 0, tracks: 0, stars: [] };
+    THEMES.forEach(function (theme) {
+      var ids = theme.tracks.map(function (t) { return t.id; })
+        .filter(function (id) { return !!trackData(id); });
+      ids.forEach(function (id) {
+        var m = P.medal(id);
+        out.tracks++;
+        if (!m) return;
+        out.done++;
+        if (m === 1) out.gold++; else if (m === 2) out.silver++; else out.bronze++;
+      });
+      out.stars.push({ name: theme.name, star: P.star(ids) });
+    });
+    out.goldStars = out.stars.filter(function (s) { return s.star === 1; }).length;
+    return out;
+  };
+
+  Screens.paintProgress = function () {
+    var p = this.progressTotals();
+    el.play.classList.add('progress-page');
+    el.play.style.setProperty('--theme', '#dfe7f7');
+    el.playMode.textContent = 'OVERALL';
+    el.themeName.textContent = 'PROGRESS';
+    el.themeTag.textContent = 'Every podium and every star, across all ten themes';
+    el.themeStar.style.display = 'none';
+    el.themeIndexLabel.textContent = '';
+    el.themeIndex.textContent = 'PROGRESS';
+
+    function medal(kind, label, n) {
+      return '<div class="pg-medal medal-' + kind + '">' +
+        '<span class="pg-disc" aria-hidden="true"></span>' +
+        '<b>' + n + '</b><span class="pg-label">' + label + '</span></div>';
+    }
+    // The completion bar is split by medal, so the three totals above it can
+    // be read off it at a glance as well.
+    function seg(kind, n) {
+      return n ? '<span class="pg-seg medal-' + kind + '" style="flex-grow:' + n + '"></span>' : '';
+    }
+    var stars = p.stars.map(function (s) {
+      var cls = s.star ? 'earned medal-' + MEDALS[s.star] : 'unearned';
+      var what = s.star ? MEDAL_NAME[s.star] + ' star' : 'no star yet';
+      return '<svg class="pg-star theme-star ' + cls + '" viewBox="0 0 24 24" role="img" ' +
+        'aria-label="' + s.name + ': ' + what + '"><title>' + s.name + ': ' + what + '</title>' +
+        '<path d="' + STAR_PATH + '"/></svg>';
+    }).join('');
+
+    el.cards.innerHTML =
+      '<div class="progress-board">' +
+        '<div class="pg-medals">' +
+          medal('gold', 'GOLD', p.gold) + medal('silver', 'SILVER', p.silver) +
+          medal('bronze', 'BRONZE', p.bronze) +
+        '</div>' +
+        '<div class="pg-stat">' +
+          '<div class="pg-line"><span>TRACKS COMPLETED</span>' +
+            '<b>' + p.done + '<i> / ' + p.tracks + '</i></b></div>' +
+          '<div class="pg-bar" role="img" aria-label="' + p.done + ' of ' + p.tracks + ' tracks completed">' +
+            seg('gold', p.gold) + seg('silver', p.silver) + seg('bronze', p.bronze) +
+            '<span class="pg-seg pg-rest" style="flex-grow:' + (p.tracks - p.done) + '"></span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="pg-stat">' +
+          '<div class="pg-line"><span>GOLD STARS</span>' +
+            '<b>' + p.goldStars + '<i> / ' + THEMES.length + '</i></b></div>' +
+          '<div class="pg-stars">' + stars + '</div>' +
+        '</div>' +
+      '</div>';
   };
 
   /* ---- the legacy list -------------------------------------------------
@@ -370,6 +474,7 @@
     el.themeTag = document.getElementById('theme-tagline');
     el.themeStar = document.getElementById('theme-star');
     el.themeIndex = document.getElementById('theme-index');
+    el.themeIndexLabel = document.getElementById('theme-index-label');
     el.playMode = document.getElementById('play-mode');
     el.legacyList = document.getElementById('legacy-list');
 
