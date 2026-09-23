@@ -1828,6 +1828,43 @@ floor without this becoming a different kind of drawing from the ten landscapes
 it sits beside - everything here is still flat blocks from a seeded generator,
 identical across a resize.
 
+### Telling you when you have won something
+
+Finish a race that unlocks something and a panel drops in from the top of the
+screen - `COW SKIN UNLOCKED!`, `RALLY CAR UNLOCKED!`, with the chip or the car
+beside it - holds for just under three seconds and goes back up.
+
+**What was unlocked is not tracked anywhere new.** `Cosmetics.snapshot()` is
+the answer the existing `skinUnlocked` / `vehicleUnlocked` give right now; the
+results screen takes one before `Progress.record` and asks
+`Cosmetics.unlockedSince(snapshot)` afterwards. The difference is what that race
+unlocked, and nothing else can produce one. That is what makes it honest:
+
+- winning a track you have already won changes nothing, so shows nothing;
+- a second place changes nothing;
+- a time trial records no medal, so it cannot unlock anything;
+- loading a save never takes a snapshot at all, so a player who already owns
+  half the shop is not greeted by fifteen notifications.
+
+**One panel, never a stack.** The third win of a theme unlocks that track's skin
+*and* completes the Gold Star, and two toasts arriving in the same frame would
+land on top of each other. Everything one race unlocks goes into one panel as
+rows - skin first, then the vehicle. A skin's name is in the accent and a
+vehicle's in the shop's prestige gold, so the two read as different prizes
+without being different notifications.
+
+**Every timer belongs to a generation.** Showing or dismissing bumps it, and a
+timer that wakes to find it has moved on does nothing. Without that, the hide
+timer of a panel you dismissed by pressing NEXT TRACK would fire three seconds
+later and snatch away the next race's notification - which the tests check for
+directly. Every change of screen goes through `Screens.show`, so that is the
+one place it is dismissed: BACK, RACE AGAIN, NEXT TRACK and restart all take it
+down at once.
+
+It never takes a click (`pointer-events: none`), drops in below the top bar
+upright so it is never over HOME, and keeps clear of the floating HOME button
+lying down.
+
 ### Locked is shown, not hidden
 
 A locked tile is dimmed, desaturated, `disabled`, and says exactly what would

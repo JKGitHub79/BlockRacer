@@ -584,6 +584,11 @@
 
     // A podium is kept for good. Progress.record only writes an improvement,
     // so finishing fourth after a win does not take the win away.
+    //
+    // What the shop had unlocked is read either side of it: the difference is
+    // what THIS race unlocked, and nothing else can produce one.
+    var Cos = global.Cosmetics;
+    var before = Cos ? Cos.snapshot() : null;
     var won = global.Progress.record(T.data.id, placeOfPlayer);
 
     el.resultsTitle.textContent =
@@ -607,6 +612,7 @@
     el.resultsBody.parentNode.classList.toggle('dense', all.length > 8);
     this.showNextButton();
     el.results.classList.add('show');
+    if (before && global.Unlocks) global.Unlocks.show(Cos.unlockedSince(before));
   };
 
   /* A trial has no finishing order to show, so the table lists the laps

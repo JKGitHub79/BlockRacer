@@ -1521,3 +1521,128 @@ body.in-race #backdrop { display: none; }
   .shop-grid.vehicles { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); }
   .shop-tab { padding: 9px 16px; letter-spacing: 2px; }
 }
+
+/* ======================================================================
+ * UNLOCK NOTIFICATION
+ *
+ * The same panel every overlay in the game is made of - --panel fill, a
+ * hairline border, ten-pixel corners, the deep drop shadow the board wears -
+ * with the accent lit along its top edge the way a selected tab is lit. It
+ * drops from above the top of the screen, holds, and goes back the way it
+ * came; js/unlocks.js owns the timing.
+ *
+ * The NAME is the loudest thing on it. A skin's name is in the accent, a
+ * vehicle's in the gold the shop already uses for its prestige rewards, so a
+ * combined panel reads as two different kinds of prize at a glance without
+ * being two different kinds of notification.
+ *
+ * It never takes a click. Whatever is underneath - the results buttons, the
+ * board - works exactly as if it were not there.
+ * ====================================================================== */
+.unlock {
+  --drop: calc(-100% - 28px - var(--sa-t));
+  position: fixed;
+  top: calc(12px + var(--sa-t));
+  left: 50%;
+  z-index: 30;
+  width: min(440px, calc(100% - 24px - var(--sa-l) - var(--sa-r)));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 16px 14px;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid rgba(94, 242, 255, 0.45);
+  border-radius: 10px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 0 28px rgba(94, 242, 255, 0.06);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, var(--drop));
+  transition: transform 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.12), opacity 0.2s ease-out;
+}
+.unlock[hidden] { display: none; }
+.unlock.in { opacity: 1; transform: translate(-50%, 0); }
+.unlock.out {
+  opacity: 0;
+  transform: translate(-50%, var(--drop));
+  transition: transform 0.38s ease-in, opacity 0.38s ease-in;
+}
+
+/* the lit top edge */
+.unlock::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 14px;
+  right: 14px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--accent);
+  box-shadow: 0 0 14px rgba(94, 242, 255, 0.6);
+}
+.unlock.has-vehicle { border-color: rgba(255, 210, 74, 0.5); }
+.unlock.has-vehicle::before {
+  background: linear-gradient(90deg, var(--accent), #ffd24a);
+  box-shadow: 0 0 14px rgba(255, 210, 74, 0.45);
+}
+
+.unlock-row { display: flex; align-items: center; gap: 14px; }
+.unlock-row + .unlock-row { padding-top: 10px; border-top: 1px solid var(--line); }
+
+.unlock-art { flex: 0 0 auto; display: block; }
+.unlock-row.skin .unlock-art {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(94, 242, 255, 0.5), 0 0 18px rgba(94, 242, 255, 0.25);
+}
+.unlock-row.vehicle .unlock-art {
+  border-radius: 6px;
+  background: rgba(255, 210, 74, 0.07);
+  box-shadow: 0 0 0 1px rgba(255, 210, 74, 0.55), 0 0 18px rgba(255, 210, 74, 0.18);
+}
+
+.unlock-text { min-width: 0; }
+.unlock-line {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 2px;
+  line-height: 1.3;
+  color: var(--text);
+}
+.unlock-name {
+  font-size: 21px;
+  letter-spacing: 3px;
+  margin-right: 4px;
+  color: var(--accent);
+  text-shadow: 0 0 16px rgba(94, 242, 255, 0.35);
+}
+.unlock-row.vehicle .unlock-name {
+  color: #ffd24a;
+  text-shadow: 0 0 16px rgba(255, 210, 74, 0.35);
+}
+.unlock-what { white-space: nowrap; }
+.unlock-sub {
+  margin: 4px 0 0;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--dim);
+}
+
+/* Upright on a phone the race's top bar is in the flow and HOME sits at the
+   top left. The panel drops in below the bar rather than over the button. */
+@media (orientation: portrait) and (max-width: 620px) {
+  body.in-race .unlock { top: calc(56px + var(--sa-t)); }
+}
+/* Lying down HOME floats in the corner instead; keep clear of it sideways. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .unlock { width: min(420px, calc(100% - 200px)); padding: 12px 14px 10px; }
+  .unlock-name { font-size: 18px; }
+}
+@media (max-width: 380px) {
+  .unlock { padding: 13px 12px 11px; gap: 8px; }
+  .unlock-name { font-size: 17px; letter-spacing: 2px; }
+  .unlock-row { gap: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unlock, .unlock.in, .unlock.out { transform: translate(-50%, 0); transition: opacity 0.25s; }
+}

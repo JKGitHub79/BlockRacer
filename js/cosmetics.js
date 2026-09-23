@@ -783,6 +783,39 @@
     return v.theme ? 'Earn the ' + themeName(v.theme) + ' Gold Star' : '';
   };
 
+  /* ---- what a race just unlocked ----------------------------------------
+   *
+   * NOT a second unlock system. A snapshot is simply the answer the two
+   * functions above give right now, keyed by id. The race result takes one
+   * before Progress.record and compares it with the same question asked
+   * afterwards; anything unlocked now that was not unlocked then was unlocked
+   * by that race, and by nothing else.
+   *
+   * That comparison is what makes the notification honest in all the cases
+   * that matter: winning a track you have already won changes nothing, a
+   * second place changes nothing, and loading an old save never asks at all -
+   * so a player who already owns half the shop is not greeted by fifteen
+   * toasts, because nothing ever compared the save with an empty one. */
+  Cos.snapshot = function () {
+    var s = {};
+    Cos.SKINS.forEach(function (k) { if (Cos.skinUnlocked(k)) s['skin:' + k.id] = true; });
+    Cos.VEHICLES.forEach(function (v) { if (Cos.vehicleUnlocked(v)) s['vehicle:' + v.id] = true; });
+    return s;
+  };
+
+  /* Skins first, then vehicles: when one win does both - the third gold of a
+   * theme - the track's own reward reads first and the theme's second. */
+  Cos.unlockedSince = function (before) {
+    var out = [];
+    Cos.SKINS.forEach(function (k) {
+      if (Cos.skinUnlocked(k) && !before['skin:' + k.id]) out.push({ kind: 'skin', item: k });
+    });
+    Cos.VEHICLES.forEach(function (v) {
+      if (Cos.vehicleUnlocked(v) && !before['vehicle:' + v.id]) out.push({ kind: 'vehicle', item: v });
+    });
+    return out;
+  };
+
   function findSkin(id) {
     for (var i = 0; i < Cos.SKINS.length; i++) if (Cos.SKINS[i].id === id) return Cos.SKINS[i];
     return null;

@@ -28,6 +28,10 @@
   var SCENE_FOR = { main: 'night', options: 'night', mode: 'night', shop: 'garage' };
 
   Screens.show = function (name) {
+    // Every way out of a result - BACK, RACE AGAIN, NEXT TRACK, restart -
+    // comes through here, so this is the one place an unlock notification
+    // is taken down early.
+    if (global.Unlocks) global.Unlocks.dismiss();
     this.current = name;
     ['main', 'options', 'play', 'mode', 'shop'].forEach(function (s) {
       el[s].classList.toggle('on', s === name);
