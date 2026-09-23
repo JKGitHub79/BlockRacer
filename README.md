@@ -14,11 +14,9 @@ what you pushed.
 
 ## Screens
 
-Five of them, and the race is only one.
+Six of them, and the race is only one.
 
-**Front door.** Three doors across: OPTIONS, PLAY, SHOP. The shop is not built,
-so it is shown as what it is - dimmed and marked - rather than as a live button
-that opens nothing.
+**Front door.** Three doors across: OPTIONS, PLAY, SHOP.
 
 **Mode.** PLAY asks how you want to drive before it asks what you want to drive
 on: RACE or TIME TRIAL. It comes first because the answer changes what the
@@ -33,7 +31,11 @@ identical either way and the only way to find out would be to start a race and
 count the cars.
 
 **Options.** Everything that configures a race - slide, field size, AI level,
-game speed, race length, road colour - plus the legacy tracks.
+game speed, race length, road colour, high contrast, the glow under your own
+car - plus the legacy tracks.
+
+**Shop.** Thirty skins and ten vehicles, every one of them won rather than
+bought. See **The shop** below.
 
 **Race.** A HOME button sits at the top left. It pauses and offers HOME or
 CONTINUE, and `ESC` does the same. Leaving a race used to be one keystroke with
