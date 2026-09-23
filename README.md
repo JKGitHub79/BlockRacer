@@ -1709,6 +1709,74 @@ placed already - let two greens land 3 apart, which is worse than anything in
 the shipped field. Opponents keep their names whatever happens: VECTOR is
 VECTOR, and the results table has to go on saying so.
 
+## The ghost
+
+In a time trial your record lap drives beside you: your own car in your own
+paint, at 42% strength, with no shadow, halo or ring - everything that says
+"solid thing you are driving" left off. `js/ghost.js` owns it.
+
+**It is pictures and nothing else.** Not a `Car`, not in the field; physics,
+collisions, AI and input never see it. The renderer is handed a pose and draws
+it under every real car. The test for that is blunt: the same scripted drive,
+once with a ghost on the track and once without, is byte-identical.
+
+**What is recorded.** Every physics step of the lap you are driving - time,
+position, the body's drawn angle (so the oversteer lean replays), and how far
+round the lap the car is. When the lap closes and `Progress.recordLap` says it
+was a record, it becomes the ghost: saved over the old one and swapped in at
+once, so the very next lap is chased by it. Lap 2 a record and lap 4 a better
+one means lap 4 is stored; a slower lap 3 in between replaces nothing.
+
+**What is stored.** Nearly all of a lap is a car going straight at a constant
+speed, which a straight line between two samples reproduces exactly. So the
+lap is simplified before it is kept: a sample goes when its neighbours,
+blended *at its own time*, already put the car within a fiftieth of a cell of
+where it really was. Measuring the error at the same moment, rather than as
+the nearest point on the path, is what keeps the timing right as well as the
+line. Then whole units, each stored as its difference from the one before.
+Measured: 536 samples down to 43, 788 bytes, replayed within 0.021 cells and
+half a degree of the real lap.
+
+**When it is shown.** Only when it is the record's own lap - same time to the
+microsecond - driven on a track whose walls and line still match. A record
+from before ghosts existed keeps its time and simply has no ghost; nothing is
+made up. It gets one the first time it is beaten. One key per track and speed,
+beside the record, and RESET DATA takes them with it.
+
+### The delta
+
+The DELTA row is how far ahead or behind the record you are, **at the same
+distance round the lap** - how long the record lap took to get as far as you
+have, against how long you took. Comparing your clock with the record's final
+time says nothing until the line; comparing positions at equal times cannot be
+turned into seconds at all.
+
+Progress is measured from the finish line, which matters because lap 1 starts
+standing on the grid behind the line and every other lap starts flying on it.
+From the line, both are on the same ruler; chase a grid-start record with a
+flying lap and the delta says you are ahead from the first metre, which you
+are. It reads `--` whenever there is nothing honest to say: no ghost, the
+countdown, or a stretch of lap the record never covered. Where the record lap
+went backwards - turned round, slid back off a wall - it is judged on the
+furthest it had got. Checked two ways: the record lap against itself is level
+to within 0.002s all the way round, and on a lap 0.350s slower the delta at
+the line reads 0.348s.
+
+### A new best
+
+The moment a lap beats the record, a gold pill drops onto the top of the board
+- the crash message's shape in the results screen's gold, at the other end of
+the board so the two can never overlap: `NEW BEST!  23.481s  -0.427s`. The gain
+is against the record that lap beat. It runs on the game clock rather than a
+timer, so it cannot outlive the race it belongs to.
+
+The results screen leads with it too: `NEW BEST!`, the time, the gain on the
+**previous** best - the record the final one replaced - and what that was. A
+first ever record has nothing to improve on and says so. And a trial's big
+button is TRY AGAIN rather than the next track, because a trial is the same
+track again, chasing the same ghost; the next track is still there, just not
+highlighted. Race results are unchanged.
+
 ## The shop
 
 Thirty skins and ten vehicles, and not one of them is for sale. **SHOP** on the

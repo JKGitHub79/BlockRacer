@@ -274,6 +274,21 @@
 
   var el = {};
 
+  /* Signed, with a real minus sign: -0.38 ahead, +0.52 behind. */
+  function fmtDelta(d, places) {
+    var s = Math.abs(d).toFixed(places) + 's';
+    if (Math.abs(d) < 0.5 * Math.pow(10, -places)) return s;
+    return (d < 0 ? '\u2212' : '+') + s;
+  }
+
+  /* A lap to the thousandth, which at 120 physics steps a second is real
+   * precision rather than noise: 23.481s, or 1:03.481 past a minute. */
+  function fmt3(t) {
+    if (t < 60) return t.toFixed(3) + 's';
+    var m = Math.floor(t / 60), s = t - m * 60;
+    return m + ':' + (s < 10 ? '0' : '') + s.toFixed(3);
+  }
+
   function fmt(t) {
     if (!t && t !== 0) return '--:--.--';
     var m = Math.floor(t / 60);
@@ -333,6 +348,23 @@
     Input.clear();
     this.state = 'countdown';
     this.updateStandings();
+
+    /* A trial's ghost: the record lap for this track and speed, if one was
+     * driven since ghosts existed, and a recorder for the lap you are about
+     * to drive in case it turns out to be the next one. Loaded after the
+     * grid, so the recorder's first sample is the car on its slot. */
+    this.ghost = null;
+    this.ghostPose = null;
+    this.ghostRec = null;
+    this.delta = null;
+    this.pbFlash = null;
+    this.beaten = 0;
+    if (trial && global.Ghost) {
+      this.ghost = global.Ghost.load(T.data, C.speedLevel, this.lapRecord);
+      this.ghostRec = new global.Ghost.Recorder();
+      this.ghostRec.start(this.player);
+      if (this.ghost) this.ghostPose = global.Ghost.poseAt(this.ghost, 0);
+    }
   };
 
   function spawnSparks(game, at, color, count) {
@@ -366,6 +398,7 @@
   }
 
   function updateCarRace(game, car) {
+    var lapped = false, newBest = false;
     if (T.lapCheck(car)) {
       car.lap++;
       car.lastLap = car.lapTime;
@@ -376,11 +409,20 @@
       // A trial banks a record the moment it is set, rather than at the end:
       // quitting a trial half way through should not throw away the fastest
       // lap you have ever driven on the track.
-      if (game.mode === 'trial' && car.isPlayer &&
-          global.Progress.recordLap(T.data.id, C.speedLevel, car.lastLap)) {
-        game.lapRecord = car.lastLap;
-        game.newRecord = true;
+      if (game.mode === 'trial' && car.isPlayer) {
+        var was = game.lapRecord;
+        if (global.Progress.recordLap(T.data.id, C.speedLevel, car.lastLap)) {
+          game.lapRecord = car.lastLap;
+          game.newRecord = true;
+          // the gain is against the record this lap BEAT - which, two records
+          // into one session, is the one set a few laps ago, not this morning's
+          game.pbFlash = { time: car.lastLap, gain: was ? car.lastLap - was : null,
+                           until: game.time + 2.6 };
+          game.beaten = was || 0;
+          newBest = true;
+        }
       }
+      lapped = true;
       car.lapTime = 0;
       if (car.lap >= game.laps) {
         car.finished = true;
@@ -391,7 +433,49 @@
         Sound.lap();
       }
     }
+    if (car.isPlayer && game.ghostRec) traceLap(game, car, lapped, newBest);
   }
+
+  /* Feed the recorder, and when a lap closes decide what it was.
+   *
+   * The lap's last sample is the car at the moment it crossed, stamped with
+   * the lap's own time, so the ghost crosses the line at exactly the time the
+   * record says. If that lap set a record it becomes the ghost - saved over
+   * the old one and swapped in straight away, so the very next lap is chased
+   * by it. Whatever it was, the next lap starts recording from the same spot. */
+  function traceLap(game, car, lapped, newBest) {
+    var rec = game.ghostRec;
+    if (!lapped) {
+      if (!car.finished) rec.push(car, car.lapTime);
+      return;
+    }
+    rec.push(car, car.lastLap);
+    if (newBest) {
+      var stored = rec.finish(car.lastLap, T.data);
+      if (stored) {
+        global.Ghost.save(T.data, C.speedLevel, stored);
+        game.ghost = global.Ghost.decode(stored);
+      }
+    }
+    if (!car.finished) rec.start(car);
+  }
+
+  /* Where the ghost is and how far ahead or behind you are, for this step.
+   *
+   * The ghost runs on YOUR lap clock - it starts when your lap starts, so a
+   * lap you begin two seconds late is still raced side by side from the line.
+   * The delta is taken at equal distance round the lap, not at equal time:
+   * how long the record lap took to get as far as you have got, against how
+   * long you took. Comparing your clock with the record's final time instead
+   * says nothing until the line, and comparing positions at equal times
+   * cannot be turned into seconds at all. */
+  Game.updateGhost = function () {
+    var p = this.player, g = this.ghost;
+    if (!g || p.finished) { this.ghostPose = null; this.delta = null; return; }
+    this.ghostPose = global.Ghost.poseAt(g, p.lapTime);
+    var tg = global.Ghost.timeAtProgress(g, this.ghostRec.progress);
+    this.delta = tg === null ? null : p.lapTime - tg;
+  };
 
   Game.updateStandings = function () {
     var laps = this.laps;
@@ -467,6 +551,7 @@
     }
 
     this.updateStandings();
+    if (this.ghostRec) this.updateGhost();
 
     var allDone = this.cars.every(function (c) { return c.finished; });
     if (this.player.finished || allDone) {
@@ -518,6 +603,9 @@
     el.steerRange.min = C.minOversteer;   // one place decides how far it goes
     el.steerRange.max = C.maxOversteer;
     el.record = document.getElementById('hud-record');
+    el.delta = document.getElementById('hud-delta');
+    el.pbFlash = document.getElementById('pb-flash');
+    el.resultsRow = el.btnNext ? el.btnNext.parentNode : null;
     el.resultsHead = document.getElementById('results-head');
     el.btnAgain = document.getElementById('btn-again');
     el.timeLabel = document.getElementById('hud-time-label');
@@ -550,6 +638,21 @@
     if (this.mode === 'trial') {
       el.record.textContent = this.lapRecord ? fmt(this.lapRecord) : '--:--.--';
       el.standings.innerHTML = '';
+
+      // A dash when there is nothing honest to say: no ghost, the countdown,
+      // or a stretch of lap the record lap never covered.
+      var d = this.state === 'racing' ? this.delta : null;
+      el.delta.textContent = d === null ? '--' : fmtDelta(d, 2);
+      el.delta.className = d === null ? '' : d <= -0.005 ? 'ahead' : d >= 0.005 ? 'behind' : '';
+
+      var f = this.pbFlash;
+      var on = !!(f && this.state === 'racing' && this.time < f.until);
+      if (on && el.pbFlash._for !== f) {
+        el.pbFlash._for = f;
+        el.pbFlash.innerHTML = '<b>NEW BEST!</b><span class="pb-time">' + fmt3(f.time) + '</span>' +
+          (f.gain !== null ? '<span class="pb-gain">' + fmtDelta(f.gain, 3) + '</span>' : '');
+      }
+      el.pbFlash.classList.toggle('show', on);
       return;
     }
 
@@ -571,8 +674,21 @@
 
   };
 
+  /* Which button is the big one. A race is a ladder, so the next rung is
+   * the natural thing to press; a trial is the same track again, chasing the
+   * same ghost, so RACE AGAIN is. NEXT TRACK stays - just not highlighted -
+   * and the highlighted one always sits at the end of the row. */
+  Game.setResultsPrimary = function (trial) {
+    var main = trial ? el.btnAgain : el.btnNext;
+    var other = trial ? el.btnNext : el.btnAgain;
+    main.classList.add('primary'); main.classList.remove('secondary');
+    other.classList.add('secondary'); other.classList.remove('primary');
+    if (el.resultsRow) el.resultsRow.appendChild(main);
+  };
+
   Game.showResults = function () {
     if (this.mode === 'trial') return this.showTrialResults();
+    this.setResultsPrimary(false);
 
     el.resultsHead.innerHTML =
       '<tr><th>#</th><th>Driver</th><th>Time</th><th>Best lap</th></tr>';
@@ -623,14 +739,25 @@
     var p = this.player;
     var record = this.lapRecord;
 
-    el.resultsTitle.textContent = this.newRecord ? 'NEW RECORD' : 'TIME TRIAL';
+    el.resultsTitle.textContent = this.newRecord ? 'NEW BEST!' : 'TIME TRIAL';
     el.resultsTitle.className = this.newRecord ? 'podium p1' : '';
-    el.resultsNote.textContent = p.bestLap
-      ? (this.newRecord
-          ? fmt(p.bestLap) + ' \u2013 the fastest lap yet on ' + T.name
-          : 'BEST THIS RUN ' + fmt(p.bestLap) +
-            (record ? '  \u00b7  RECORD ' + fmt(record) : ''))
-      : 'No lap completed';
+    /* A new best shows the time and what it took off the PREVIOUS best - the
+     * record it actually replaced. Two records in one run means lap 4 is
+     * measured against lap 2, which is the gap you just closed; a first ever
+     * record has nothing to improve on and says so instead of showing a gain. */
+    if (p.bestLap && this.newRecord) {
+      var before = this.beaten;
+      el.resultsNote.innerHTML =
+        '<span class="pb-time">' + fmt3(p.bestLap) + '</span>' +
+        (before
+          ? '<span class="pb-gain">' + fmtDelta(p.bestLap - before, 3) + '</span>' +
+            '<span class="pb-was">was ' + fmt3(before) + '</span>'
+          : '<span class="pb-was">first record on ' + T.name + '</span>');
+    } else {
+      el.resultsNote.textContent = p.bestLap
+        ? 'BEST THIS RUN ' + fmt(p.bestLap) + (record ? '  \u00b7  RECORD ' + fmt(record) : '')
+        : 'No lap completed';
+    }
 
     el.resultsHead.innerHTML = '<tr><th>Lap</th><th>Time</th><th></th></tr>';
 
@@ -638,12 +765,13 @@
     // both claim it and the row stops meaning "this is the one".
     var bestAt = p.lapTimes.indexOf(p.bestLap);
     var rows = '';
+    var newBest = this.newRecord;
     p.lapTimes.forEach(function (t, i) {
       var isBest = i === bestAt;
       rows += '<tr' + (isBest ? ' class="me"' : '') + '>' +
         '<td>' + (i + 1) + '</td>' +
         '<td>' + fmt(t) + '</td>' +
-        '<td>' + (isBest ? 'BEST' : '') + '</td>' +
+        '<td>' + (isBest ? (newBest ? 'NEW BEST' : 'BEST') : '') + '</td>' +
         '</tr>';
     });
     if (!rows) rows = '<tr><td colspan="3">\u2013</td></tr>';
@@ -651,6 +779,7 @@
     el.resultsBody.parentNode.classList.toggle('dense', p.lapTimes.length > 8);
 
     this.showNextButton();
+    this.setResultsPrimary(true);
     el.results.classList.add('show');
   };
 

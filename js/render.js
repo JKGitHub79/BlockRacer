@@ -1211,6 +1211,28 @@
     return ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255);
   }
 
+  /* Your record lap: your own car, in your own paint, at a third of its
+   * strength. No shadow, no halo, no ring and no crash flash - everything that
+   * says "this is a solid thing you are driving" is left off, so it reads as a
+   * trace of a lap rather than a second car. In high contrast it is a plain
+   * white shape, for the same reason every other texture goes. */
+  function drawGhost(g, pose) {
+    var L = C.carLength * S, W = C.carWidth * S;
+    var hc = !!C.contrastColors();
+    var Cos = global.Cosmetics;
+    g.save();
+    g.globalAlpha = hc ? 0.5 : 0.42;
+    g.translate(pose.x * S, pose.y * S);
+    g.rotate(pose.a);
+    if (Cos) {
+      Cos.drawCar(g, L, W, Cos.equippedSkin(), Cos.equippedVehicle(), 0, hc ? '#ffffff' : null);
+    } else {
+      g.fillStyle = '#ffffff';
+      g.fillRect(-L / 2, -W / 2, L, W);
+    }
+    g.restore();
+  }
+
   function drawCar(g, car) {
     var L = C.carLength * S, W = C.carWidth * S;
     var a = car.bodyAngle();
@@ -1338,6 +1360,8 @@
     });
     g.globalAlpha = 1;
 
+    // the ghost under every real car, so it can never hide the one you drive
+    if (game.ghostPose) drawGhost(g, game.ghostPose);
     game.cars.forEach(function (car) { drawCar(g, car); });
     // over the cars, because it is over the cars
     if (!plain) {

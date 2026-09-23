@@ -164,6 +164,10 @@
     this.laps = {};
     save();
     saveLaps();
+    // A ghost is a record's own lap; with the record gone it belongs to
+    // nothing, and would be refused on load anyway - but RESET DATA says it
+    // wipes your data, so it goes rather than lingering unreadable.
+    if (global.Ghost) global.Ghost.clearAll();
   };
 
   Progress.best = load();
