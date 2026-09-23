@@ -150,7 +150,7 @@
 
   Screens.paintCards = function () {
     if (this.progress) return this.paintProgress();
-    el.play.classList.remove('progress-page');
+    el.play.classList.remove('progress-page', 'help-open');
     el.themeIndexLabel.textContent = 'THEME';
     var theme = THEMES[this.theme];
     el.themeName.textContent = theme.name;
@@ -356,10 +356,10 @@
    * shows its true totals the first time the page opens, and a medal won a
    * minute ago is already counted when you come back to it.
    *
-   * A track counts as completed once it has a medal on it: a podium is the
-   * only result the game keeps, so it is the only one this page can count.
-   * Only the themed tracks are counted - the legacy seven are not part of
-   * the ladder. */
+   * A track counts as completed once you have WON it - gold, first place.
+   * Silver and bronze are still counted in the medal totals, but a track you
+   * have only placed on is not finished. Only the themed tracks are counted:
+   * the legacy seven are not part of the ladder. */
   var STAR_PATH = 'M12 2.2 15.1 8.5 22 9.5l-5 4.9 1.2 6.9L12 18l-6.2 3.3L7 14.4l-5-4.9 6.9-1z';
 
   Screens.progressTotals = function () {
@@ -372,8 +372,9 @@
         var m = P.medal(id);
         out.tracks++;
         if (!m) return;
-        out.done++;
-        if (m === 1) out.gold++; else if (m === 2) out.silver++; else out.bronze++;
+        if (m === 1) { out.gold++; out.done++; }
+        else if (m === 2) out.silver++;
+        else out.bronze++;
       });
       out.stars.push({ name: theme.name, star: P.star(ids) });
     });
@@ -384,6 +385,7 @@
   Screens.paintProgress = function () {
     var p = this.progressTotals();
     el.play.classList.add('progress-page');
+    el.play.classList.remove('help-open');
     el.play.style.setProperty('--theme', '#dfe7f7');
     el.playMode.textContent = 'OVERALL';
     el.themeName.textContent = 'PROGRESS';
@@ -397,11 +399,7 @@
         '<span class="pg-disc" aria-hidden="true"></span>' +
         '<b>' + n + '</b><span class="pg-label">' + label + '</span></div>';
     }
-    // The completion bar is split by medal, so the three totals above it can
-    // be read off it at a glance as well.
-    function seg(kind, n) {
-      return n ? '<span class="pg-seg medal-' + kind + '" style="flex-grow:' + n + '"></span>' : '';
-    }
+
     var stars = p.stars.map(function (s) {
       var cls = s.star ? 'earned medal-' + MEDALS[s.star] : 'unearned';
       var what = s.star ? MEDAL_NAME[s.star] + ' star' : 'no star yet';
@@ -412,6 +410,21 @@
 
     el.cards.innerHTML =
       '<div class="progress-board">' +
+        // The visible circle is small; the button round it is thumb-sized.
+        '<button class="pg-info" type="button" aria-expanded="false" aria-controls="pg-help" ' +
+          'aria-label="How progress works"><span aria-hidden="true">i</span></button>' +
+        '<div class="pg-help" id="pg-help" hidden>' +
+          '<h3>HOW THIS WORKS</h3>' +
+          '<p>A track counts as <b>completed</b> once you&rsquo;ve won it &ndash; ' +
+            'first place, gold medal. Silver and bronze still add to your medal ' +
+            'totals.</p>' +
+          '<p>A theme&rsquo;s <b>star</b> appears once you have a medal on all three ' +
+            'of its tracks, in the colour of your lowest one &ndash; so it&rsquo;s ' +
+            'only gold when you&rsquo;ve won all three.</p>' +
+          '<p>Wins unlock skins in the Shop, and gold stars unlock cars.</p>' +
+          '<p class="pg-help-foot">Only races count here. Time trials keep their ' +
+            'own lap records.</p>' +
+        '</div>' +
         '<div class="pg-medals">' +
           medal('gold', 'GOLD', p.gold) + medal('silver', 'SILVER', p.silver) +
           medal('bronze', 'BRONZE', p.bronze) +
@@ -420,7 +433,7 @@
           '<div class="pg-line"><span>TRACKS COMPLETED</span>' +
             '<b>' + p.done + '<i> / ' + p.tracks + '</i></b></div>' +
           '<div class="pg-bar" role="img" aria-label="' + p.done + ' of ' + p.tracks + ' tracks completed">' +
-            seg('gold', p.gold) + seg('silver', p.silver) + seg('bronze', p.bronze) +
+            (p.done ? '<span class="pg-seg medal-gold" style="flex-grow:' + p.done + '"></span>' : '') +
             '<span class="pg-seg pg-rest" style="flex-grow:' + (p.tracks - p.done) + '"></span>' +
           '</div>' +
         '</div>' +
@@ -430,6 +443,43 @@
           '<div class="pg-stars">' + stars + '</div>' +
         '</div>' +
       '</div>';
+
+    /* The explanation opens over the panel it explains and closes on a
+     * second press of the button or a press anywhere else. It is built fresh
+     * with the page, so leaving the page is enough to close it. */
+    var board = el.cards.querySelector('.progress-board');
+    var info = el.cards.querySelector('.pg-info');
+    var help = el.cards.querySelector('.pg-help');
+    /* It takes the stats' place inside the panel rather than floating over
+     * them: an overlay is only as big as what it covers, and on a phone lying
+     * down the words did not fit in it. The panel keeps at least its current
+     * height, so opening it never makes the page jump. */
+    function setHelp(open) {
+      // On the very shortest screens the panel holds its height outright and
+      // the words scroll inside it, rather than the whole page scrolling.
+      var tight = global.matchMedia && global.matchMedia('(max-height: 340px)').matches;
+      var h = open ? board.offsetHeight + 'px' : '';
+      board.style.minHeight = tight ? '' : h;
+      board.style.height = tight ? h : '';
+      board.classList.toggle('help-open', open);
+      el.play.classList.toggle('help-open', open);
+      help.hidden = !open;
+      info.setAttribute('aria-expanded', open ? 'true' : 'false');
+      info.classList.toggle('on', open);
+    }
+    info.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setHelp(help.hidden);
+    });
+    help.addEventListener('click', function () { setHelp(false); });
+    if (!Screens._helpCloser) {
+      Screens._helpCloser = true;
+      document.addEventListener('click', function (e) {
+        var h = document.getElementById('pg-help');
+        if (!h || h.hidden || e.target.closest('.pg-info')) return;
+        document.querySelector('.pg-info').click();   // the one way it closes
+      });
+    }
   };
 
   /* ---- the legacy list -------------------------------------------------

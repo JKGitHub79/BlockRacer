@@ -1824,3 +1824,86 @@ body.in-race #backdrop { display: none; }
   #pause .row { gap: 6px; }
   #pause .row button { padding-left: 4px; padding-right: 4px; font-size: 11px; letter-spacing: 1px; }
 }
+
+/* ---- progress: the "i" --------------------------------------------------
+ * A small ringed "i" in the panel's corner. The circle is small so it reads
+ * as a footnote rather than a control competing with the numbers; the button
+ * round it is thumb-sized so it can actually be pressed. */
+.progress-board { position: relative; }
+.pg-info {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.pg-info span {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  color: var(--dim);
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.pg-info:hover span, .pg-info:focus-visible span { color: var(--text); }
+.pg-info.on span { color: #0b0f18; background: var(--text); border-color: var(--text); }
+
+/* The explanation takes the stats' place inside the panel (see
+   Screens.paintProgress), so it can be as tall as it needs to be. */
+.progress-board.help-open > .pg-medals,
+.progress-board.help-open > .pg-stat { display: none; }
+.pg-help {
+  padding-right: 36px;
+  text-align: left;
+  cursor: pointer;
+}
+.pg-help[hidden] { display: none; }
+.progress-board.help-open .pg-help { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.pg-help h3 {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--dim);
+}
+.pg-help p {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.55;
+  letter-spacing: 0.3px;
+  color: var(--text);
+}
+.pg-help b { color: #ffc94d; font-weight: 700; }
+.pg-help .pg-help-foot { margin: 0; font-size: 11px; color: var(--dim); }
+
+/* Short screens: two columns, so the words take width, which lying down
+   there is plenty of, instead of height, which there is not. */
+@media (max-height: 460px) {
+  .pg-help { columns: 2; column-gap: 24px; padding-right: 40px; }
+  .pg-help h3 { column-span: all; margin-bottom: 4px; font-size: 10px; }
+  .pg-help p { font-size: 11px; line-height: 1.38; margin-bottom: 5px; break-inside: avoid; }
+  .pg-help .pg-help-foot { font-size: 10px; }
+  /* While it is open the heading's small print steps aside. The words are
+     what you asked to read, and the room they need on a phone lying down is
+     exactly the room the tagline and the pill were taking. */
+  .progress-page.help-open .theme-head p,
+  .progress-page.help-open .mode-tag { display: none; }
+}
+@media (max-width: 380px) {
+  .pg-help p { font-size: 12px; }
+}

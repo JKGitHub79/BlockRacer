@@ -42,6 +42,8 @@ const SCREENS = [
   { name: 'progress', go: 'Game.setMode("race"); Screens.progress = true; Screens.show("play")',
     fits: true, box: '#screen-play',
     must: ['.progress-board', '.pg-medal', '.pg-stars', '#theme-prev', '#theme-next'] },
+  { name: 'progress-i', go: 'Game.setMode("race"); Screens.progress = true; Screens.show("play"); document.querySelector(".pg-info").click()',
+    fits: true, box: '#screen-play', must: ['.pg-info', '.pg-help h3'] },
   { name: 'options', go: 'Screens.show("options")', box: '#screen-options',
     must: ['#slide-range', '#cars-range', '#ai-range', '#btn-reset'] },
   { name: 'shop',    go: 'Screens.shopTab = "skins"; Screens.show("shop")',

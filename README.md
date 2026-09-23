@@ -1726,17 +1726,30 @@ last. Because it wraps, that one slot is exactly "between Alien and Forest":
 right from Alien lands on it, right again lands on Forest.
 
 It shows three things and no more: the gold, silver and bronze totals; tracks
-completed out of 30, as a bar split by medal so the three totals can be read
-off it too; and gold stars out of 10, as the ten themes' own stars in a row -
-the same star the theme headings use, coloured by the same `Progress.star`.
+completed out of 30, with a bar; and gold stars out of 10, as the ten themes'
+own stars in a row - the same star the theme headings use, coloured by the same
+`Progress.star`.
+
+**A track is completed when you have WON it** - first place, gold. Silver and
+bronze still count in the medal totals; they just do not finish the track. So
+the completed count and the gold count are the same number, which is the point:
+the ladder is finished when every track is a win.
+
+A small ringed **i** in the panel's corner explains that, how a theme's star is
+coloured, what wins and stars unlock, and that time trials do not count here.
+It opens *in place of* the stats rather than floating over them - an overlay is
+only as big as what it covers, and on a phone lying down the words did not fit
+in one - and the panel keeps its height, so nothing jumps. On short screens the
+words go into two columns and the tagline steps aside while it is open; on the
+very shortest, the original iPhone SE lying down, the words scroll inside the
+panel rather than the page scrolling. It closes on a second press or a press
+anywhere else, and leaving the page closes it.
 
 **Nothing on it is stored.** It is read from `Progress.medal` and
 `Progress.star` every time it is painted, so it cannot drift from the cards it
 summarises, an old save shows its true totals the first time the page opens,
-and a medal won a minute ago is already counted when you come back. A track
-counts as completed once it has a medal on it - a podium is the only result
-the game keeps, so it is the only one this page can count - and only the thirty
-themed tracks are counted.
+and a medal won a minute ago is already counted when you come back. Only the
+thirty themed tracks are counted.
 
 **It is deliberately not dressed as a theme.** Every theme is lit in its own
 accent over its own landscape, with its star beside its name and three track
