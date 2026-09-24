@@ -48,6 +48,10 @@
     document.body.classList.toggle('in-race', name === 'race');
     if (name === 'race' && global.Renderer) global.Renderer.fit();
     Backdrop.set(name === 'play' ? playScene() : SCENE_FOR[name] || 'night');
+    if (global.Sound) {
+      global.Sound.music(songFor(name));
+      if (name !== 'race') global.Sound.duck(1);   // a race sets its own
+    }
     if (name === 'play') this.paintCards();
     if (name === 'options') this.buildLegacy();
     if (name === 'shop') this.paintShop();
@@ -100,6 +104,31 @@
     var out = [];
     global.TRACKS.forEach(function (t, i) { if (!claimed[t.id]) out.push(i); });
     return out;
+  }
+
+  /* The index in THEMES of the theme a track belongs to, or -1 for the
+   * legacy tracks, which belong to none. */
+  Screens.themeOfTrack = function (id) {
+    for (var t = 0; t < THEMES.length; t++) {
+      for (var k = 0; k < THEMES[t].tracks.length; k++) {
+        if (THEMES[t].tracks[k].id === id) return t;
+      }
+    }
+    return -1;
+  };
+
+  /* Which song a screen plays. A theme's song belongs to its page of the
+   * carousel and to all three of its tracks, so going from the page into a
+   * race - and back out again - carries on with the same tune. Everything
+   * else is the menu song, bar the legacy tracks, which have their own. */
+  function songFor(name) {
+    if (name === 'race') {
+      var track = global.TRACKS[global.Game.trackIndex];
+      var t = track ? Screens.themeOfTrack(track.id) : -1;
+      return t >= 0 ? THEMES[t].id : 'classic';
+    }
+    if (name === 'play' && !Screens.progress) return THEMES[Screens.theme].id;
+    return 'menu';
   }
 
   /* Keep the carousel on whichever theme a track belongs to, so backing out
@@ -349,6 +378,12 @@
     if (!this.progress) this.theme = at;
     Backdrop.set(playScene());
     this.paintCards();
+    if (global.Sound) {
+      global.Sound.play('step', dir);
+      // Flicking through several themes should not start several songs:
+      // the one you stop on plays.
+      global.Sound.music(songFor('play'), 350);
+    }
   };
 
   /* ---- progress ---------------------------------------------------------
@@ -597,6 +632,25 @@
       armed = 0;
       setTimeout(disarm, 1800);
     });
+
+    /* The menu sounds, for every button at once rather than one handler
+     * each. A disabled button - a locked skin, a track still to come - gets
+     * no click, so it makes no sound. The carousel arrows and the in-race
+     * pause controls make their own (Screens.stepTheme, Game.pauseRace). */
+    var OWN_SOUND = { 'theme-prev': 1, 'theme-next': 1, 'btn-home': 1, 'btn-pause-go': 1 };
+    var BACK = { 'btn-quit': 1, 'btn-pause-home': 1 };
+    document.addEventListener('click', function (e) {
+      var b = e.target && e.target.closest ? e.target.closest('button') : null;
+      if (!b || !global.Sound || OWN_SOUND[b.id]) return;
+      global.Sound.play(b.hasAttribute('data-back') || BACK[b.id] ? 'back' : 'select');
+    }, true);   // capture: the option buttons stop their clicks propagating
+    // Sliders tick as they move, higher toward the top of their range.
+    document.addEventListener('input', function (e) {
+      var r = e.target;
+      if (!global.Sound || !r || r.type !== 'range') return;
+      var lo = parseFloat(r.min) || 0, hi = parseFloat(r.max) || 100;
+      global.Sound.play('tick', hi > lo ? (parseFloat(r.value) - lo) / (hi - lo) : 0);
+    }, true);
 
     global.addEventListener('keydown', function (e) {
       if (Screens.current !== 'play') return;

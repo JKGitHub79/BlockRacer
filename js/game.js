@@ -302,6 +302,7 @@
     this.particles = [];
     this.time = 0;
     this.results = [];
+    this.touchedAt = -1;
     this.countdown = C.countdown;
 
     // The track grids as many as its road holds, which on a tight circuit is
@@ -380,6 +381,17 @@
     }
   }
 
+  function touchingAny(me, cars) {
+    var a = me.box();
+    for (var i = 0; i < cars.length; i++) {
+      var o = cars[i];
+      if (o === me || o.finished) continue;
+      var b = o.box();
+      if (a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1) return true;
+    }
+    return false;
+  }
+
   /* Tyre marks under a sliding car, dropped at its back corners and left on
    * the road to fade. They are what makes the slide readable at a glance. */
   function layRubber(game, car) {
@@ -428,9 +440,14 @@
         car.finished = true;
         car.finishTime = game.time;
         game.results.push(car);
-        if (car.isPlayer) Sound.finish();
+        if (car.isPlayer) {
+          // A trial has no placing: it ends on its record, or quietly.
+          if (game.mode === 'trial') Sound.play(newBest ? 'pb' : 'finish', 0);
+          else Sound.play('finish', game.results.length);
+          Sound.dip(0.3, 2.2);
+        }
       } else if (car.isPlayer) {
-        Sound.lap();
+        Sound.play(newBest ? 'pb' : car.lap === game.laps - 1 ? 'lastlap' : 'lap');
       }
     }
     if (car.isPlayer && game.ghostRec) traceLap(game, car, lapped, newBest);
@@ -507,7 +524,8 @@
       var n = Math.ceil(this.countdown);
       if (n !== this._lastBeep) {
         this._lastBeep = n;
-        if (n > 0) Sound.beep(); else Sound.go();
+        if (n > 0) Sound.play('count');
+        else { Sound.play('go'); Sound.duck(1); }
       }
       if (this.countdown <= -0.6) { this.state = 'racing'; Input.clear(); }
       return;
@@ -520,7 +538,13 @@
     // that is sitting against a wall.
     var turn;
     while ((turn = Input.take()) !== 0) {
-      if (!this.player.finished) this.player.turn(turn);
+      if (this.player.finished) continue;
+      // Pulling away from a wall revs; a corner thrown in at speed chirps the
+      // tyres - unless slide is off, when the car just snaps round.
+      var standing = this.player.crashed;
+      this.player.turn(turn);
+      if (standing) Sound.play('rev');
+      else if (C.slide > 0) Sound.play('turn');
     }
 
     for (var i = 0; i < this.drivers.length; i++) this.drivers[i].update(dt);
@@ -531,13 +555,22 @@
       var hit = car.step(dt);
       if (hit && hit.crashed) {
         spawnSparks(this, hit, car.color);
-        if (car.isPlayer) Sound.crash();
-      } else if (hit && Math.random() < 0.3) {
+        if (car.isPlayer) Sound.play('crash');
+      } else if (hit) {
+        if (car.isPlayer) Sound.play('scrape');
         // A scrape throws a few sparks every so often rather than a shower,
         // otherwise a car running down a wall fountains.
-        spawnSparks(this, hit, car.color, 2);
+        if (Math.random() < 0.3) spawnSparks(this, hit, car.color, 2);
       }
       layRubber(this, car);
+    }
+    // Your car touching another one: once per contact, not every step of it.
+    // Two cars being eased apart touch and part several times a second, so a
+    // contact is only a new one after a moment clear. Only yours: the whole
+    // field bumping would never stop.
+    if (!this.player.finished && touchingAny(this.player, this.cars)) {
+      if (this.time - this.touchedAt > 0.4) Sound.play('bump');
+      this.touchedAt = this.time;
     }
     Car.separate(this.cars, dt);
     for (var n = 0; n < this.cars.length; n++) updateCarRace(this, this.cars[n]);
@@ -602,6 +635,8 @@
     el.steerRange = document.getElementById('oversteer-range');
     el.steerRange.min = C.minOversteer;   // one place decides how far it goes
     el.steerRange.max = C.maxOversteer;
+    el.musicRange = document.getElementById('music-range');
+    el.sfxRange = document.getElementById('sfx-range');
     el.record = document.getElementById('hud-record');
     el.delta = document.getElementById('hud-delta');
     el.pbFlash = document.getElementById('pb-flash');
@@ -705,7 +740,18 @@
     // what THIS race unlocked, and nothing else can produce one.
     var Cos = global.Cosmetics;
     var before = Cos ? Cos.snapshot() : null;
+    var theme = global.THEMES[global.Screens.themeOfTrack(T.data.id)];
+    var ids = theme ? theme.tracks.map(function (e) { return e.id; }) : null;
+    var starWas = ids ? global.Progress.star(ids) : 0;
     var won = global.Progress.record(T.data.id, placeOfPlayer);
+    var unlocked = before ? Cos.unlockedSince(before) : [];
+    var starIs = ids ? global.Progress.star(ids) : 0;
+    // One reward sound after the fanfare, the biggest thing the race earned:
+    // something for the shop, then a theme star (new or better), then a
+    // medal. Three in a row would be a jingle too many.
+    if (unlocked.length) Sound.play('unlock', null, 0.7);
+    else if (starIs && (!starWas || starIs < starWas)) Sound.play('star', null, 0.7);
+    else if (won) Sound.play('medal', placeOfPlayer, 0.7);
 
     el.resultsTitle.textContent =
       placeOfPlayer === 1 ? 'YOU WIN' : 'P' + placeOfPlayer + ' OF ' + all.length;
@@ -728,7 +774,7 @@
     el.resultsBody.parentNode.classList.toggle('dense', all.length > 8);
     this.showNextButton();
     el.results.classList.add('show');
-    if (before && global.Unlocks) global.Unlocks.show(Cos.unlockedSince(before));
+    if (global.Unlocks) global.Unlocks.show(unlocked);
   };
 
   /* A trial has no finishing order to show, so the table lists the laps
@@ -856,6 +902,23 @@
     }
   };
 
+  /* Music and effects, 0-100 each. Live - the next note is at the new level -
+   * and saved straight away, like every other preference. */
+  function paintVolume(key, v) {
+    document.getElementById('menu-' + key).textContent = v;
+    document.getElementById('menu-' + key + '-note').textContent = v === 0 ? '(off)' : '';
+    var r = el[key + 'Range'];
+    if (r && parseInt(r.value, 10) !== v) r.value = v;
+  }
+  Game.setVolumes = function (music, sfx) {
+    C.musicVolume = C.clampVolume(music);
+    C.sfxVolume = C.clampVolume(sfx);
+    C.saveVolumes();
+    Sound.setVolumes(C.musicVolume, C.sfxVolume);
+    paintVolume('music', C.musicVolume);
+    paintVolume('sfx', C.sfxVolume);
+  };
+
   /* The halo under your own car. Cosmetic and live: nothing reads it but
    * the car painter, so it takes effect on the very next frame and there is
    * nothing to rebake and nothing to reset. */
@@ -940,12 +1003,16 @@
     if (this.state !== 'racing') return;
     this.state = 'paused';
     el.pause.classList.add('show');
+    Sound.play('pause');
+    Sound.duck(0.3);
   };
 
   Game.resumeRace = function () {
     if (this.state !== 'paused') return;
     this.state = 'racing';
     el.pause.classList.remove('show');
+    Sound.play('resume');
+    Sound.duck(1);
     Input.clear();
   };
 
@@ -955,6 +1022,7 @@
     global.Screens.show('race');
     Sound.unlock();
     this.reset();
+    Sound.duck(0.5);   // under the countdown; GO brings it back up
   };
 
   Game.command = function (name) {
@@ -976,7 +1044,7 @@
     } else if (name === 'slide+' || name === 'slide-') {
       this.setSlide(C.slide + (name === 'slide+' ? 0.05 : -0.05));
     } else if (name === 'mute') {
-      Sound.muted = !Sound.muted;
+      Sound.setMuted(!Sound.muted);
       document.getElementById('mute-state').textContent = Sound.muted ? 'OFF' : 'ON';
     }
   };
@@ -996,6 +1064,7 @@
     this.setSpeed(C.speedLevel);
     this.setRoad(C.roadTint);
     this.setAiLevel(C.aiLevel);
+    this.setVolumes(C.musicVolume, C.sfxVolume);
     this.setMode('race');
     this.setTrack(C.track);   // also sets the field, which depends on the track
     if (C.deepLink) {
@@ -1020,6 +1089,14 @@
     el.steerRange.addEventListener('input', function (e) {
       e.stopPropagation();
       Game.setOversteer(parseInt(el.steerRange.value, 10));
+    });
+    el.musicRange.addEventListener('input', function (e) {
+      e.stopPropagation();
+      Game.setVolumes(parseInt(el.musicRange.value, 10), C.sfxVolume);
+    });
+    el.sfxRange.addEventListener('input', function (e) {
+      e.stopPropagation();
+      Game.setVolumes(C.musicVolume, parseInt(el.sfxRange.value, 10));
     });
     el.carsRange.addEventListener('input', function (e) {
       e.stopPropagation();

@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.47.4', built: '2026-09-24' };
+window.BR = { version: '0.48.0', built: '2026-09-24' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -310,6 +310,23 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       </div>
 
       <div class="opt">
+        <p class="lapline">MUSIC &middot; <b id="menu-music">60</b>
+          <span class="sub" id="menu-music-note"></span></p>
+        <input id="music-range" class="slider" type="range" min="0" max="100" step="5" value="60">
+        <p class="hint">The menus have a tune, and so does every theme - its
+          three tracks share it. 0 turns the music off.</p>
+      </div>
+
+      <div class="opt">
+        <p class="lapline">SOUND EFFECTS &middot; <b id="menu-sfx">80</b>
+          <span class="sub" id="menu-sfx-note"></span></p>
+        <input id="sfx-range" class="slider" type="range" min="0" max="100" step="5" value="80">
+        <p class="hint">Menus, the lights, tyres, walls and rewards. 0 turns them
+          off. <code>M</code> silences everything, music too, until you press it
+          again.</p>
+      </div>
+
+      <div class="opt">
         <p class="lapline">YOUR DATA</p>
         <p class="hint">Race medals and time-trial lap records. Both go, and
           resetting them cannot be undone. Your settings, this one included,
@@ -334,7 +351,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 <script>
 /* Loaded through the version so the browser fetches fresh files after a
  * deploy. document.write keeps them strictly in order, which they need. */
-['viewport', 'tracks', 'themes', 'config', 'track', 'car', 'ai', 'input', 'audio',
+['viewport', 'tracks', 'themes', 'config', 'track', 'car', 'ai', 'input', 'music', 'audio',
  'progress', 'ghost', 'cosmetics', 'unlocks', 'backdrop', 'render', 'screens', 'game']
   .forEach(function (name) {
     document.write('<script src="js/' + name + '.js?v=' + BR.version + '"><\/script>');

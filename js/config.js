@@ -400,6 +400,32 @@
   var steerParam = /[?&]steer=(\d+)/.exec(search);
   if (steerParam) CONFIG.oversteer = CONFIG.clampOversteer(parseInt(steerParam[1], 10));
 
+  /* Music and sound effects, 0-100 each, 0 being off. Preferences, so each
+   * has its own key and RESET DATA leaves them alone. */
+  CONFIG.musicVolume = 60;
+  CONFIG.sfxVolume = 80;
+  CONFIG.clampVolume = function (v) {
+    v = Math.round(Number(v) / 5) * 5;
+    return isFinite(v) ? Math.max(0, Math.min(100, v)) : 0;
+  };
+  var VOLUME_KEYS = { musicVolume: 'blockracer.musicvol.v1', sfxVolume: 'blockracer.sfxvol.v1' };
+  CONFIG.saveVolumes = function () {
+    try {
+      if (global.localStorage) {
+        Object.keys(VOLUME_KEYS).forEach(function (k) {
+          global.localStorage.setItem(VOLUME_KEYS[k], String(CONFIG[k]));
+        });
+      }
+    } catch (e) { /* storage blocked or full */ }
+  };
+  Object.keys(VOLUME_KEYS).forEach(function (k) {
+    try {
+      var saved = global.localStorage && global.localStorage.getItem(VOLUME_KEYS[k]);
+      var n = saved ? parseInt(saved, 10) : NaN;
+      if (isFinite(n)) CONFIG[k] = CONFIG.clampVolume(n);
+    } catch (e) { /* unreadable storage: keep the default */ }
+  });
+
   /* The one palette that outranks a theme's own. Everything not listed here
    * falls through to the theme, which is deliberate: the car colours and the
    * start line are already high contrast and do not need replacing. */

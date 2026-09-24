@@ -1275,7 +1275,7 @@ before anyone had to press one.
 | `R` | restart the race |
 | `Esc` | back to the settings menu |
 | `P` | pause |
-| `M` | mute |
+| `M` | mute music and sound effects (until pressed again) |
 | `Enter` / `Space` | start |
 
 On a touchscreen, tap the left or right half of the screen.
@@ -1999,6 +1999,71 @@ Cosmetics are the player's alone. An AI car is painted by `js/render.js` exactly
 as it always was, and `car.isPlayer` is the only thing that routes a car through
 this file at all.
 
+## Sound
+
+Music and sound effects, with no audio files: everything is synthesised live
+by WebAudio from a few kilobytes of code, so there is nothing to download,
+nothing to host and nothing that can fail to load.
+
+**Music.** One tune for the menus, one for each of the ten themes - shared by
+all three of the theme's tracks - and one for the seven legacy tracks. Each is
+written for its place: a bouncy woody one for Forest, phrygian hand drums for
+Desert, slow bells through a long echo for Snow, a rock beat for Cliffs, disco
+for City, metal hits for Industrial, harp and toms for the Ruins, a fast low
+pound for the Volcano, floating bells for Space and an unfamiliar scale with a
+wobbling lead for Alien. The songs are scores in `js/music.js` - chords, a
+bass line, drum patterns and two melodies each, as data - and `js/audio.js`
+plays them. A song is sixteen bars on a grid of sixteenth notes and the last
+step is followed by the first on the same grid, so the loop has no seam; one
+section in four drops the melody, which is what keeps three minutes of the
+same loop from wearing thin.
+
+Which song plays follows the screen. The track carousel plays the theme you
+are looking at (flick through several and only the one you stop on starts),
+so going from a theme's page into one of its races, and back out, carries on
+with the same tune instead of restarting it. Everywhere else is the menu
+song; a change of song is a short crossfade. The music drops to half under
+the countdown and comes back at GO, drops further while paused, and dips
+under the finishing fanfare.
+
+The songs are levelled, not guessed: each is rendered offline and measured
+with an approximation of the loudness weighting broadcasters use, and trimmed
+(`gain` in `js/music.js`) so all twelve play within half a decibel of each
+other. A limiter after everything keeps a fanfare over a full chorus from
+clipping.
+
+**Effects.** Menu select and back, the carousel arrows, slider ticks, pause
+and resume; the countdown and GO; the tyres biting as you throw a corner in,
+the engine pulling you away from a wall, a crash, a scrape along a wall, and a
+knock when you touch another car; laps (a different chime for the last one), a
+finish that depends on where you finished, and a NEW BEST chime for a lap
+record. After a race there is one reward sound at most, the biggest thing the
+race earned - a shop unlock, then a new or better theme star, then a medal -
+because three jingles in a row is two too many. Effects that the race can
+fire every frame have a minimum gap, and only your own car makes contact
+sounds: the whole field bumping would never stop.
+
+**Volume.** MUSIC and SOUND EFFECTS in Options, 0 to 100, 0 being off; at 0
+the music is stopped rather than played into silence. Both are saved, under
+their own keys, so RESET DATA leaves them alone. `M` silences both for the
+session without touching either slider.
+
+**Starting it.** Browsers only let a page make sound after the player has done
+something, and they disagree about what counts. Chrome accepts a key press, a
+mouse press, or the *end* of a touch, but not its start; iOS Safari has at
+times accepted only the end of a touch or a click, and before iOS 14.5 also
+needed a sound started inside it. So nothing is created until the first
+gesture (no "autoplay blocked" warnings), the first real one - any key, click
+or tap, anywhere - starts the audio, and whatever should be playing by then
+(the menu song, usually) starts with it. The listeners stay for the life of
+the page, because Safari also suspends audio by itself after a phone call or
+a trip to the lock screen and needs the next touch to bring it back. In a
+background tab the audio is suspended and the song picks up where it was when
+you come back.
+
+On an iPhone with the ring/silent switch on silent, Safari mutes web audio;
+that is the phone's setting and the game respects it.
+
 ## High contrast
 
 **Off by default, and an option rather than a theme.** There are thirty-seven
@@ -2155,6 +2220,11 @@ RESTART, the ghost, the delta, NEW BEST and the ghost reaching the canvas all
 come out identical, and the layout audit gives identical verdicts in both at
 ten screen sizes. (It needs `gir1.2-webkit2-4.1 python3-gi python3-gi-cairo
 xvfb`; `tools/webkit/wk.py` says so.)
+
+The sound was checked in WebKit separately (not part of that suite): every
+song and effect renders there through the same code as in Chromium, and the
+live path - context, songs, crossfades, ducking, volumes - runs without an
+error once a gesture has started it.
 
 The engine is not where the Safari problems were. They were in what
 Apple's platforms do around it, and there were four.
