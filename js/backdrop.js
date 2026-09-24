@@ -986,6 +986,38 @@
     });
   }
 
+  /* The night sky's ninety stars, drawn fresh every frame rather than baked:
+   * ninety small rectangles cost nothing to draw, whereas a baked layer per
+   * speed would be another screen-sized canvas each - exactly what iOS has
+   * too little of (see Viewport.releaseCanvas).
+   *
+   * The generator is walked in exactly the order it always was, so every star
+   * is where, how big and how bright it has always been at time zero. Each
+   * then slides left at a speed set by its size - the small dim ones at a
+   * crawl, the larger brighter ones a little faster - and wraps round. */
+  var starCache = null, starsFor = '';
+  function nightStars(g, t) {
+    if (starsFor !== W + 'x' + H) {
+      var rnd = rng(7);
+      starCache = [];
+      for (var i = 0; i < 90; i++) {
+        var r = rnd() * 1.4 + 0.3;
+        var a = (0.15 + rnd() * 0.5).toFixed(2);
+        starCache.push({ r: r, fill: 'rgba(190,220,255,' + a + ')',
+                         x: rnd() * W, y: rnd() * H * 0.8, v: r >= 1 ? 11 : 5 });
+      }
+      starsFor = W + 'x' + H;
+    }
+    for (var k = 0; k < starCache.length; k++) {
+      var st = starCache[k];
+      var x = still ? st.x : ((st.x - t * st.v) % W + W) % W;
+      g.fillStyle = st.fill;
+      g.fillRect(x, st.y, st.r, st.r);
+      // a star half way off the left edge is also half way on at the right
+      if (x + st.r > W) g.fillRect(x - W, st.y, st.r, st.r);
+    }
+  }
+
   var SCENES = {
     /* Depth is value, not size: the far band is hazed almost to the colour of
      * the sky behind it and the near band is nearly black. Three bands of the
@@ -1289,16 +1321,20 @@
       }
     },
 
+    /* The menus' own sky - the front door, the mode picker, the options and
+     * Progress. It is the same sky it always was, the same ninety stars from
+     * the same seed, but the stars drift slowly left in two layers: the small
+     * dim ones at a crawl and the larger, brighter ones a little faster, so
+     * the screen has some depth and some life without anything competing
+     * with the buttons in front of it. The sky and the glow do not move. */
     night: {
       weather: null,
       paint: function (g) {
         sky(g, [[0, '#04070f'], [0.55, '#0a1222'], [1, '#132038']]);
-        var rnd = rng(7);
-        for (var i = 0; i < 90; i++) {
-          var r = rnd() * 1.4 + 0.3;
-          g.fillStyle = 'rgba(190,220,255,' + (0.15 + rnd() * 0.5).toFixed(2) + ')';
-          g.fillRect(rnd() * W, rnd() * H * 0.8, r, r);
-        }
+      },
+      // drawn every frame, over the baked sky, in the order they always were
+      live: function (g, t) {
+        nightStars(g, t);
         var glow = g.createRadialGradient(W / 2, H * 0.95, 0, W / 2, H * 0.95, H * 0.7);
         glow.addColorStop(0, 'rgba(94,242,255,0.10)');
         glow.addColorStop(1, 'rgba(94,242,255,0)');
@@ -1389,6 +1425,10 @@
     baked = null;
   }
 
+  // Asked once: somebody who has asked their device for less motion gets the
+  // sky standing still, exactly as it was before it moved at all.
+  var still = !!(global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
   Backdrop.set = function (name) {
     if (!SCENES[name]) name = 'night';
     if (this.scene === name) return;
@@ -1431,6 +1471,7 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(baked, 0, 0);
     ctx.scale(dpr, dpr);
+    if (spec.live) spec.live(ctx, t);
     if (spec.flyby) flyby(ctx, t);
     if (!spec.weather) { ctx.setTransform(1, 0, 0, 1, 0, 0); return; }
     ensureMotes(spec.weather);
