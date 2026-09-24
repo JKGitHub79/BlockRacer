@@ -948,7 +948,25 @@ body.in-race #backdrop { display: none; }
 .opt .laps { margin-bottom: 0; }
 .opt .swatches { margin-left: 0; }
 
+/* Below the game's own settings: the tuning and test ones, under a heading
+   rather than behind a button, then RESET DATA on its own at the bottom. */
+.opt-head {
+  margin: 30px 0 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: normal;
+  letter-spacing: 4px;
+  color: var(--dim);
+  text-align: left;
+}
+.opt-end { margin-top: 14px; }
+/* auto-fill, not auto-fit: one card keeps the width of a column instead of
+   stretching the RESET button across the whole screen */
+.opt-grid.opt-end { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+
 .wide-btn { width: 100%; padding: 10px; }
+.opt .wide-btn { margin-top: 12px; }   /* clear of the hint above it */
 
 /* The legacy list is folded away until asked for: it is seven buttons of
    tracks that are being replaced, and it should not be the biggest thing on

@@ -402,12 +402,16 @@
 
   /* Music and sound effects, 0-100 each, 0 being off. Preferences, so each
    * has its own key and RESET DATA leaves them alone. */
-  /* How a touchscreen steers: 'tap' (the left or right half of the screen)
-   * or 'swipe' (the way you want to go). Tap is the default and the only
-   * thing a mouse or keyboard ever does. Its own key, so RESET DATA leaves
-   * it alone. */
-  CONFIG.control = 'tap';
-  var CONTROL_KEY = 'blockracer.control.v1';
+  /* How a touchscreen steers: 'swipe' (the way you want to go, the default)
+   * or 'tap' (the left or right half of the screen). A mouse or keyboard
+   * ignores it. Its own key, so RESET DATA leaves it alone.
+   *
+   * v2 because v1 was written by every page load, not only by a choice, so
+   * it cannot tell somebody who picked TAP from somebody who never looked:
+   * reading it would keep every earlier player off the new default. Only a
+   * choice made in Options is written now (Game.setControl). */
+  CONFIG.control = 'swipe';
+  var CONTROL_KEY = 'blockracer.control.v2';
   CONFIG.saveControl = function () {
     try {
       if (global.localStorage) global.localStorage.setItem(CONTROL_KEY, CONFIG.control);

@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.49.0', built: '2026-09-24' };
+window.BR = { version: '0.50.0', built: '2026-09-24' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -213,12 +213,34 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 
     <div class="opt-grid">
       <div class="opt">
-        <p class="lapline">SLIDE &middot; <b id="menu-slide">0.80</b> CELLS
-          <span class="sub" id="menu-slide-cw"></span></p>
-        <input id="slide-range" class="slider" type="range" min="0" step="0.05" value="0.8">
-        <p class="hint slide-hint">0 turns slide off entirely. Staircase clips its
-          chicanes above 0.47; much past 3 the arc is wider than the road on any
-          track. <code>[</code> and <code>]</code> step it by 0.05, mid-race included.</p>
+        <p class="lapline">CONTROL STYLE &middot; <b id="menu-control">SWIPE</b></p>
+        <div id="control-buttons" class="laps">
+          <button data-control="swipe">SWIPE</button>
+          <button data-control="tap">TAP</button>
+        </div>
+        <p class="hint">For touchscreens. SWIPE turns the car to face the way
+          you swipe - up, down, left or right; a swipe the way you are already
+          going, or straight back, does nothing, since a turn is always a
+          quarter turn. TAP turns left or right with a tap on that half of the
+          screen. The car drives exactly the same either way, and keys and the
+          mouse are not affected.</p>
+      </div>
+
+      <div class="opt">
+        <p class="lapline">MUSIC &middot; <b id="menu-music">60</b>
+          <span class="sub" id="menu-music-note"></span></p>
+        <input id="music-range" class="slider" type="range" min="0" max="100" step="5" value="60">
+        <p class="hint">The menus have a tune, and so does every theme - its
+          three tracks share it. 0 turns the music off.</p>
+      </div>
+
+      <div class="opt">
+        <p class="lapline">SOUND EFFECTS &middot; <b id="menu-sfx">80</b>
+          <span class="sub" id="menu-sfx-note"></span></p>
+        <input id="sfx-range" class="slider" type="range" min="0" max="100" step="5" value="80">
+        <p class="hint">Menus, the lights, tyres, walls and rewards. 0 turns them
+          off. <code>M</code> silences everything, music too, until you press it
+          again.</p>
       </div>
 
       <div class="opt">
@@ -235,6 +257,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           painted landscape behind the menus and everything else that is only
           decoration come off while it is on.</p>
       </div>
+
       <div class="opt">
         <p class="lapline">YOUR CAR &middot; <b id="menu-glow">ON</b></p>
         <div id="glow-buttons" class="laps">
@@ -244,6 +267,20 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
         <p class="hint">A halo under your own car, in your own colour. Six
           cars on a dark track is a lot to pick yourself out of at speed.
           Your car only, and it changes nothing about the racing.</p>
+      </div>
+    </div>
+
+    <!-- Tuning and test settings, kept for development rather than hidden:
+         the settings above are the game's own. -->
+    <h3 class="opt-head">DEVELOPER</h3>
+    <div class="opt-grid">
+      <div class="opt">
+        <p class="lapline">SLIDE &middot; <b id="menu-slide">0.80</b> CELLS
+          <span class="sub" id="menu-slide-cw"></span></p>
+        <input id="slide-range" class="slider" type="range" min="0" step="0.05" value="0.8">
+        <p class="hint slide-hint">0 turns slide off entirely. Staircase clips its
+          chicanes above 0.47; much past 3 the arc is wider than the road on any
+          track. <code>[</code> and <code>]</code> step it by 0.05, mid-race included.</p>
       </div>
 
       <div class="opt">
@@ -309,51 +346,22 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           racing.</p>
       </div>
 
-      <div class="opt">
-        <p class="lapline">CONTROL STYLE &middot; <b id="menu-control">TAP</b></p>
-        <div id="control-buttons" class="laps">
-          <button data-control="tap">TAP</button>
-          <button data-control="swipe">SWIPE</button>
-        </div>
-        <p class="hint">For touchscreens. TAP turns left or right with a tap on
-          that half of the screen. SWIPE turns the car to face the way you
-          swipe - up, down, left or right; a tap does nothing, and a swipe
-          the way you are already going or straight back does nothing either,
-          since a turn is always a quarter turn. The car drives exactly the
-          same either way, and keys and the mouse are not affected.</p>
-      </div>
-
-      <div class="opt">
-        <p class="lapline">MUSIC &middot; <b id="menu-music">60</b>
-          <span class="sub" id="menu-music-note"></span></p>
-        <input id="music-range" class="slider" type="range" min="0" max="100" step="5" value="60">
-        <p class="hint">The menus have a tune, and so does every theme - its
-          three tracks share it. 0 turns the music off.</p>
-      </div>
-
-      <div class="opt">
-        <p class="lapline">SOUND EFFECTS &middot; <b id="menu-sfx">80</b>
-          <span class="sub" id="menu-sfx-note"></span></p>
-        <input id="sfx-range" class="slider" type="range" min="0" max="100" step="5" value="80">
-        <p class="hint">Menus, the lights, tyres, walls and rewards. 0 turns them
-          off. <code>M</code> silences everything, music too, until you press it
-          again.</p>
-      </div>
-
-      <div class="opt">
-        <p class="lapline">YOUR DATA</p>
-        <p class="hint">Race medals and time-trial lap records. Both go, and
-          resetting them cannot be undone. Your settings, this one included,
-          are left alone.</p>
-        <button id="btn-reset" class="secondary wide-btn">RESET DATA</button>
-      </div>
-
       <div class="opt opt-legacy">
         <p class="lapline">LEGACY TRACKS</p>
         <p class="hint">The seven circuits built before the themes. They are being
           replaced, not removed - these are the originals, still raceable.</p>
         <button id="legacy-open" class="secondary wide-btn">SHOW LEGACY TRACKS</button>
         <div id="legacy-list" class="legacy-list"></div>
+      </div>
+    </div>
+
+    <div class="opt-grid opt-end">
+      <div class="opt">
+        <p class="lapline">YOUR DATA</p>
+        <p class="hint">Race medals and time-trial lap records. Both go, and
+          resetting them cannot be undone. Your settings, this one included,
+          are left alone.</p>
+        <button id="btn-reset" class="secondary wide-btn">RESET DATA</button>
       </div>
     </div>
 

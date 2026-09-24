@@ -15,7 +15,7 @@
 
   var Input = {
     turns: [],          // pending -1 / +1, or a swiped direction {x, y}
-    control: 'tap',     // how a touchscreen steers: 'tap' or 'swipe'
+    control: 'swipe',   // how a touchscreen steers: 'swipe' or 'tap'
     onCommand: null,    // (name) => void  for restart / pause / mute / start
     /* The next turn, given where the car points now. A swiped direction is
      * the one 90-degree turn that points it that way: the sign of the cross

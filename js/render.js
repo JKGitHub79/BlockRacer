@@ -1236,6 +1236,10 @@
     g.restore();
   }
 
+  var HC_MARK = '#ffd400';   // your car, in high contrast
+  var STILL = !!(global.matchMedia &&
+                 global.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
   function drawCar(g, car) {
     var L = C.carLength * S, W = C.carWidth * S;
     var a = car.bodyAngle();
@@ -1254,6 +1258,23 @@
       halo.addColorStop(1, 'rgba(' + rgb + ',0)');
       g.fillStyle = halo;
       g.fillRect(car.x * S - rr, car.y * S - rr, rr * 2, rr * 2);
+    }
+
+    /* High contrast marks your car with a circle: yellow on black, so it
+     * reads against the black road and the white scenery alike, and the only
+     * round thing on a board made of rectangles - it stands out by its shape
+     * as much as by its brightness, which is what this mode is for. It
+     * breathes slowly, unless the device asks for less motion. */
+    if (car.isPlayer && C.contrastColors()) {
+      var rc = Math.max(L, W) * (1.15 + (STILL ? 0 : 0.07 * Math.sin(Date.now() / 260)));
+      g.beginPath();
+      g.arc(car.x * S, car.y * S, rc, 0, Math.PI * 2);
+      g.lineWidth = 7;
+      g.strokeStyle = '#000000';
+      g.stroke();
+      g.lineWidth = 3.5;
+      g.strokeStyle = HC_MARK;
+      g.stroke();
     }
 
     g.save();
@@ -1292,10 +1313,11 @@
         ring(5.5, '#ff5470');
         g.globalAlpha = 1;
       }
-      /* In high contrast it is a white ring outside a black one, so it reads
-       * against a black road and against white scenery alike. */
-      if (hc) { ring(7, '#ffffff'); ring(4.5, '#000000'); }
-      ring(2, 'rgba(255,255,255,0.9)');
+      /* In high contrast the edge is yellow outside black, the colours of the
+       * circle round it: a white edge made your car look like one more white
+       * block, and every opponent has one. */
+      if (hc) { ring(7, HC_MARK); ring(3.5, '#000000'); }
+      else ring(2, 'rgba(255,255,255,0.9)');
     }
 
     if (car.isPlayer && Cos) {

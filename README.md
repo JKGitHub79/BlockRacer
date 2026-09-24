@@ -31,9 +31,11 @@ says which mode you are picking for, because the carousel is otherwise
 identical either way and the only way to find out would be to start a race and
 count the cars.
 
-**Options.** Everything that configures a race - slide, field size, AI level,
-game speed, race length, road colour, high contrast, the glow under your own
-car - plus the legacy tracks.
+**Options.** The game's own settings first, with no heading: control style,
+music, sound effects, high contrast and the glow under your own car. Then,
+under **DEVELOPER** - a heading, not a hidden button - the tuning and test
+settings: slide, oversteer, field size, AI level, game speed, race length,
+road colour and the legacy tracks. RESET DATA sits on its own at the bottom.
 
 **Shop.** Thirty skins and ten vehicles, every one of them won rather than
 bought. See **The shop** below.
@@ -1278,10 +1280,15 @@ before anyone had to press one.
 | `M` | mute music and sound effects (until pressed again) |
 | `Enter` / `Space` | start |
 
-On a touchscreen, tap the left or right half of the screen.
+On a touchscreen, swipe the way you want to go - or, with CONTROL STYLE set
+to TAP in Options, tap the left or right half of the screen.
 
-**Swipe**, in Options under CONTROL STYLE, is the alternative for
-touchscreens; TAP stays the default. Swipe up, down, left or right anywhere on
+**Swipe** is the default on a touchscreen; TAP is the alternative, and the
+mouse and keys ignore the setting. (Until v0.50 it was the other way round.
+The setting moved to a new storage key then, because the old one had been
+written by every page load rather than only by a choice, so it could not tell
+somebody who picked TAP from somebody who never opened Options. Settings are
+now only written when you change them.) Swipe up, down, left or right anywhere on
 the race and the car turns to face that way. It is not a second way of
 driving: a swipe is turned into the one 90° turn that points the car where
 you swiped, and that goes into the same queue, and the same `Car.turn`, as a
@@ -2119,8 +2126,14 @@ What changes when it is on:
 - **Every car gets a hard edge**: white inside, black outside. The road under
   a car is black and the scenery beside it is white, so a car needs an
   outline that works against both; without one a dark car on a black road is
-  a hole. Yours carries a second ring in black and white on top of that,
-  because the halo is a colour and a colour is not enough here.
+  a hole.
+- **Yours is marked in yellow on black**: a yellow-and-black edge instead of
+  the white one, and a yellow circle on black round it. With a white edge
+  like everyone else's, your car read as one more white block on a
+  black-and-white board. The circle is the only round thing on a board made
+  of rectangles, so it stands out by its shape as well as its brightness,
+  which is what this mode is about. It breathes slowly, and holds still if
+  the device asks for reduced motion. Normal mode is unchanged.
 - **Every wall painter is turned off** - the stone, the windows, the pipes,
   the ashlar, the basalt, the starfield, the growth. They are all texture,
   and texture on a solid that is meant to read as one flat "not road" is

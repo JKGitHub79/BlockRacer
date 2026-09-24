@@ -911,10 +911,10 @@
     var r = el[key + 'Range'];
     if (r && parseInt(r.value, 10) !== v) r.value = v;
   }
-  Game.setVolumes = function (music, sfx) {
+  Game.setVolumes = function (music, sfx, keep) {
     C.musicVolume = C.clampVolume(music);
     C.sfxVolume = C.clampVolume(sfx);
-    C.saveVolumes();
+    if (keep) C.saveVolumes();   // a choice, not boot applying the default
     Sound.setVolumes(C.musicVolume, C.sfxVolume);
     paintVolume('music', C.musicVolume);
     paintVolume('sfx', C.sfxVolume);
@@ -939,9 +939,9 @@
   /* Tap or swipe, for touchscreens. Input does the reading; the page needs
    * to know too, because swiping takes the race's touch gestures away from
    * the browser (css: html.swipe-control). */
-  Game.setControl = function (mode) {
-    C.control = mode === 'swipe' ? 'swipe' : 'tap';
-    C.saveControl();
+  Game.setControl = function (mode, keep) {
+    C.control = mode === 'tap' ? 'tap' : 'swipe';
+    if (keep) C.saveControl();   // a choice, not boot applying the default
     Input.control = C.control;
     Input.clear();
     document.documentElement.classList.toggle('swipe-control', C.control === 'swipe');
@@ -1109,11 +1109,11 @@
     });
     el.musicRange.addEventListener('input', function (e) {
       e.stopPropagation();
-      Game.setVolumes(parseInt(el.musicRange.value, 10), C.sfxVolume);
+      Game.setVolumes(parseInt(el.musicRange.value, 10), C.sfxVolume, true);
     });
     el.sfxRange.addEventListener('input', function (e) {
       e.stopPropagation();
-      Game.setVolumes(C.musicVolume, parseInt(el.sfxRange.value, 10));
+      Game.setVolumes(C.musicVolume, parseInt(el.sfxRange.value, 10), true);
     });
     el.carsRange.addEventListener('input', function (e) {
       e.stopPropagation();
@@ -1138,7 +1138,7 @@
     Array.prototype.forEach.call(el.controlButtons.children, function (b) {
       b.addEventListener('click', function (e) {
         e.stopPropagation();
-        Game.setControl(b.dataset.control);
+        Game.setControl(b.dataset.control, true);
       });
     });
     Array.prototype.forEach.call(el.contrastButtons.children, function (b) {
