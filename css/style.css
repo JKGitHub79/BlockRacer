@@ -726,6 +726,19 @@ body.in-race #backdrop { display: none; }
 }
 @media (hover: hover) { .door:hover { transform: translateY(-3px); border-color: var(--accent); } }
 .door-mark { font-size: 22px; color: var(--accent); line-height: 1; }
+/* Sized in em so it matches the glyph icons beside it at every size, and
+   drawn in strokes of the same weight a text glyph has at that size. */
+.door-cart {
+  display: block;
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.door-cart circle { fill: currentColor; stroke: none; }
 .door-name { font-size: clamp(14px, 2.4vw, 20px); letter-spacing: 4px; }
 .door-sub { font-size: 11px; letter-spacing: 1px; color: var(--dim); }
 

@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.47.3', built: '2026-09-24' };
+window.BR = { version: '0.47.4', built: '2026-09-24' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -117,7 +117,13 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
         <span class="door-sub">Pick a theme and race</span>
       </button>
       <button id="btn-shop" class="door">
-        <span class="door-mark">&#9670;</span>
+        <!-- A drawn cart rather than a character: the only cart in Unicode is
+             an emoji, which would come out in its own colours and ignore the
+             door's. This one is currentColor, the same cyan as its neighbours. -->
+        <span class="door-mark"><svg class="door-cart" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M2 4h3l2.6 10.2a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.76L20.5 8H6.3"/>
+          <circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/>
+        </svg></span>
         <span class="door-name">SHOP</span>
         <span class="door-sub">Skins &amp; vehicles you have won</span>
       </button>
