@@ -592,6 +592,12 @@ body.mode-trial .stat.trial-only { display: flex; }
 }
 
 .slider { touch-action: none; }
+/* Swipe steering: on the race nothing may pan, and the root may not
+ * overscroll, or a swipe down pulls the page to refresh on Android and
+ * rubber-bands it on iOS. The overlays scroll on their own, so the results
+ * still scroll. Tap mode is untouched. */
+html.swipe-control { overscroll-behavior: none; }
+html.swipe-control body.in-race { touch-action: none; }
 .board, #backdrop { touch-action: none; }
 .screen { touch-action: pan-y; }
 

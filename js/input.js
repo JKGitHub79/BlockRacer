@@ -1,5 +1,12 @@
 /* Block Racer - input. Two controls: turn left, turn right.
- * Turns are queued on key down so a press between frames is never eaten. */
+ * Turns are queued on key down so a press between frames is never eaten.
+ *
+ * A touchscreen can instead be set to swipe (Options, CONTROL STYLE). A
+ * swipe is queued as a DIRECTION on the screen rather than as a turn, and
+ * becomes a turn only when the race takes it - by then the car may have
+ * turned since, and it is where the car points at that moment that decides
+ * whether up is a left or a right. Either way what comes out is the same
+ * -1 / +1 the keys and taps give, into the same Car.turn. */
 (function (global) {
   'use strict';
 
@@ -7,10 +14,24 @@
   var RIGHT = ['ArrowRight', 'd', 'D', 'KeyD'];
 
   var Input = {
-    turns: [],          // pending -1 / +1
+    turns: [],          // pending -1 / +1, or a swiped direction {x, y}
+    control: 'tap',     // how a touchscreen steers: 'tap' or 'swipe'
     onCommand: null,    // (name) => void  for restart / pause / mute / start
-    take: function () { return this.turns.length ? this.turns.shift() : 0; },
-    clear: function () { this.turns.length = 0; }
+    /* The next turn, given where the car points now. A swiped direction is
+     * the one 90-degree turn that points it that way: the sign of the cross
+     * product, with screen y running down, is +1 for a right turn exactly as
+     * Car.turn has it. Straight on, or straight back - which no single
+     * quarter turn reaches - is dropped rather than guessed at. */
+    take: function (heading) {
+      while (this.turns.length) {
+        var t = this.turns.shift();
+        if (typeof t === 'number') return t;
+        var s = heading ? heading.x * t.y - heading.y * t.x : 0;
+        if (s) return s > 0 ? 1 : -1;
+      }
+      return 0;
+    },
+    clear: function () { this.turns.length = 0; swipes = {}; }
   };
 
   function matches(list, e) {
@@ -43,14 +64,73 @@
     }
   });
 
+  // Menus, screens and buttons are not the track.
+  function onTrack(e) {
+    if (e.target && e.target.closest &&
+        e.target.closest('button, input, .overlay, .screen')) return false;
+    return !global.Screens || global.Screens.current === 'race';
+  }
+
+  // A finger in swipe mode. The mouse always taps: swipe is a touchscreen
+  // setting, and a desktop keeps exactly the controls it had.
+  function swiping(e) {
+    return Input.control === 'swipe' && e.pointerType !== 'mouse';
+  }
+
   // Touch / mouse: tap the left or right half of the screen.
   global.addEventListener('pointerdown', function (e) {
-    // menus, screens and buttons are not the track
-    if (e.target && e.target.closest &&
-        e.target.closest('button, input, .overlay, .screen')) return;
-    if (global.Screens && global.Screens.current !== 'race') return;
+    if (!onTrack(e)) return;
+    if (swiping(e)) {
+      swipes[e.pointerId] = { x: e.clientX, y: e.clientY, done: false };
+      return;
+    }
     Input.turns.push(e.clientX < global.innerWidth / 2 ? -1 : 1);
   });
+
+  /* Swipes. A finger has to travel SWIPE_MIN CSS pixels - about 4mm on a
+   * phone, where a tap wanders 1 or 2 - before it is a swipe, so a tap never
+   * steers. It fires the moment it gets there rather than on lifting, which
+   * is what makes it feel immediate, and then that finger is spent: one
+   * swipe, one turn, however far it carries on. Mid-swipe it also has to be
+   * clearly one way (DOMINANCE times further along one axis than the
+   * other); a diagonal waits to see which way it goes, and one that is
+   * still diagonal when lifted goes whichever way it went further. */
+  var SWIPE_MIN = 24;
+  var DOMINANCE = 1.5;
+  var swipes = {};
+
+  function swipeDir(s, x, y, lifting) {
+    var dx = x - s.x, dy = y - s.y;
+    var ax = Math.abs(dx), ay = Math.abs(dy);
+    var major = Math.max(ax, ay), minor = Math.min(ax, ay);
+    if (major < SWIPE_MIN || ax === ay) return null;
+    if (!lifting && major < DOMINANCE * minor) return null;
+    return ax > ay ? { x: dx > 0 ? 1 : -1, y: 0 } : { x: 0, y: dy > 0 ? 1 : -1 };
+  }
+
+  function track(e, lifting) {
+    var s = swipes[e.pointerId];
+    if (!s) return;
+    if (lifting) delete swipes[e.pointerId];
+    if (s.done) return;
+    var d = swipeDir(s, e.clientX, e.clientY, lifting);
+    if (!d) return;
+    s.done = true;
+    if (!global.Screens || global.Screens.current === 'race') Input.turns.push(d);
+  }
+  global.addEventListener('pointermove', function (e) { track(e, false); });
+  global.addEventListener('pointerup', function (e) { track(e, true); });
+  global.addEventListener('pointercancel', function (e) { delete swipes[e.pointerId]; });
+
+  /* While swiping, a finger moving on the race must never move the page.
+   * The stylesheet does most of it (touch-action: none on the race, no
+   * overscroll at the root, so no pull-to-refresh); this is for iOS Safari,
+   * whose rubber-band and edge behaviour only a cancelled touchmove stops.
+   * Buttons and overlays are left alone - the results still scroll. */
+  global.addEventListener('touchmove', function (e) {
+    if (Input.control !== 'swipe' || !onTrack(e)) return;
+    if (e.cancelable) e.preventDefault();
+  }, { passive: false });
 
   /* Zoom, off.
    *

@@ -537,7 +537,7 @@
     // Player controls: a turn is the only input, and it also restarts a car
     // that is sitting against a wall.
     var turn;
-    while ((turn = Input.take()) !== 0) {
+    while ((turn = Input.take(this.player.dir)) !== 0) {
       if (this.player.finished) continue;
       // Pulling away from a wall revs; a corner thrown in at speed chirps the
       // tyres - unless slide is off, when the car just snaps round.
@@ -631,6 +631,7 @@
     el.aiRange.min = C.minAiLevel;
     el.aiRange.max = C.maxAiLevel;
     el.glowButtons = document.getElementById('glow-buttons');
+    el.controlButtons = document.getElementById('control-buttons');
     el.contrastButtons = document.getElementById('contrast-buttons');
     el.steerRange = document.getElementById('oversteer-range');
     el.steerRange.min = C.minOversteer;   // one place decides how far it goes
@@ -935,6 +936,21 @@
     global.Renderer.setTrack();
   };
 
+  /* Tap or swipe, for touchscreens. Input does the reading; the page needs
+   * to know too, because swiping takes the race's touch gestures away from
+   * the browser (css: html.swipe-control). */
+  Game.setControl = function (mode) {
+    C.control = mode === 'swipe' ? 'swipe' : 'tap';
+    C.saveControl();
+    Input.control = C.control;
+    Input.clear();
+    document.documentElement.classList.toggle('swipe-control', C.control === 'swipe');
+    Array.prototype.forEach.call(el.controlButtons.children, function (b) {
+      b.classList.toggle('on', b.dataset.control === C.control);
+    });
+    document.getElementById('menu-control').textContent = C.control.toUpperCase();
+  };
+
   Game.setPlayerGlow = function (on) {
     C.playerGlow = !!on;
     C.savePlayerGlow();
@@ -1065,6 +1081,7 @@
     this.setRoad(C.roadTint);
     this.setAiLevel(C.aiLevel);
     this.setVolumes(C.musicVolume, C.sfxVolume);
+    this.setControl(C.control);
     this.setMode('race');
     this.setTrack(C.track);   // also sets the field, which depends on the track
     if (C.deepLink) {
@@ -1116,6 +1133,12 @@
       b.addEventListener('click', function (e) {
         e.stopPropagation();
         Game.setPlayerGlow(b.dataset.glow === '1');
+      });
+    });
+    Array.prototype.forEach.call(el.controlButtons.children, function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        Game.setControl(b.dataset.control);
       });
     });
     Array.prototype.forEach.call(el.contrastButtons.children, function (b) {

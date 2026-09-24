@@ -402,6 +402,24 @@
 
   /* Music and sound effects, 0-100 each, 0 being off. Preferences, so each
    * has its own key and RESET DATA leaves them alone. */
+  /* How a touchscreen steers: 'tap' (the left or right half of the screen)
+   * or 'swipe' (the way you want to go). Tap is the default and the only
+   * thing a mouse or keyboard ever does. Its own key, so RESET DATA leaves
+   * it alone. */
+  CONFIG.control = 'tap';
+  var CONTROL_KEY = 'blockracer.control.v1';
+  CONFIG.saveControl = function () {
+    try {
+      if (global.localStorage) global.localStorage.setItem(CONTROL_KEY, CONFIG.control);
+    } catch (e) { /* storage blocked or full */ }
+  };
+  try {
+    var savedControl = global.localStorage && global.localStorage.getItem(CONTROL_KEY);
+    if (savedControl === 'tap' || savedControl === 'swipe') CONFIG.control = savedControl;
+  } catch (e) { /* unreadable storage: keep the default */ }
+  var controlParam = /[?&]control=(tap|swipe)/.exec(search);
+  if (controlParam) CONFIG.control = controlParam[1];
+
   CONFIG.musicVolume = 60;
   CONFIG.sfxVolume = 80;
   CONFIG.clampVolume = function (v) {

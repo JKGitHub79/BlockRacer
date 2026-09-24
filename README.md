@@ -1280,6 +1280,31 @@ before anyone had to press one.
 
 On a touchscreen, tap the left or right half of the screen.
 
+**Swipe**, in Options under CONTROL STYLE, is the alternative for
+touchscreens; TAP stays the default. Swipe up, down, left or right anywhere on
+the race and the car turns to face that way. It is not a second way of
+driving: a swipe is turned into the one 90° turn that points the car where
+you swiped, and that goes into the same queue, and the same `Car.turn`, as a
+tap or a key - speed, slide and everything else are untouched. Which turn it
+is gets decided when the race takes it, from where the car points at that
+moment, so two quick swipes are read one after the other correctly. A swipe
+the way you are already going, or straight back, does nothing: no single
+quarter turn gets there, and one swipe is only ever one turn.
+
+A finger has to travel 24 CSS pixels (about 4mm on a phone, where a tap
+wanders one or two) before it counts, so a tap never steers; it fires the
+moment it gets there rather than on lifting, and that finger is then spent
+however far it carries on. Mid-swipe it has to be clearly one way; a diagonal
+waits, and one still diagonal when lifted goes the way it went further.
+
+While swiping, nothing on the race screen pans (`touch-action: none`), the
+root does not overscroll (no pull-to-refresh on Android, no rubber-band on
+iOS), and touch moves on the race are cancelled for iOS Safari. Buttons and
+overlays are left out of all of it, so HOME, the pause menu and the results
+work exactly as before, and the results still scroll. The mouse and the keys
+ignore the setting - a desktop has the controls it always had. Saved under its
+own key, so RESET DATA leaves it alone; `?control=swipe` sets it from the URL.
+
 The board scales to whatever screen it is on, in both dimensions, keeping the
 track's shape - so a phone held sideways gets the whole circuit rather than a
 cropped desktop layout. The canvas is drawn in logical track pixels whatever
