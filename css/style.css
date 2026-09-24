@@ -2023,3 +2023,38 @@ body.mode-tutorial .stat.trial-only { display: none; }
 .welcome { z-index: 20; }
 .welcome h2 span { color: var(--accent); }
 .welcome-q { margin: 0 0 18px; color: var(--dim); letter-spacing: 1px; line-height: 1.6; }
+
+/* ---- a race on a phone held upright: the panel gets out of the way -----
+   Upright, the panel's height is taken straight off the board's: the track
+   is turned to run along the screen (Renderer.fit), so it is limited by
+   height, and every row the panel gives back is board. So the readouts sit
+   in two tight rows and the running order in three columns - six cars in
+   two lines - instead of the stacked list the short-screen rules above give
+   a small phone. Last in the file, and scoped to the race, so it beats
+   those and touches nothing else. */
+@media (orientation: portrait) and (max-width: 620px) {
+  body.in-race .stage { flex-direction: column; gap: 6px; }
+  body.in-race .hud {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1px 12px;
+    padding: 6px 10px 7px;
+  }
+  body.in-race .stat { margin: 0; gap: 5px; }
+  body.in-race .stat span { font-size: 9px; letter-spacing: 0.5px; }
+  body.in-race .stat b { font-size: 12px; }
+  body.in-race .hud h3 { display: none; }
+  body.in-race #standings {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 10px;
+    width: 100%;
+    margin-top: 3px;
+    font-size: 11px;
+  }
+  body.in-race #standings li { padding: 0; gap: 5px; min-width: 0; }
+  body.in-race #standings .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body.in-race #standings .lp { display: none; }
+}

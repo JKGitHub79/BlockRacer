@@ -685,18 +685,22 @@ track code or the renderer knows which mode it is in.
 **Upright, the track is turned a quarter.** Every track is wider than it is
 tall and a phone held upright is the other way round, so an unturned board is
 held to the width of the screen with half the height to spare. Turned, its
-long side runs along the screen's long side: on a 390x844 phone the board goes
-from about 40% of the screen to 60-77%, on an iPad from about half to three
-quarters. It is only a picture turned - the physics, the lap and every
+long side runs along the screen's long side. Every one of the 30 tracks (and
+the legacy seven, and the tutorial's) is turned on every upright screen tried,
+down to an iPhone SE in Safari. It is only a picture turned - the physics, the lap and every
 coordinate are exactly as they were. The countdown and the weather are drawn
 the right way up on the screen, and a swipe is turned back into the track's
 directions (`Renderer.toTrack`), so up is still up. Keys and taps are left and
-right of the car, which a turn does not change. It happens only where it makes
-the board at least a tenth bigger, which is every portrait screen tried except
-the 320x568 phone, where the running order below the board leaves too little
-height; lying down and on a desktop nothing changes. The board is fitted again
-once the race's panel is filled in, because upright the panel's height is what
-decides.
+right of the car, which a turn does not change. Lying down and on a desktop nothing changes.
+
+Turned, the board is limited by height, so upright on a phone the panel under
+it gives up every row it can: the readouts in two tight rows and the running
+order in three columns - six cars in two lines. Measured in Safari's visible
+area (its bars take the rest), the median track on an iPhone 15 went from 59%
+of the screen to 73%, on a Pro Max to 74%, and on an SE - which had not been
+turned at all, its panel being a tall stacked list - from 51% to 60%. The board
+is fitted again once the race's panel is filled in, because upright the
+panel's height is what decides.
 
 The board is sized to whatever the stage has left, keeping the track's shape, so
 making the track bigger is entirely a question of what is around it.
@@ -1296,7 +1300,10 @@ or a setting that older versions saved means you have played. `?welcome=1`
 shows the prompt anyway.
 
 It is two laps of **TRAINING**, a track of its own (last in `js/tracks.js`,
-flagged `tutorial`): seven-cell roads, six corners, one of them a left. It is
+flagged `tutorial`): a plain ring the shape of Pinefall, run anticlockwise
+like every track, with nothing in the road. The one thing it keeps from
+Pinefall is the lane change on the main straight - as a line to follow, not
+blocks to dodge - because that gives the lesson a left and then a right. It is
 not on the carousel or in the legacy list, and it cannot be won - no medal,
 no lap record, no ghost, no star, nothing for the shop. The teaching lap
 runs at BEGINNER speed; where a car should turn does not change with speed,
@@ -1306,11 +1313,12 @@ It is the real game: the same car, physics, controls and turn queue as a race.
 `js/tutorial.js` never moves the car. It only decides whether the race may
 move on - `Game.step` asks it first - and what the card over the board says:
 
-1. **The first corner, a right.** The car stops exactly where a sliding car
-   should turn - the point the AI turns at - and waits for the input that
-   takes it round: the swipe, the tap or the key, in whichever control style
-   you use. The wrong one is refused and says so.
-2. **The second, a left**, the same way: every turn is a quarter turn.
+1. **The first corner, a left**, up into the other lane. The car stops
+   exactly where a sliding car should turn - the point the AI turns at - and
+   waits for the input that takes it round: the swipe, the tap or the key, in
+   whichever control style you use. The wrong one is refused and says so.
+2. **The second, a right**, straight again, the same way: every turn is a
+   quarter turn.
 3. **The third is yours.** A marker on the road shows where to turn, because
    the car slides and has to be turned early. Crash, and the card says how to
    get going again.

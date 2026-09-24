@@ -1101,13 +1101,13 @@
     /* Upright, a track - every one of them is wider than it is tall - is
      * limited by the width of the screen and leaves the height to spare. A
      * quarter turn puts its long side along the long side of the screen and
-     * the board comes out far bigger. Only where it does: lying down, or on
-     * a track the shape of the space it has, it stays as it is. The turn is
+     * the board comes out bigger. Only where it does: lying down, or on a
+     * track the shape of the space it has, it stays as it is. The turn is
      * a picture of the track and nothing else - the physics, the lap, every
      * coordinate in the game is untouched; only what is drawn and which way
      * a swipe points are turned (Renderer.toTrack / toScreen). */
     var turned = Math.min((availW - bx) / T.height, (availH - by) / T.width);
-    this.rotated = turned > scale * 1.1;
+    this.rotated = turned > scale * 1.02;
     if (this.rotated) scale = turned;
     if (!(scale > 0)) scale = 1;
 

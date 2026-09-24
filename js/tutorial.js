@@ -5,11 +5,12 @@
  * lesson does is decide when the race may move on - Game.step asks it first,
  * every step - and what the card over the board says.
  *
- *   1. The first corner (a right). The car is held exactly where a sliding
- *      car should turn - the same point the AI turns at - until you give the
- *      input that takes it round. The wrong one is refused, and says so.
- *   2. The second corner (a LEFT), the same way: every turn is a quarter
- *      turn, either way.
+ *   1. The first corner, a left, up into the other lane. The car is held
+ *      exactly where a sliding car should turn - the same point the AI turns
+ *      at - until you give the input that takes it round. The wrong one is
+ *      refused, and says so.
+ *   2. The second, a RIGHT, straight again, the same way: every turn is a
+ *      quarter turn, either way.
  *   3. The third corner is yours: a marker on the road shows where to turn,
  *      because the car slides and has to be turned early. Crash, and the card
  *      says how to get going again.
@@ -96,13 +97,14 @@
   // The second line under a held corner.
   function holdHint(k, sign) {
     var how = Input.how();
+    var side = sign > 0 ? 'right' : 'left';
     if (k === 0) {
       return how === 'swipe' ? 'Swipe the way you want to go'
-           : how === 'tap' ? 'Tap the right side of the screen'
-           : 'Turn right to take the corner';
+           : how === 'tap' ? 'Tap the ' + side + ' side of the screen'
+           : 'Turn ' + side + ' to take the corner';
     }
     return how === 'swipe' ? 'Every turn is a quarter turn'
-         : how === 'tap' ? 'The left side turns left'
+         : how === 'tap' ? 'Each side turns its own way'
          : '← turns left, → turns right';
   }
 
@@ -272,10 +274,20 @@
   Lesson.prototype.marks = function () {
     if (this.real || this.k < TAUGHT || this.k >= this.corners.length) return null;
     var wp = this.corners[this.k], tp = turnPoint(wp), p = T.ROUTE[wp];
-    var half = 3.5;                    // the road is seven cells wide
+    // Across the whole road, wall to wall, however wide it is and wherever
+    // in it the racing line runs. Measured half way along the straight in,
+    // not at the turn point: that is in the corner, where the road being
+    // turned into is open and there is no wall to stop at.
+    var n = T.ROUTE.length, q = T.ROUTE[(wp - 1 + n) % n];
+    var at = Math.floor(tp.horiz ? (p.x + q.x) / 2 : (p.y + q.y) / 2);
+    var from = tp.horiz ? p.y : p.x;
+    var wall = function (c) { return tp.horiz ? T.isWall(at, c) : T.isWall(c, at); };
+    var lo = Math.floor(from), hi = lo;
+    while (!wall(lo - 1)) lo--;
+    while (!wall(hi + 1)) hi++;
     return tp.horiz
-      ? { x0: tp.at - 0.3, x1: tp.at + 0.3, y0: p.y - half, y1: p.y + half, d: T.LEG_DIR[wp] }
-      : { x0: p.x - half, x1: p.x + half, y0: tp.at - 0.3, y1: tp.at + 0.3, d: T.LEG_DIR[wp] };
+      ? { x0: tp.at - 0.3, x1: tp.at + 0.3, y0: lo, y1: hi + 1, d: T.LEG_DIR[wp] }
+      : { x0: lo, x1: hi + 1, y0: tp.at - 0.3, y1: tp.at + 0.3, d: T.LEG_DIR[wp] };
   };
 
   /* ---- the page ---------------------------------------------------------- */
