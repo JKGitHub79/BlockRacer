@@ -24,15 +24,33 @@
      * quarter turn reaches - is dropped rather than guessed at. */
     take: function (heading) {
       while (this.turns.length) {
-        var t = this.turns.shift();
-        if (typeof t === 'number') return t;
-        var s = heading ? heading.x * t.y - heading.y * t.x : 0;
-        if (s) return s > 0 ? 1 : -1;
+        var s = this.resolve(this.turns.shift(), heading);
+        if (s) return s;
       }
       return 0;
     },
+    // One queued entry as a turn: -1, +1, or 0 for a swipe no turn reaches.
+    resolve: function (t, heading) {
+      if (typeof t === 'number') return t;
+      var s = heading ? heading.x * t.y - heading.y * t.x : 0;
+      return s > 0 ? 1 : s < 0 ? -1 : 0;
+    },
+    /* How this player steers, for anything that has to tell them what to
+     * press: 'keys', 'swipe' or 'tap'. Whatever they last steered with;
+     * before that, a touchscreen is assumed to be a finger and anything else
+     * a keyboard. */
+    how: function () {
+      var kind = lastKind;
+      if (!kind) {
+        var coarse = global.matchMedia && global.matchMedia('(pointer: coarse)').matches;
+        kind = coarse ? 'touch' : 'keys';
+      }
+      return kind === 'touch' ? this.control : 'keys';
+    },
     clear: function () { this.turns.length = 0; swipes = {}; }
   };
+
+  var lastKind = null;   // 'keys' | 'touch' | null, for Input.how
 
   function matches(list, e) {
     return list.indexOf(e.key) !== -1 || list.indexOf(e.code) !== -1;
@@ -40,6 +58,7 @@
 
   global.addEventListener('keydown', function (e) {
     if (e.repeat) return;
+    if (matches(LEFT, e) || matches(RIGHT, e)) lastKind = 'keys';
     if (matches(LEFT, e)) {
       Input.turns.push(-1);
       e.preventDefault();
@@ -80,6 +99,9 @@
   // Touch / mouse: tap the left or right half of the screen.
   global.addEventListener('pointerdown', function (e) {
     if (!onTrack(e)) return;
+    // A mouse click is a tap, but somebody with a mouse has keys: the
+    // instructions stay in keys for them.
+    lastKind = e.pointerType === 'mouse' ? 'keys' : 'touch';
     if (swiping(e)) {
       swipes[e.pointerId] = { x: e.clientX, y: e.clientY, done: false };
       return;

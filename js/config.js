@@ -242,12 +242,33 @@
   }
   var track = /[?&]track=(\d+)/.exec(search);
   if (track) {
-    CONFIG.track = Math.max(0, Math.min(global.TRACKS.length - 1, parseInt(track[1], 10) - 1));
+    // The tutorial's track is last and is not a track you can race.
+    var raceable = global.TRACKS.filter(function (t) { return !t.tutorial; }).length;
+    CONFIG.track = Math.max(0, Math.min(raceable - 1, parseInt(track[1], 10) - 1));
     // Naming a track in the URL means you want to race it. Before the menus
     // were screens this only preselected it, because the one menu was one
     // click from starting; now it would be three, through a legacy list.
     CONFIG.deepLink = true;
   }
+  /* Has this browser PLAYED the game before? It is what keeps the
+   * first-launch tutorial prompt away from everybody who was already playing
+   * before the prompt existed. Only keys that mean somebody played count -
+   * medals, lap records, ghosts, the shop - plus the settings earlier
+   * versions saved on every launch (volumes, v1 of the control style), which
+   * every existing player therefore has. NOT the preferences this version
+   * still saves at boot (AI level, oversteer, contrast, glow): a new player
+   * has those after one launch, and closing the prompt unanswered must not
+   * turn them into a returning player who is never asked. */
+  CONFIG.returning = false;
+  try {
+    var ls = global.localStorage;
+    var PLAYED = /^blockracer\.(medals|laps|ghost|cosmetics|control|musicvol|sfxvol)\./;
+    for (var ki = 0; ls && ki < ls.length; ki++) {
+      if (PLAYED.test(ls.key(ki))) { CONFIG.returning = true; break; }
+    }
+  } catch (e) { /* unreadable storage: treat as a first launch */ }
+  CONFIG.welcome = /[?&]welcome=1/.test(search);   // show the prompt anyway
+
   var road = /[?&]road=(\d+)/.exec(search);
   if (road) {
     CONFIG.roadTint = Math.max(0,

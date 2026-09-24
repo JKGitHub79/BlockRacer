@@ -3313,6 +3313,64 @@
     return out;
   }
 
+  /* ---- TRAINING - the tutorial ---------------------------------------
+   *
+   * Not a race track: the tutorial's, and nothing else's. It is last in the
+   * list and flagged `tutorial`, which keeps it off the carousel, out of the
+   * legacy list and away from medals, records and the shop.
+   *
+   *        0      8           21    28           42    49
+   *      0 +-------------------------------------------+
+   *        |  top road, rows 1-7                       |
+   *      8 |      +---------------------------+        |
+   *        |      |          infield          |        |
+   *     13 |   middle road         +----------+  right |
+   *        |   rows 13-19  | conn- | infield  |  road  |
+   *     20 |###############| ector +----------+        |
+   *     22 |###############|    bottom road, rows 22-28|
+   *     29 +-------------------------------------------+
+   *
+   * Seven-cell roads everywhere, and a notch cut out of the bottom left so
+   * that one of the six corners turns the other way: the lesson wants a
+   * right and then a LEFT, and gets them as the first two corners from the
+   * grid. The straights either side of those are long enough, at BEGINNER
+   * speed, to read an instruction before the corner it is about arrives.
+   * -------------------------------------------------------------------- */
+  var TRAINING = {
+    id: 'training',
+    name: 'TRAINING',
+    blurb: 'Where the tutorial is driven.',
+    grade: 'TUTORIAL',
+    tutorial: true,
+    cols: 50,
+    rows: 30,
+    walls: border(50, 30).concat([
+      { x0: 8,  y0: 8,  x1: 41, y1: 12, kind: 'infield' },
+      { x0: 28, y0: 13, x1: 41, y1: 21, kind: 'infield' },
+      { x0: 1,  y0: 20, x1: 20, y1: 28, kind: 'edge' }
+    ]),
+    route: [
+      { x: 4.5,  y: 4.5  },   // 0  top left
+      { x: 45.5, y: 4.5  },   // 1  top right
+      { x: 45.5, y: 25.5 },   // 2  bottom right
+      { x: 24.5, y: 25.5 },   // 3  first lesson: a right, up the connector
+      { x: 24.5, y: 16.5 },   // 4  second lesson: a LEFT, along the middle
+      { x: 4.5,  y: 16.5 }    // 5  the timing lesson, up the left side
+    ],
+    startLeg: 2,
+    checkpoints: [
+      { x0: 21, y0: 20, x1: 28, y1: 21 },   // up the connector
+      { x0: 13, y0: 13, x1: 14, y1: 20 },   // along the middle
+      { x0: 24, y0: 1,  x1: 25, y1: 8  },   // along the top
+      { x0: 42, y0: 14, x1: 49, y1: 15 }    // down the right
+    ],
+    finish: { x0: 35.6, y0: 22, x1: 36.4, y1: 29, dir: { x: -1, y: 0 } },
+    startGrid: [
+      { x: 38,   y: 25.5, wp: 3 },
+      { x: 39.9, y: 25.5, wp: 3 }
+    ]
+  };
+
   global.TRACKS = [
     // the themed circuits, in the order the play screen offers them
     PINEFALL, HOLLOW, CANOPY,
@@ -3326,6 +3384,8 @@
     ORBITAL, DRIFTFIELD, HORIZON,
     LANDFALL, HIVE, MOTHERSHIP,
     // and the seven built before the themes, kept raceable under LEGACY
-    CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE
+    CROSSOVER, SNOWDRIFT, MESA, WILDWOOD, CATALUNYA, CALDERA, STAIRCASE,
+    // and the tutorial's, which is neither - always last
+    TRAINING
   ].map(function (t) { return t.mirror ? flipX(t) : t; });
 })(typeof window !== 'undefined' ? window : globalThis);

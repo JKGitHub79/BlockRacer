@@ -35,6 +35,8 @@
     // comes through here, so this is the one place an unlock notification
     // is taken down early.
     if (global.Unlocks) global.Unlocks.dismiss();
+    // Out of the tutorial, whichever way: put back what it displaced.
+    if (name !== 'race' && global.Game && global.Game.mode === 'tutorial') global.Game.endTutorial();
     this.current = name;
     ['main', 'options', 'play', 'mode', 'shop'].forEach(function (s) {
       el[s].classList.toggle('on', s === name);
@@ -102,7 +104,7 @@
       theme.tracks.forEach(function (t) { claimed[t.id] = true; });
     });
     var out = [];
-    global.TRACKS.forEach(function (t, i) { if (!claimed[t.id]) out.push(i); });
+    global.TRACKS.forEach(function (t, i) { if (!claimed[t.id] && !t.tutorial) out.push(i); });
     return out;
   }
 
@@ -535,7 +537,7 @@
 
     el.legacyList.innerHTML = '';
     global.TRACKS.forEach(function (t, i) {
-      if (claimed[t.id]) return;
+      if (claimed[t.id] || t.tutorial) return;
       var medal = global.Progress.medal(t.id);
       var b = document.createElement('button');
       b.className = medal ? 'medal medal-' + MEDALS[medal] : '';

@@ -1951,3 +1951,66 @@ body.in-race #backdrop { display: none; }
 @media (max-width: 380px) {
   .pg-help p { font-size: 12px; }
 }
+
+/* ---- tutorial ----------------------------------------------------------
+   The card over the board says one thing at a time: a big line (what to do)
+   and a small one (why). Accent while it waits for you, gold for well done,
+   red for not like that - the colours the race already uses for those. */
+.tutor {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 20px 10px;
+  border-radius: 12px;
+  background: rgba(18, 24, 39, 0.92);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  line-height: 1.3;          /* the board sets 0, for the canvas */
+  pointer-events: none;
+  max-width: calc(100% - 20px);
+  z-index: 2;
+}
+.tutor[hidden] { display: none; }
+.tutor b { font-size: 18px; letter-spacing: 4px; color: var(--text); white-space: nowrap; }
+.tutor span { font-size: 11px; letter-spacing: 1px; color: var(--dim); }
+.tutor span:empty { display: none; }
+.tutor.go { border-color: var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 24px rgba(94,242,255,0.3); }
+.tutor.go b { color: var(--accent); }
+.tutor.good { border-color: rgba(255, 201, 77, 0.75); }
+.tutor.good b { color: #ffc94d; }
+.tutor.wrong { border-color: rgba(255, 84, 112, 0.7); }
+.tutor.wrong b, .tutor.wrong span { color: #ff9aac; }
+@media (max-width: 430px), (max-height: 460px) {
+  .tutor { top: 8px; padding: 6px 14px 7px; }
+  .tutor b { font-size: 14px; letter-spacing: 3px; }
+  .tutor span { font-size: 10px; }
+}
+/* Upright, the board is a short strip across the middle of the screen and the
+   card would sit on the top road, which the lap drives along. There is room
+   above the board instead, under the HOME row, so it goes there. */
+@media (orientation: portrait) {
+  .tutor {
+    position: fixed;
+    top: calc(var(--sa-t) + 60px);
+    max-width: calc(100vw - 24px);
+  }
+}
+
+/* One car, no order, no record: nothing in the panel that a tutorial has
+   nothing to put in. */
+body.mode-tutorial .race-only,
+body.mode-tutorial #standings,
+body.mode-tutorial .stat.trial-only { display: none; }
+
+#tutor-done h2 { color: #ffc94d; }
+.tutor-done-note { max-width: 320px; margin: 0 auto 16px; }
+
+.welcome { z-index: 20; }
+.welcome h2 span { color: var(--accent); }
+.welcome-q { margin: 0 0 18px; color: var(--dim); letter-spacing: 1px; line-height: 1.6; }

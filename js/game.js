@@ -309,10 +309,11 @@
     // fewer than the menu asked for; the field is cut to whatever fit. A
     // trial ignores the number entirely and takes the front slot.
     var trial = this.mode === 'trial';
+    var tutorial = this.mode === 'tutorial';   // one car too, and no records
     this.lapRecord = trial ? global.Progress.lapRecord(T.data.id, C.speedLevel) : 0;
     this.newRecord = false;
-    var grid = T.gridFor(trial ? 1 : C.cars);
-    var field = fieldFor(trial ? 1 : grid.length);
+    var grid = T.gridFor(trial || tutorial ? 1 : C.cars);
+    var field = fieldFor(trial || tutorial ? 1 : grid.length);
     this.gridSize = field.length;
 
     /* Slot order: the AI take theirs as laid out, and the player - last in
@@ -332,7 +333,8 @@
         name: spec.name,
         color: spec.color,
         isPlayer: !!spec.player,
-        speedMul: (cfg ? cfg.speedMul * T.aiPace : 1) * C.speedMul(),
+        speedMul: (cfg ? cfg.speedMul * T.aiPace : 1) *
+                  (tutorial ? C.speedLevels[0].mul : C.speedMul()),
         x: slot.x,
         y: slot.y,
         dir: { x: T.startDir.x, y: T.startDir.y }
@@ -349,6 +351,7 @@
     Input.clear();
     this.state = 'countdown';
     this.updateStandings();
+    this.tutorial = tutorial && global.Tutorial ? global.Tutorial.begin(this) : null;
 
     /* A trial's ghost: the record lap for this track and speed, if one was
      * driven since ghosts existed, and a recorder for the lap you are about
@@ -494,6 +497,19 @@
     this.delta = tg === null ? null : p.lapTime - tg;
   };
 
+  /* Your car turning: the keys, taps and swipes all come here, and so does
+   * the turn a tutorial corner was waiting for. Pulling away from a wall
+   * revs; a corner thrown in at speed chirps the tyres - unless slide is off,
+   * when the car just snaps round. */
+  Game.playerTurn = function (sign) {
+    var P = this.player;
+    if (P.finished) return;
+    var standing = P.crashed;
+    P.turn(sign);
+    if (standing) Sound.play('rev');
+    else if (C.slide > 0) Sound.play('turn');
+  };
+
   Game.updateStandings = function () {
     var laps = this.laps;
     this.cars.forEach(function (car) {
@@ -531,21 +547,16 @@
       return;
     }
     if (this.state !== 'racing') return;
+    // The tutorial can hold the race still - nothing moves, the clock stops -
+    // while it waits for the input it has asked for.
+    if (this.tutorial && this.tutorial.gate()) return;
 
     this.time += dt;
 
     // Player controls: a turn is the only input, and it also restarts a car
     // that is sitting against a wall.
     var turn;
-    while ((turn = Input.take(this.player.dir)) !== 0) {
-      if (this.player.finished) continue;
-      // Pulling away from a wall revs; a corner thrown in at speed chirps the
-      // tyres - unless slide is off, when the car just snaps round.
-      var standing = this.player.crashed;
-      this.player.turn(turn);
-      if (standing) Sound.play('rev');
-      else if (C.slide > 0) Sound.play('turn');
-    }
+    while ((turn = Input.take(this.player.dir)) !== 0) this.playerTurn(turn);
 
     for (var i = 0; i < this.drivers.length; i++) this.drivers[i].update(dt);
 
@@ -650,18 +661,22 @@
   Game.drawHud = function () {
     var p = this.player;
     el.track.textContent = T.name;
-    el.speed.textContent = C.speedName();
+    el.speed.textContent = this.mode === 'tutorial' ? C.speedLevels[0].name : C.speedName();
     el.slide.textContent = C.slide.toFixed(2);
     el.lap.textContent = Math.min(p.lap + 1, this.laps) + ' / ' + this.laps;
     el.time.textContent = fmt(this.time);
     el.best.textContent = p.bestLap ? fmt(p.bestLap) : '--:--.--';
     el.last.textContent = p.lastLap ? fmt(p.lastLap) : '--:--.--';
 
-    if (this.state === 'racing' && p.crashed) {
-      // The long form does not fit across a phone-sized board, and on a phone
-      // you are tapping rather than pressing anything anyway.
-      el.msg.textContent = el.board.clientWidth < 430
-        ? 'CRASHED - TAP LEFT OR RIGHT'
+    if (this.tutorial) global.Tutorial.draw(this.tutorial);
+
+    // The tutorial says it on its own card.
+    if (this.state === 'racing' && p.crashed && !this.tutorial) {
+      // In the words of whatever you steer with. The long form does not fit
+      // across a phone-sized board.
+      var how = Input.how();
+      el.msg.textContent = how === 'swipe' ? 'CRASHED - SWIPE TO TURN AND GO'
+        : how === 'tap' || el.board.clientWidth < 430 ? 'CRASHED - TAP LEFT OR RIGHT'
         : 'CRASHED - press LEFT or RIGHT to turn and go';
       el.msg.classList.add('show');
     } else {
@@ -723,6 +738,8 @@
   };
 
   Game.showResults = function () {
+    // A tutorial has no result: nothing is recorded, nothing is won.
+    if (this.mode === 'tutorial') return global.Tutorial.complete();
     if (this.mode === 'trial') return this.showTrialResults();
     this.setResultsPrimary(false);
 
@@ -1015,6 +1032,35 @@
     global.Screens.show(global.Screens.from);
   };
 
+  /* The tutorial is a race in its own mode on its own track. What it
+   * displaces - the mode, the track, the lap count - is put back when it is
+   * left, whichever way it is left: Screens.show calls endTutorial on the
+   * way to any other screen. */
+  Game.startTutorial = function () {
+    if (this.mode !== 'tutorial') {
+      this.before = { mode: this.mode, track: this.trackIndex, laps: this.laps };
+    }
+    this.mode = 'tutorial';
+    document.body.classList.add('mode-tutorial');
+    this.laps = 1;
+    this.setTrack(global.Tutorial.trackIndex());
+    global.Screens.from = 'main';
+    this.startRace();
+  };
+
+  Game.endTutorial = function () {
+    if (this.mode !== 'tutorial') return;
+    var b = this.before || { mode: 'race', track: C.track, laps: C.laps };
+    this.before = null;
+    this.tutorial = null;
+    global.Tutorial.hide();
+    document.body.classList.remove('mode-tutorial');
+    this.setLaps(b.laps);
+    this.setMode(b.mode);        // before the track, so its reset is not a lesson
+    this.setTrack(b.track);
+    this.state = 'menu';
+  };
+
   Game.pauseRace = function () {
     if (this.state !== 'racing') return;
     this.state = 'paused';
@@ -1046,7 +1092,8 @@
     // the screen, not to a race that is not running.
     var racing = global.Screens.current === 'race';
     if (name === 'start') {
-      if (racing && this.state === 'finished') this.startRace();
+      if (racing && this.mode === 'tutorial' && global.Tutorial.doneShowing()) global.Tutorial.leave();
+      else if (racing && this.state === 'finished') this.startRace();
       else if (racing && this.state === 'paused') this.command('pause');
     } else if (name === 'restart') {
       if (racing) this.startRace();
@@ -1084,11 +1131,14 @@
     this.setControl(C.control);
     this.setMode('race');
     this.setTrack(C.track);   // also sets the field, which depends on the track
+    if (global.Tutorial) global.Tutorial.init();
     if (C.deepLink) {
       global.Screens.from = global.Screens.homeFor(C.track);
       this.startRace();
     } else {
       global.Screens.show('main');
+      // A first ever launch asks, over the front door, before anything else.
+      if (global.Tutorial && global.Tutorial.shouldWelcome()) global.Tutorial.welcome();
     }
 
     Input.onCommand = function (n) { Game.command(n); };

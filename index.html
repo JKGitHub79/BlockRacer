@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.50.0', built: '2026-09-24' };
+window.BR = { version: '0.51.0', built: '2026-09-24' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -48,6 +48,20 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       <canvas id="game"></canvas>
       <div id="message" class="message"></div>
       <div id="pb-flash" class="pb-flash" role="status" aria-live="polite"></div>
+      <div id="tutor" class="tutor" role="status" aria-live="polite" hidden>
+        <b id="tutor-big"></b><span id="tutor-small"></span>
+      </div>
+
+      <div id="tutor-done" class="overlay">
+        <div class="panel">
+          <h2 class="podium p1">YOU&rsquo;RE READY TO RACE!</h2>
+          <p class="hint tutor-done-note">Win a race for a medal. Win every track in a
+            theme for its star - and new cars and colours in the shop.</p>
+          <div class="row">
+            <button id="btn-tutor-done" class="primary">MAIN MENU</button>
+          </div>
+        </div>
+      </div>
 
       <div id="pause" class="overlay">
         <div class="panel">
@@ -96,6 +110,18 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       <h3 class="race-only">ORDER</h3>
       <ol id="standings" class="race-only"></ol>
     </aside>
+  </div>
+</div>
+
+<!-- First ever launch only (js/tutorial.js). Either answer is remembered. -->
+<div id="welcome" class="overlay welcome">
+  <div class="panel">
+    <h2>WELCOME TO BLOCK<span>RACER</span></h2>
+    <p class="welcome-q">Want to learn how to play?<br>It takes about a minute.</p>
+    <div class="row">
+      <button id="btn-welcome-skip" class="secondary">SKIP</button>
+      <button id="btn-welcome-play" class="primary">PLAY TUTORIAL</button>
+    </div>
   </div>
 </div>
 
@@ -224,6 +250,13 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           quarter turn. TAP turns left or right with a tap on that half of the
           screen. The car drives exactly the same either way, and keys and the
           mouse are not affected.</p>
+      </div>
+
+      <div class="opt">
+        <p class="lapline">TUTORIAL</p>
+        <p class="hint">One lap that teaches steering, sliding and finishing,
+          in whatever control style you use. Nothing in it counts.</p>
+        <button id="btn-tutorial" class="secondary wide-btn">PLAY TUTORIAL</button>
       </div>
 
       <div class="opt">
@@ -374,7 +407,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 /* Loaded through the version so the browser fetches fresh files after a
  * deploy. document.write keeps them strictly in order, which they need. */
 ['viewport', 'tracks', 'themes', 'config', 'track', 'car', 'ai', 'input', 'music', 'audio',
- 'progress', 'ghost', 'cosmetics', 'unlocks', 'backdrop', 'render', 'screens', 'game']
+ 'progress', 'ghost', 'tutorial', 'cosmetics', 'unlocks', 'backdrop', 'render', 'screens', 'game']
   .forEach(function (name) {
     document.write('<script src="js/' + name + '.js?v=' + BR.version + '"><\/script>');
   });

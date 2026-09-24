@@ -32,7 +32,8 @@ identical either way and the only way to find out would be to start a race and
 count the cars.
 
 **Options.** The game's own settings first, with no heading: control style,
-music, sound effects, high contrast and the glow under your own car. Then,
+PLAY TUTORIAL, music, sound effects, high contrast and the glow under your own
+car. Then,
 under **DEVELOPER** - a heading, not a hidden button - the tuning and test
 settings: slide, oversteer, field size, AI level, game speed, race length,
 road colour and the legacy tracks. RESET DATA sits on its own at the bottom.
@@ -1267,6 +1268,43 @@ six pixels tall. They are 40px now, with the visible track painted by
 The layout audit is what keeps this honest as screens get added. The shop's two
 tabs went in at 37px tall and the audit failed them on every tablet in the list
 before anyone had to press one.
+
+## The tutorial
+
+The first time the game is ever opened it asks, over the front door, whether
+you want to learn how to play: PLAY TUTORIAL or SKIP. Either answer is saved
+(`blockracer.tutorial.v1`) and it never asks again; the tutorial stays in
+Options for whenever you want it. People who were already playing before the
+tutorial existed are not asked - a medal, a lap record, a ghost, a shop pick
+or a setting that older versions saved means you have played. `?welcome=1`
+shows the prompt anyway.
+
+It is one lap of **TRAINING**, a track of its own (last in `js/tracks.js`,
+flagged `tutorial`): seven-cell roads, six corners, one of them a left. It is
+not on the carousel or in the legacy list, and it cannot be won - no medal,
+no lap record, no ghost, no star, nothing for the shop. It runs at BEGINNER
+speed whatever the game speed is; where a car should turn does not change
+with speed, because the slide radius does not.
+
+It is the real game: the same car, physics, controls and turn queue as a race.
+`js/tutorial.js` never moves the car. It only decides whether the race may
+move on - `Game.step` asks it first - and what the card over the board says:
+
+1. **The first corner, a right.** The car stops exactly where a sliding car
+   should turn - the point the AI turns at - and waits for the input that
+   takes it round: the swipe, the tap or the key, in whichever control style
+   you use. The wrong one is refused and says so.
+2. **The second, a left**, the same way: every turn is a quarter turn.
+3. **The third is yours.** A marker on the road shows where to turn, because
+   the car slides and has to be turned early. Crash, and the card says how to
+   get going again.
+4. **Finish the lap** on your own, markers still showing, and cross the line:
+   YOU'RE READY TO RACE!, then back to the main menu.
+
+Until the car reaches each of the first two corners your inputs are ignored,
+so a nervous first tap cannot put a new player into a wall before the lesson
+has said anything. HOME, RESTART and CONTINUE work as in any race, and leaving
+by any route puts back the mode, track and lap count it borrowed.
 
 ## Controls
 

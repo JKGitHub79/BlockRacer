@@ -1359,6 +1359,44 @@
     g.restore();
   }
 
+  /* The tutorial's marker: a bright band across the road where to turn,
+   * with chevrons pointing the way the corner goes. It pulses, unless the
+   * device asks for less motion. */
+  function drawTutorMark(g, m, now) {
+    if (!m) return;
+    var hc = !!C.contrastColors();
+    var pulse = STILL ? 1 : 0.65 + 0.35 * Math.sin(now * 6);
+    g.save();
+    g.globalAlpha = pulse;
+    g.fillStyle = hc ? HC_MARK : '#ffd166';
+    g.shadowColor = hc ? 'transparent' : 'rgba(255,209,102,0.8)';
+    g.shadowBlur = hc ? 0 : 12;
+    var w = (m.x1 - m.x0) * S, h = (m.y1 - m.y0) * S;
+    var bw = Math.max(w, 5), bh = Math.max(h, 5);
+    g.fillRect((m.x0 + m.x1) / 2 * S - bw / 2, (m.y0 + m.y1) / 2 * S - bh / 2, bw, bh);
+    g.shadowBlur = 0;
+    // three chevrons along the band, pointing where the corner goes
+    var cx = (m.x0 + m.x1) / 2 * S, cy = (m.y0 + m.y1) / 2 * S;
+    var along = m.x1 - m.x0 > m.y1 - m.y0 ? { x: 1, y: 0 } : { x: 0, y: 1 };
+    var span = Math.max(w, h) / 2, c = Math.min(w, h) * 0.42;
+    g.strokeStyle = hc ? '#000000' : '#1a1206';
+    g.lineWidth = 2.5;
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    [-0.55, 0, 0.55].forEach(function (f) {
+      var px = cx + along.x * span * f, py = cy + along.y * span * f;
+      var tipX = px + m.d.x * c, tipY = py + m.d.y * c;
+      var bx = px - m.d.x * c * 0.2, by = py - m.d.y * c * 0.2;
+      var ox = -m.d.y * c * 0.8, oy = m.d.x * c * 0.8;
+      g.beginPath();
+      g.moveTo(bx + ox, by + oy);
+      g.lineTo(tipX, tipY);
+      g.lineTo(bx - ox, by - oy);
+      g.stroke();
+    });
+    g.restore();
+  }
+
   Renderer.draw = function (game) {
     var g = this.ctx;
     g.fillStyle = colorOf('bg');
@@ -1369,6 +1407,7 @@
     var plain = !!C.contrastColors();
     if (!plain) Renderer.drawLava(g, now);
     drawCheckpoints(g, game.player);
+    if (game.tutorial) drawTutorMark(g, game.tutorial.marks(), now);
 
     // tyre marks first so they sit under the sparks and the cars
     game.particles.forEach(function (p) {
