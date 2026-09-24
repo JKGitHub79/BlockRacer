@@ -682,6 +682,22 @@ track code or the renderer knows which mode it is in.
 
 ## The screen the race is played on
 
+**Upright, the track is turned a quarter.** Every track is wider than it is
+tall and a phone held upright is the other way round, so an unturned board is
+held to the width of the screen with half the height to spare. Turned, its
+long side runs along the screen's long side: on a 390x844 phone the board goes
+from about 40% of the screen to 60-77%, on an iPad from about half to three
+quarters. It is only a picture turned - the physics, the lap and every
+coordinate are exactly as they were. The countdown and the weather are drawn
+the right way up on the screen, and a swipe is turned back into the track's
+directions (`Renderer.toTrack`), so up is still up. Keys and taps are left and
+right of the car, which a turn does not change. It happens only where it makes
+the board at least a tenth bigger, which is every portrait screen tried except
+the 320x568 phone, where the running order below the board leaves too little
+height; lying down and on a desktop nothing changes. The board is fitted again
+once the race's panel is filled in, because upright the panel's height is what
+decides.
+
 The board is sized to whatever the stage has left, keeping the track's shape, so
 making the track bigger is entirely a question of what is around it.
 
@@ -1279,12 +1295,12 @@ tutorial existed are not asked - a medal, a lap record, a ghost, a shop pick
 or a setting that older versions saved means you have played. `?welcome=1`
 shows the prompt anyway.
 
-It is one lap of **TRAINING**, a track of its own (last in `js/tracks.js`,
+It is two laps of **TRAINING**, a track of its own (last in `js/tracks.js`,
 flagged `tutorial`): seven-cell roads, six corners, one of them a left. It is
 not on the carousel or in the legacy list, and it cannot be won - no medal,
-no lap record, no ghost, no star, nothing for the shop. It runs at BEGINNER
-speed whatever the game speed is; where a car should turn does not change
-with speed, because the slide radius does not.
+no lap record, no ghost, no star, nothing for the shop. The teaching lap
+runs at BEGINNER speed; where a car should turn does not change with speed,
+because the slide radius does not, so what it teaches holds at full speed.
 
 It is the real game: the same car, physics, controls and turn queue as a race.
 `js/tutorial.js` never moves the car. It only decides whether the race may
@@ -1298,8 +1314,11 @@ move on - `Game.step` asks it first - and what the card over the board says:
 3. **The third is yours.** A marker on the road shows where to turn, because
    the car slides and has to be turned early. Crash, and the card says how to
    get going again.
-4. **Finish the lap** on your own, markers still showing, and cross the line:
-   YOU'RE READY TO RACE!, then back to the main menu.
+4. **Finish the lap** on your own, markers still showing, and cross the line.
+5. **NOW FOR A REAL LAP.** The car is held on the line for a count of three,
+   then goes at race speed - SWEAT, the game's speed - for one full lap with
+   no markers and no help. Cross the line and it is YOU'RE READY TO RACE!, and
+   START RACING goes straight to the tracks in RACE mode.
 
 Until the car reaches each of the first two corners your inputs are ignored,
 so a nervous first tap cannot put a new player into a wall before the lesson

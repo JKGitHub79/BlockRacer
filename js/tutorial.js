@@ -1,6 +1,6 @@
 /* Block Racer - the tutorial.
  *
- * One lap of the TRAINING track (js/tracks.js), driven with the real car, the
+ * Two laps of the TRAINING track (js/tracks.js), driven with the real car, the
  * real physics and the real controls. Nothing here moves a car. What the
  * lesson does is decide when the race may move on - Game.step asks it first,
  * every step - and what the card over the board says.
@@ -14,6 +14,9 @@
  *      because the car slides and has to be turned early. Crash, and the card
  *      says how to get going again.
  *   4. The rest of the lap on your own, with the markers, then the line.
+ *   5. NOW FOR A REAL LAP: held at the line for a count of three, then one
+ *      lap at race speed - SWEAT, unless the game speed says otherwise - with
+ *      no markers and no help. Finishing that is finishing the tutorial.
  *
  * Until the car reaches the first two corners, turns are ignored, so a
  * nervous first tap cannot put a new player into a wall before the lesson
@@ -21,9 +24,9 @@
  *
  * It is never a race: no opponents, one lap, no results, and Progress,
  * Ghost and the shop are never told about it (Game.showResults hands a
- * finished tutorial here instead). It runs at BEGINNER speed whatever the
- * game speed is set to; the point a car should turn at is the same at every
- * speed, because the slide radius is. */
+ * finished tutorial here instead). The teaching lap runs at BEGINNER speed;
+ * the point a car should turn at is the same at every speed, because the
+ * slide radius is, so what it teaches holds on the real lap. */
 (function (global) {
   'use strict';
 
@@ -32,6 +35,8 @@
   var Input = global.Input;
 
   var TAUGHT = 2;            // corners held for the right input
+  var REAL_TITLE = 1.6;      // seconds of NOW FOR A REAL LAP before the count
+  var REAL_BEAT = 0.8;       // each of 3, 2, 1
   var SEEN_KEY = 'blockracer.tutorial.v1';
   var seenThisSession = false;
 
@@ -67,9 +72,13 @@
   var ARROW = { '0,-1': '↑', '0,1': '↓', '-1,0': '←', '1,0': '→' };
   function key(d) { return d.x + ',' + d.y; }
 
+  // A track direction as the screen shows it: the board can be turned.
+  function screen(d) { return global.Renderer ? global.Renderer.toScreen(d) : d; }
+
   // The input that makes turn `sign`, which faces the car along `dir`.
   function prompt(sign, dir) {
     var how = Input.how();
+    dir = screen(dir);
     if (how === 'swipe') return 'SWIPE ' + NAME[key(dir)] + ' ' + ARROW[key(dir)];
     if (how === 'tap') return sign > 0 ? 'TAP RIGHT' : 'TAP LEFT';
     return sign > 0 ? 'PRESS →' : 'PRESS ←';
@@ -78,6 +87,7 @@
   // Any input that turns a car stopped facing `dir`.
   function anyTurn(dir) {
     var how = Input.how();
+    dir = screen(dir);
     if (how === 'swipe') return dir.x !== 0 ? 'Swipe up or down' : 'Swipe left or right';
     if (how === 'tap') return 'Tap either side';
     return 'Press ← or →';
@@ -111,6 +121,8 @@
     this.flash = null;                 // { big, small, until }
     this.wrongUntil = 0;
     this.shown = '';
+    this.real = false;                 // on the full-speed lap
+    this.waited = -1;                  // seconds held at the line before it
   }
 
   function now() { return global.performance ? performance.now() : Date.now(); }
@@ -149,7 +161,7 @@
     var ord = (P.leg - T.data.startLeg + n) % n;
     var reached = ord === 0 ? (this.k === n - 1 ? n : 0) : ord;
     if (reached <= this.k) return;
-    if (this.k <= TAUGHT && reached > TAUGHT) {
+    if (!this.real && this.k <= TAUGHT && reached > TAUGHT) {
       global.Sound.play('select');
       this.say(this.crashedAt[TAUGHT] ? 'GOT IT' : 'PERFECT!', 'That is the whole trick');
     }
@@ -158,9 +170,30 @@
 
   /* Called by Game.step before anything moves. True means this step is
    * held: nothing moves and the clock does not run. */
-  Lesson.prototype.gate = function () {
+  Lesson.prototype.gate = function (dt) {
     var game = this.game, P = game.player;
+
+    /* Over the line after the teaching lap: hold, say what is next, count
+     * it in, and let it go at race speed. Timed in steps, not by the clock,
+     * so pausing in the middle of it pauses the count too. */
+    if (!this.real && P.lap >= 1) {
+      Input.turns.length = 0;
+      if (this.waited < 0) this.waited = 0;
+      var before = this.count();
+      this.waited += dt;
+      var n = this.count();
+      if (n !== before && n > 0) global.Sound.play('count');
+      if (n > 0) return true;
+      this.real = true;
+      this.k = 0;
+      P.speed = C.speed * C.speedMul();   // what the car would be built with
+      global.Sound.play('go');
+      this.say('GO!', 'One lap. Full speed.', 800);
+      return false;
+    }
+
     this.progress();
+    if (this.real) return false;
 
     if (this.hold) {
       while (Input.turns.length) {
@@ -197,11 +230,26 @@
     return true;
   };
 
+  // 3, 2, 1 once the title has been up long enough; 4 before that.
+  Lesson.prototype.count = function () {
+    if (this.waited < REAL_TITLE) return 4;
+    return Math.max(0, 3 - Math.floor((this.waited - REAL_TITLE) / REAL_BEAT));
+  };
+
+  // The speed the car is on, for the panel.
+  Lesson.prototype.speedName = function () {
+    return this.real ? C.speedName() : C.speedLevels[0].name;
+  };
+
   // The card over the board, for this frame. Written only when it changes.
   Lesson.prototype.text = function () {
     var game = this.game, P = game.player, n = this.corners.length, k = this.k;
     var t = now();
     if (game.state === 'countdown') return ['TRAINING', 'Your car drives itself. You steer.', ''];
+    if (this.waited >= 0 && !this.real) {
+      var c = this.count();
+      return ['NOW FOR A REAL LAP', c > 3 ? 'Full speed. No markers.' : 'Starting in ' + c, 'go'];
+    }
     if (this.hold) {
       var wp = this.corners[k];
       return [prompt(this.need, T.LEG_DIR[wp]),
@@ -210,6 +258,9 @@
     }
     if (this.flash && t < this.flash.until) return [this.flash.big, this.flash.small, 'good'];
     if (P.crashed) return ['CRASHED', anyTurn(P.dir) + ' to get going', 'wrong'];
+    if (this.real) {
+      return k < n ? ['REAL LAP', 'Get round and cross the line', ''] : ['CROSS THE LINE', 'Finish it', ''];
+    }
     if (k < TAUGHT) return ['TRAINING', 'Your car drives itself. You steer.', ''];
     if (k === TAUGHT) return ['TURN AT THE MARKER', 'The car slides, so turn early', ''];
     if (k < n) return ['FINISH THE LAP', 'Turn at each marker', ''];
@@ -219,7 +270,7 @@
   /* What the renderer draws on the road: a band across it at the turn point
    * of the next corner you take yourself. */
   Lesson.prototype.marks = function () {
-    if (this.k < TAUGHT || this.k >= this.corners.length) return null;
+    if (this.real || this.k < TAUGHT || this.k >= this.corners.length) return null;
     var wp = this.corners[this.k], tp = turnPoint(wp), p = T.ROUTE[wp];
     var half = 3.5;                    // the road is seven cells wide
     return tp.horiz
@@ -251,7 +302,7 @@
     });
     $('btn-tutor-done').addEventListener('click', function (e) {
       e.stopPropagation();
-      Tutorial.leave();
+      Tutorial.startRacing();
     });
     $('btn-tutorial').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -263,12 +314,15 @@
 
   Tutorial.start = function () { global.Game.startTutorial(); };
 
-  // Back to the front door, from the end or from wherever it was left.
-  Tutorial.leave = function () {
+  /* START RACING: straight to the tracks, in RACE mode - the tutorial's
+   * last word is that you are ready, so the button goes where racing is. */
+  Tutorial.startRacing = function () {
     el.done.classList.remove('show');
-    global.Game.reset();
-    global.Game.state = 'menu';
-    global.Screens.show('main');
+    var game = global.Game;
+    game.endTutorial();
+    game.setMode('race');
+    global.Screens.progress = false;
+    global.Screens.show('play');
   };
 
   // A new lesson for a race that is about to start.

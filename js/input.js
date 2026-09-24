@@ -138,6 +138,8 @@
     var d = swipeDir(s, e.clientX, e.clientY, lifting);
     if (!d) return;
     s.done = true;
+    // A swipe is on the screen; the board may be turned a quarter on it.
+    if (global.Renderer && global.Renderer.toTrack) d = global.Renderer.toTrack(d);
     if (!global.Screens || global.Screens.current === 'race') Input.turns.push(d);
   }
   global.addEventListener('pointermove', function (e) { track(e, false); });

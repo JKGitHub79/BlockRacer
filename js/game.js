@@ -549,7 +549,7 @@
     if (this.state !== 'racing') return;
     // The tutorial can hold the race still - nothing moves, the clock stops -
     // while it waits for the input it has asked for.
-    if (this.tutorial && this.tutorial.gate()) return;
+    if (this.tutorial && this.tutorial.gate(dt)) return;
 
     this.time += dt;
 
@@ -661,7 +661,7 @@
   Game.drawHud = function () {
     var p = this.player;
     el.track.textContent = T.name;
-    el.speed.textContent = this.mode === 'tutorial' ? C.speedLevels[0].name : C.speedName();
+    el.speed.textContent = this.tutorial ? this.tutorial.speedName() : C.speedName();
     el.slide.textContent = C.slide.toFixed(2);
     el.lap.textContent = Math.min(p.lap + 1, this.laps) + ' / ' + this.laps;
     el.time.textContent = fmt(this.time);
@@ -1042,7 +1042,7 @@
     }
     this.mode = 'tutorial';
     document.body.classList.add('mode-tutorial');
-    this.laps = 1;
+    this.laps = 2;                 // the teaching lap, then a real one
     this.setTrack(global.Tutorial.trackIndex());
     global.Screens.from = 'main';
     this.startRace();
@@ -1085,6 +1085,12 @@
     Sound.unlock();
     this.reset();
     Sound.duck(0.5);   // under the countdown; GO brings it back up
+    /* Fit again now the panel holds this race - its running order, its rows
+     * for this mode. Screens.show fitted before any of that was there, and
+     * upright the panel's height decides how tall the board can be, and so
+     * whether the track is turned to fill the screen. */
+    this.drawHud();
+    Renderer.fit();
   };
 
   Game.command = function (name) {
@@ -1092,7 +1098,7 @@
     // the screen, not to a race that is not running.
     var racing = global.Screens.current === 'race';
     if (name === 'start') {
-      if (racing && this.mode === 'tutorial' && global.Tutorial.doneShowing()) global.Tutorial.leave();
+      if (racing && this.mode === 'tutorial' && global.Tutorial.doneShowing()) global.Tutorial.startRacing();
       else if (racing && this.state === 'finished') this.startRace();
       else if (racing && this.state === 'paused') this.command('pause');
     } else if (name === 'restart') {

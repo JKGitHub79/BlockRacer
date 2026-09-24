@@ -1964,8 +1964,8 @@ body.in-race #backdrop { display: none; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 9px 20px 10px;
+  gap: 4px;
+  padding: 12px 26px 13px;
   border-radius: 12px;
   background: rgba(18, 24, 39, 0.92);
   border: 1px solid var(--line);
@@ -1977,8 +1977,8 @@ body.in-race #backdrop { display: none; }
   z-index: 2;
 }
 .tutor[hidden] { display: none; }
-.tutor b { font-size: 18px; letter-spacing: 4px; color: var(--text); white-space: nowrap; }
-.tutor span { font-size: 11px; letter-spacing: 1px; color: var(--dim); }
+.tutor b { font-size: 28px; letter-spacing: 4px; color: var(--text); white-space: nowrap; }
+.tutor span { font-size: 13px; letter-spacing: 1px; color: var(--dim); }
 .tutor span:empty { display: none; }
 .tutor.go { border-color: var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 24px rgba(94,242,255,0.3); }
 .tutor.go b { color: var(--accent); }
@@ -1987,19 +1987,28 @@ body.in-race #backdrop { display: none; }
 .tutor.wrong { border-color: rgba(255, 84, 112, 0.7); }
 .tutor.wrong b, .tutor.wrong span { color: #ff9aac; }
 @media (max-width: 430px), (max-height: 460px) {
-  .tutor { top: 8px; padding: 6px 14px 7px; }
-  .tutor b { font-size: 14px; letter-spacing: 3px; }
-  .tutor span { font-size: 10px; }
+  .tutor { top: 8px; padding: 8px 16px 9px; }
+  .tutor b { font-size: 22px; letter-spacing: 3px; }
+  .tutor span { font-size: 11px; }
 }
-/* Upright, the board is a short strip across the middle of the screen and the
-   card would sit on the top road, which the lap drives along. There is room
-   above the board instead, under the HOME row, so it goes there. */
+/* Upright, the board takes the height of the screen (turned, if that makes
+   it bigger) and there is no room above it. The card docks at the bottom
+   instead, over the stats panel - which says nothing a tutorial needs - so
+   it never covers the road. */
 @media (orientation: portrait) {
   .tutor {
     position: fixed;
-    top: calc(var(--sa-t) + 60px);
-    max-width: calc(100vw - 24px);
+    top: auto;
+    bottom: calc(var(--sa-b) + 10px);
+    width: min(440px, calc(100vw - 20px));
+    max-width: none;
+    padding: 12px 16px 13px;
+    background: rgb(18, 24, 39);
+    z-index: 5;
   }
+  /* The panel it docks over keeps its place - the board was sized around
+     it - but not its readouts, which would show round the card's edges. */
+  body.mode-tutorial .hud { visibility: hidden; }
 }
 
 /* One car, no order, no record: nothing in the panel that a tutorial has

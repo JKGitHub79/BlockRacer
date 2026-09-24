@@ -153,13 +153,13 @@
     if (!T.weather || !WEATHER[T.weather]) return;
     ensureMotes();
     var spec = flakes.spec;
-    g.save();
+    var box = upright(g);
     g.fillStyle = spec.color;
     flakes.list.forEach(function (f) {
-      var y = (f.y + t * f.vy) % T.height;
-      if (y < 0) y += T.height;
-      var x = (f.x + t * f.vx + Math.sin(t * spec.swayRate + f.sway) * spec.sway) % T.width;
-      if (x < 0) x += T.width;
+      var y = (f.y + t * f.vy) % box.h;
+      if (y < 0) y += box.h;
+      var x = (f.x + t * f.vx + Math.sin(t * spec.swayRate + f.sway) * spec.sway) % box.w;
+      if (x < 0) x += box.w;
       g.globalAlpha = f.alpha;
       g.fillRect(x - f.r * spec.smear, y - f.r, f.r * 2 * spec.smear, f.r * 2);
     });
@@ -1036,6 +1036,25 @@
    * transform changes. The backing store is sized to what is actually shown,
    * so a phone renders a phone's worth of pixels rather than a desktop's
    * scaled down, and the drawing stays sharp at any size. */
+  /* Directions between the screen and the track, for a board that may be
+   * turned: a swipe is on the screen and the car turns on the track, and an
+   * instruction that names a direction names it on the screen. */
+  Renderer.rotated = false;
+  Renderer.toTrack = function (d) { return this.rotated ? { x: -d.y, y: d.x } : d; };
+  Renderer.toScreen = function (d) { return this.rotated ? { x: d.y, y: -d.x } : d; };
+
+  /* Draw the next thing the right way up on the screen rather than on the
+   * track: text, and weather, which falls DOWN whichever way the track is
+   * turned. Returns the size of the box that is then drawn into, in track
+   * pixels, and must be paired with g.restore(). */
+  function upright(g) {
+    g.save();
+    if (!Renderer.rotated) return { w: T.width, h: T.height };
+    var c = Renderer.canvas;
+    g.setTransform(c.width / T.height, 0, 0, c.height / T.width, 0, 0);
+    return { w: T.height, h: T.width };
+  }
+
   Renderer.fit = function () {
     var canvas = this.canvas;
     var board = canvas.parentNode;                         // .board
@@ -1058,6 +1077,17 @@
     var availW = stage.clientWidth - (column || !hud ? 0 : hud.offsetWidth + gap);
     var availH = stage.clientHeight - (!column || !hud ? 0 : hud.offsetHeight + gap);
 
+    /* Lying down, HOME floats in the gutter beside the board rather than in
+     * a bar of its own, so the board must leave it that strip - on a track
+     * wide enough to use the whole width, it otherwise ran under the button. */
+    var reserve = 0;
+    var bar = document.querySelector('.topbar');
+    var home = document.getElementById('btn-home');
+    if (!column && bar && home && global.getComputedStyle(bar).position === 'absolute') {
+      reserve = home.offsetWidth + 18;
+    }
+    availW -= reserve;
+
     /* The board's own border, measured rather than assumed. It used to be a
      * hardcoded 2, which is right when the frame has a side on it and wrong
      * upright, where the board runs off both edges of the screen and the left
@@ -1068,10 +1098,21 @@
     var by = (parseFloat(bs.borderTopWidth) || 0) + (parseFloat(bs.borderBottomWidth) || 0);
 
     var scale = Math.min((availW - bx) / T.width, (availH - by) / T.height);
+    /* Upright, a track - every one of them is wider than it is tall - is
+     * limited by the width of the screen and leaves the height to spare. A
+     * quarter turn puts its long side along the long side of the screen and
+     * the board comes out far bigger. Only where it does: lying down, or on
+     * a track the shape of the space it has, it stays as it is. The turn is
+     * a picture of the track and nothing else - the physics, the lap, every
+     * coordinate in the game is untouched; only what is drawn and which way
+     * a swipe points are turned (Renderer.toTrack / toScreen). */
+    var turned = Math.min((availW - bx) / T.height, (availH - by) / T.width);
+    this.rotated = turned > scale * 1.1;
+    if (this.rotated) scale = turned;
     if (!(scale > 0)) scale = 1;
 
-    var cssW = Math.max(1, Math.floor(T.width * scale));
-    var cssH = Math.max(1, Math.floor(T.height * scale));
+    var cssW = Math.max(1, Math.floor((this.rotated ? T.height : T.width) * scale));
+    var cssH = Math.max(1, Math.floor((this.rotated ? T.width : T.height) * scale));
     var dpr = Math.min(global.devicePixelRatio || 1, 2);
 
     canvas.style.width = cssW + 'px';
@@ -1082,7 +1123,13 @@
     // Resizing the backing store clears the context, so the transform that
     // maps track pixels onto it has to be set again here.
     this.ctx = canvas.getContext('2d');
-    this.ctx.setTransform(canvas.width / T.width, 0, 0, canvas.height / T.height, 0, 0);
+    if (this.rotated) {
+      // A quarter turn anticlockwise: the track's top is the screen's left,
+      // so a start straight along the bottom runs up the screen.
+      this.ctx.setTransform(0, -canvas.height / T.width, canvas.width / T.height, 0, 0, canvas.height);
+    } else {
+      this.ctx.setTransform(canvas.width / T.width, 0, 0, canvas.height / T.height, 0, 0);
+    }
 
     /* ---- and the panel takes up the slack ----------------------------
      *
@@ -1109,12 +1156,6 @@
      * and makes the board look smaller into the bargain. Upright the slack
      * goes round the board instead (see the stylesheet). */
     if (hud && !column) {
-      var reserve = 0;
-      var bar = document.querySelector('.topbar');
-      var home = document.getElementById('btn-home');
-      if (bar && home && global.getComputedStyle(bar).position === 'absolute') {
-        reserve = home.offsetWidth + 18;
-      }
       var slack = stage.clientWidth - cssW - bx - gap - hud.offsetWidth - reserve;
       /* flex-basis, not width or height. The panel is a flex item with a
        * basis of its own in the stylesheet, and a basis beats a width - the
@@ -1439,11 +1480,13 @@
       g.save();
       g.fillStyle = 'rgba(8,11,18,0.55)';
       g.fillRect(0, 0, T.width, T.height);
+      var box = upright(g);
       g.font = '700 96px ui-monospace, Menlo, Consolas, monospace';
       g.textAlign = 'center';
       g.textBaseline = 'middle';
       g.fillStyle = n > 0 ? '#ffd166' : '#5ef2a0';
-      g.fillText(label, T.width / 2, T.height / 2);
+      g.fillText(label, box.w / 2, box.h / 2);
+      g.restore();
       g.restore();
     }
   };
