@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.47.1', built: '2026-09-23' };
+window.BR = { version: '0.47.2', built: '2026-09-24' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -107,12 +107,12 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 
     <nav class="doors">
       <button id="btn-options" class="door">
-        <span class="door-mark">&#9881;</span>
+        <span class="door-mark">&#9881;&#xFE0E;</span>
         <span class="door-name">OPTIONS</span>
         <span class="door-sub">Settings &amp; legacy tracks</span>
       </button>
       <button id="btn-play" class="door door-main">
-        <span class="door-mark">&#9654;</span>
+        <span class="door-mark">&#9654;&#xFE0E;</span>
         <span class="door-name">PLAY</span>
         <span class="door-sub">Pick a theme and race</span>
       </button>
@@ -140,7 +140,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
         <span class="door-sub">A field of cars, a finishing position, medals</span>
       </button>
       <button id="btn-mode-trial" class="door">
-        <span class="door-mark">&#9201;</span>
+        <span class="door-mark">&#9201;&#xFE0E;</span>
         <span class="door-name">TIME TRIAL</span>
         <span class="door-sub">Empty track, one clock, your lap record</span>
       </button>

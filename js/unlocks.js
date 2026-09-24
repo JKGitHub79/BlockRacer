@@ -51,6 +51,7 @@
   function hide() {
     el.hidden = true;
     el.className = 'unlock';
+    if (global.Viewport) global.Viewport.releaseCanvases(el);
     el.innerHTML = '';
   }
 

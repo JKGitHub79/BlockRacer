@@ -6,6 +6,7 @@
   "scripts": {
     "check": "node tools/validate-track.js && node tools/simulate.js 5 40",
     "test": "npm run check",
-    "layout": "node tools/audit-layout.js"
+    "layout": "node tools/audit-layout.js",
+    "crossengine": "node tools/cross-engine.js"
   }
 }

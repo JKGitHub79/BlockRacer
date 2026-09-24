@@ -65,5 +65,29 @@
     setTimeout(measure, 400);
   });
 
-  global.Viewport = { measure: measure };
+  /* Give a canvas's pixels back NOW rather than whenever the garbage
+   * collector gets to it.
+   *
+   * iOS Safari puts a hard ceiling on the canvas memory a page may hold at
+   * once - the console calls it "Total canvas memory use exceeds the maximum
+   * limit" - and a canvas that has been dropped still counts against it until
+   * it is collected. Past the ceiling, new canvases silently draw nothing:
+   * the landscape, the shop's chips, the track thumbnails, eventually the
+   * board. Measured, a few minutes of ordinary play (round the carousel
+   * twice, the shop a few times, six races) allocated 212MB on an iPhone and
+   * 700MB on an iPad, nearly all of it already garbage.
+   *
+   * Setting a canvas to 0 x 0 frees its backing store on the spot, in every
+   * engine, and does nothing else - so it is called on each canvas at the
+   * moment it is thrown away. Chrome has no such ceiling and is unaffected. */
+  function releaseCanvas(cv) {
+    if (cv && cv.width !== undefined) { cv.width = 0; cv.height = 0; }
+  }
+  function releaseCanvases(root) {
+    if (!root || !root.querySelectorAll) return;
+    Array.prototype.forEach.call(root.querySelectorAll('canvas'), releaseCanvas);
+  }
+
+  global.Viewport = { measure: measure, releaseCanvas: releaseCanvas,
+                      releaseCanvases: releaseCanvases };
 })(typeof window !== 'undefined' ? window : globalThis);

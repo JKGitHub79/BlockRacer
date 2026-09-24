@@ -1380,11 +1380,20 @@
     ctx = cv.getContext('2d');
   };
 
+  // The baked landscape is the biggest canvas the game makes - the whole
+  // screen, at up to twice its size - and it is rebuilt on every change of
+  // scene, so it is the one that matters most to hand back (see
+  // Viewport.releaseCanvas).
+  function dropBaked() {
+    if (baked && global.Viewport) global.Viewport.releaseCanvas(baked);
+    baked = null;
+  }
+
   Backdrop.set = function (name) {
     if (!SCENES[name]) name = 'night';
     if (this.scene === name) return;
     this.scene = name;
-    baked = null;
+    dropBaked();
   };
 
   /* The landscape is baked once per size and blitted; only the weather is
@@ -1401,7 +1410,7 @@
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      baked = null;
+      dropBaked();
       bakedFor = '';
       return;
     }
@@ -1409,6 +1418,7 @@
     var spec = SCENES[this.scene];
 
     if (!baked || bakedFor !== this.scene + W + 'x' + H) {
+      dropBaked();
       baked = document.createElement('canvas');
       baked.width = canvas.width;
       baked.height = canvas.height;

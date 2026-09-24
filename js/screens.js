@@ -189,6 +189,8 @@
     // A time trial has no medals, so it has no star at all.
     el.themeStar.style.display = trial ? 'none' : '';
 
+    // thumbnails being thrown away give their pixels back (Viewport.releaseCanvas)
+    global.Viewport.releaseCanvases(el.cards);
     el.cards.innerHTML = '';
     theme.tracks.forEach(function (entry) {
       var found = trackData(entry.id);
@@ -278,6 +280,7 @@
     var Cos = global.Cosmetics;
     var grid = el.shopGrid;
     var skins = this.shopTab === 'skins';
+    global.Viewport.releaseCanvases(grid);
     grid.innerHTML = '';
     grid.className = 'shop-grid' + (skins ? '' : ' vehicles');
     Array.prototype.forEach.call(el.shopTabs.children, function (b) {
@@ -408,6 +411,7 @@
         '<path d="' + STAR_PATH + '"/></svg>';
     }).join('');
 
+    global.Viewport.releaseCanvases(el.cards);
     el.cards.innerHTML =
       '<div class="progress-board">' +
         // The visible circle is small; the button round it is thumb-sized.

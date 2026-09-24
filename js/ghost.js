@@ -251,11 +251,28 @@
 
   function keyFor(trackId, speedLevel) { return KEY + trackId + '@' + speedLevel; }
 
+  /* The session's own copy of every ghost saved in it, keyed like storage.
+   *
+   * Progress has always kept its records in memory and treated storage as a
+   * backup, so a record set while storage is refusing writes still stands for
+   * the rest of the session. Ghosts did not, and on Safari that matters:
+   * "Block All Cookies" and Lockdown Mode make every localStorage access
+   * throw, and some private configurations refuse writes. There, the ghost
+   * was used for the lap straight after the record and then lost at the next
+   * reset - TRY AGAIN, RESTART, NEXT TRACK - because reset reloads it from a
+   * storage that never received it. Chrome never refuses a page its own
+   * storage, which is why it only ever showed up in Safari.
+   *
+   * Memory is written first and read first. It only ever holds ghosts saved
+   * in this session, which are always newer than anything in storage. */
+  var mem = {};
+
   /* Written only when the lap is a new record, over the top of the last one.
    * If storage is full or blocked the ghost is still used for the rest of the
    * session - it just does not survive a reload - and the record itself is
    * untouched either way, because it lives under its own key. */
   function save(data, speedLevel, stored) {
+    mem[keyFor(data.id, speedLevel)] = stored;
     try {
       global.localStorage.setItem(keyFor(data.id, speedLevel), JSON.stringify(stored));
       return true;
@@ -270,11 +287,13 @@
    * ever the record's own lap. */
   function load(data, speedLevel, record) {
     if (!data || !(record > 0)) return null;
-    var raw;
-    try { raw = global.localStorage.getItem(keyFor(data.id, speedLevel)); } catch (e) { return null; }
-    if (!raw) return null;
+    var key = keyFor(data.id, speedLevel), d = mem[key], raw = null;
+    if (!d) {
+      try { raw = global.localStorage.getItem(key); } catch (e) { raw = null; }
+      if (!raw) return null;
+    }
     try {
-      var d = JSON.parse(raw);
+      if (!d) d = JSON.parse(raw);
       if (!d || d.v !== VERSION || d.sig !== signature(data)) return null;
       if (!(Math.abs(d.time - record) < 1e-6)) return null;
       var n = d.t && d.t.length;
@@ -287,6 +306,7 @@
   }
 
   function clearAll() {
+    mem = {};
     try {
       var ls = global.localStorage, doomed = [];
       for (var i = 0; i < ls.length; i++) {

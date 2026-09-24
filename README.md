@@ -2144,6 +2144,61 @@ midpoint is where the width probe starts.
 Scripts are plain `<script>` tags in order, deliberately: ES modules do not load
 over `file://`, and the point is that you can double-click the HTML file.
 
+## Safari
+
+Checked in real WebKit rather than guessed at: WebKitGTK is the engine
+Safari is built on, and `npm run crossengine` runs one functional suite
+unchanged in it and in Chromium - each once with ordinary storage and once
+with storage blocked the way Safari blocks it - and compares every result
+field by field. Race, medals, unlock notifications, the shop, Progress,
+RESTART, the ghost, the delta, NEW BEST and the ghost reaching the canvas all
+come out identical, and the layout audit gives identical verdicts in both at
+ten screen sizes. (It needs `gir1.2-webkit2-4.1 python3-gi python3-gi-cairo
+xvfb`; `tools/webkit/wk.py` says so.)
+
+The engine is not where the Safari problems were. They were in what
+Apple's platforms do around it, and there were four.
+
+**The ghost vanished after TRY AGAIN.** Safari can refuse a page its own
+storage outright - "Block All Cookies" and Lockdown Mode make every
+`localStorage` access throw, and some private configurations refuse writes -
+and Chrome never does. `Progress` has always kept records in memory and
+treated storage as a backup, so the record survived; the ghost only existed
+in storage, so it raced you for the lap after it was set and was then lost at
+the next reset. Ghosts now have the same session copy records do, written and
+read first. Reproduced in WebKit and Chromium with storage blocked, and the
+test that now covers it fails on the old code.
+
+**Icons turned into emoji.** The font stack starts `ui-monospace`, which only
+Safari understands, so Safari draws in SF Mono and Chrome falls through to
+Menlo or Consolas. SF Mono has no glyph for the PLAY, OPTIONS and TIME TRIAL
+icons (▶ ⚙ ⏱), and Apple's fallback for those three is Apple Color Emoji - a
+blue button, a grey cog and a coloured stopwatch that ignore the CSS colour.
+Each is followed by U+FE0E, the text-presentation selector, which asks for
+the plain glyph and changes nothing where there was one already.
+
+**Canvases ran out.** iOS Safari caps the canvas memory a page may hold at
+once, and a canvas that has been thrown away counts against the cap until it
+is collected. The landscape behind the menus is rebuilt on every change of
+scene at up to twice the screen's size, and the shop, the track cards and the
+notifications make canvases every time they are shown. Measured: round the
+carousel twice, the shop a few times and six races allocated 212MB on an
+iPhone and 702MB on an iPad, nearly all of it garbage - past the cap, new
+canvases silently draw nothing. Each canvas is now given back (set to 0 x 0,
+which frees it at once in every engine) at the moment it is replaced:
+the same session holds 12MB and 28MB.
+
+**Hover stuck.** iOS applies `:hover` on a tap and leaves it on, so the arrow
+you had just pressed stayed lit and the card you had tapped stayed lifted.
+Every hover effect is behind `@media (hover: hover)`: a mouse gets exactly
+what it always did, a finger gets nothing stuck.
+
+What is deliberately NOT changed: the font stack still prefers SF Mono on
+Apple devices, which is the design; Safari still wipes a site's storage after
+seven days without a visit (ITP), which nothing in a page can change; and
+the game assumes Safari 15 or later - flexbox `gap` needs 14.5 and
+`aspect-ratio` needs 15 - which is where it already was.
+
 ## Checking a change
 
 The two tools under `tools/` run headless in Node and need no browser:
@@ -2157,6 +2212,7 @@ node tools/simulate.js 5 40 "" 3 0.4   # ...at Hard, slide 0.4
 node tools/simulate.js 5 40 "" "" "" "" 10   # ...against level 10 opponents
 node tools/map.js 10               # an ASCII picture of track 10
 npm run layout                     # every screen at 72 viewport sizes
+npm run crossengine                # the same game in Chromium AND WebKit (see Safari)
 ```
 
 `simulate.js` reads the defaults in `js/config.js` for anything it is not

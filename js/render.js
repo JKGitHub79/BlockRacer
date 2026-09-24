@@ -845,6 +845,8 @@
         g.fillRect(fx + col * fw / 2, r * S, fw / 2, 0.4 * S);
       }
     }
+    // the track it replaces is released at once (Viewport.releaseCanvas)
+    if (trackCanvas && trackCanvas !== cv && global.Viewport) global.Viewport.releaseCanvas(trackCanvas);
     trackCanvas = cv;
   }
 
@@ -1185,6 +1187,7 @@
     g.fillStyle = pick('startLine');
     g.fillRect(f.x0 * s, f.y0 * s, Math.max(2, (f.x1 - f.x0) * s), (f.y1 - f.y0) * s);
 
+    if (global.Viewport) global.Viewport.releaseCanvases(host);
     host.innerHTML = '';
     host.appendChild(cv);
   };

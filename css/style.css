@@ -256,7 +256,13 @@ canvas { display: block; touch-action: none; }
   border-radius: 6px;
   cursor: pointer;
 }
-.laps button:hover { border-color: var(--accent); }
+/* Every hover effect in this file sits behind @media (hover: hover).
+   A phone has no hover, but iOS Safari fakes one: a tap applies :hover and
+   leaves it on until something else is tapped, so the arrow you just pressed
+   stayed lit, the card you tapped stayed lifted and HOME stayed cyan. Behind
+   the query, a mouse gets exactly what it always did and a finger gets
+   nothing stuck. */
+@media (hover: hover) { .laps button:hover { border-color: var(--accent); } }
 .laps button.on { background: var(--accent); color: #06121a; border-color: var(--accent); }
 
 /* The road colour is a look, not a setting that changes the racing, so it gets
@@ -282,7 +288,7 @@ canvas { display: block; touch-action: none; }
   border-radius: 5px;
   cursor: pointer;
 }
-.swatches button:hover { border-color: var(--accent); }
+@media (hover: hover) { .swatches button:hover { border-color: var(--accent); } }
 .swatches button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 
 button.primary {
@@ -296,7 +302,7 @@ button.primary {
   border-radius: 6px;
   cursor: pointer;
 }
-button.primary:hover { filter: brightness(1.1); }
+@media (hover: hover) { button.primary:hover { filter: brightness(1.1); } }
 
 .row { display: flex; gap: 8px; }
 .row .primary { flex: 2; }
@@ -312,7 +318,7 @@ button.secondary {
   border-radius: 6px;
   cursor: pointer;
 }
-button.secondary:hover { border-color: var(--accent); }
+@media (hover: hover) { button.secondary:hover { border-color: var(--accent); } }
 
 .hint { color: var(--dim); font-size: 11px; margin: 12px 0 0; }
 
@@ -672,7 +678,7 @@ body.in-race #backdrop { display: none; }
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
-.back:hover { border-color: var(--accent); color: var(--accent); }
+@media (hover: hover) { .back:hover { border-color: var(--accent); color: var(--accent); } }
 
 /* ---- the front door ------------------------------------------------- */
 
@@ -718,7 +724,7 @@ body.in-race #backdrop { display: none; }
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
-.door:hover { transform: translateY(-3px); border-color: var(--accent); }
+@media (hover: hover) { .door:hover { transform: translateY(-3px); border-color: var(--accent); } }
 .door-mark { font-size: 22px; color: var(--accent); line-height: 1; }
 .door-name { font-size: clamp(14px, 2.4vw, 20px); letter-spacing: 4px; }
 .door-sub { font-size: 11px; letter-spacing: 1px; color: var(--dim); }
@@ -737,7 +743,7 @@ body.in-race #backdrop { display: none; }
 /* The shop is not built. Showing it as a live button that opens nothing is
    worse than showing it as what it is. */
 .door-locked { opacity: 0.42; cursor: not-allowed; }
-.door-locked:hover { transform: none; border-color: var(--line); }
+@media (hover: hover) { .door-locked:hover { transform: none; border-color: var(--line); } }
 .door-locked .door-mark { color: var(--dim); }
 
 /* ---- track select ---------------------------------------------------- */
@@ -843,7 +849,7 @@ body.in-race #backdrop { display: none; }
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
-.arrow:hover { border-color: var(--theme, var(--accent)); color: var(--theme, var(--accent)); }
+@media (hover: hover) { .arrow:hover { border-color: var(--theme, var(--accent)); color: var(--theme, var(--accent)); } }
 
 .cards {
   flex: 1 1 auto;
@@ -868,7 +874,7 @@ body.in-race #backdrop { display: none; }
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
-.card:hover { transform: translateY(-4px); border-color: var(--theme, var(--accent)); }
+@media (hover: hover) { .card:hover { transform: translateY(-4px); border-color: var(--theme, var(--accent)); } }
 
 /* The picture is the track, rendered from its own data rather than shipped as
    an image, so it can never be a stale picture of a track since edited. */
@@ -891,7 +897,7 @@ body.in-race #backdrop { display: none; }
 }
 
 .card.soon { opacity: 0.45; cursor: not-allowed; }
-.card.soon:hover { transform: none; border-color: var(--line); }
+@media (hover: hover) { .card.soon:hover { transform: none; border-color: var(--line); } }
 .card.soon .card-grade { color: var(--dim); }
 /* Nothing to show yet, so the art box holds its shape rather than collapsing
    and leaving three cards of different heights. */
@@ -943,7 +949,7 @@ body.in-race #backdrop { display: none; }
   border-radius: 6px;
   cursor: pointer;
 }
-.legacy-list button:hover { border-color: var(--accent); }
+@media (hover: hover) { .legacy-list button:hover { border-color: var(--accent); } }
 .legacy-list b { font-size: 12px; letter-spacing: 2px; }
 .legacy-list span { font-size: 10px; letter-spacing: 1px; color: var(--dim); }
 
@@ -995,7 +1001,7 @@ body.in-race #backdrop { display: none; }
   border-color: var(--medal);
   box-shadow: 0 0 0 1px var(--medal), 0 6px 22px var(--medal-dim);
 }
-.card.medal:hover { border-color: var(--medal); }
+@media (hover: hover) { .card.medal:hover { border-color: var(--medal); } }
 /* The name and its background are deliberately untouched by the medal. */
 .card.medal .card-name { color: var(--text); }
 .card.medal .card-grade { color: var(--medal); }
@@ -1091,7 +1097,7 @@ body.in-race #backdrop { display: none; }
   border-radius: 6px;
   cursor: pointer;
 }
-.homebtn:hover { border-color: var(--accent); color: var(--accent); }
+@media (hover: hover) { .homebtn:hover { border-color: var(--accent); color: var(--accent); } }
 
 #pause .panel { width: min(340px, 100%); }
 #pause .row { margin-top: 16px; }
@@ -1404,7 +1410,7 @@ body.in-race #backdrop { display: none; }
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
-.shop-tab:hover { color: var(--ink); border-color: var(--accent); }
+@media (hover: hover) { .shop-tab:hover { color: var(--ink); border-color: var(--accent); } }
 /* The selected tab is not a shade darker, it is lit: at a glance you should
    never have to work out which list you are looking at. */
 .shop-tab.on {
@@ -1861,7 +1867,8 @@ body.in-race #backdrop { display: none; }
   border-radius: 50%;
   transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
-.pg-info:hover span, .pg-info:focus-visible span { color: var(--text); }
+.pg-info:focus-visible span { color: var(--text); }
+@media (hover: hover) { .pg-info:hover span { color: var(--text); } }
 .pg-info.on span { color: #0b0f18; background: var(--text); border-color: var(--text); }
 
 /* The explanation takes the stats' place inside the panel (see
