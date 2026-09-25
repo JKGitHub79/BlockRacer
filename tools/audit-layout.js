@@ -121,6 +121,26 @@ const SCREENS = [
     });
     checks += Object.keys(layers).length;
 
+    /* The race layout is two boxes side by side in `.stage`: the board and
+     * the HUD. One stray closing tag in the overlays above them once put the
+     * HUD outside `.stage`, and every landscape race shrank the board and
+     * dropped the HUD under it - while every menu here still looked right.
+     * The nesting is asserted directly, once per page. */
+    if (checks <= Object.keys(layers).length) {
+      const nest = await page.evaluate(() => {
+        const hud = document.querySelector('.hud'), stage = document.querySelector('.stage');
+        const board = document.querySelector('.board');
+        return { hudInStage: !!(hud && stage && hud.parentElement === stage),
+                 boardInStage: !!(board && stage && stage.contains(board)) };
+      });
+      if (!nest.hudInStage || !nest.boardInStage) {
+        problems.push(`race markup: the HUD and the board must both sit in .stage ` +
+          `(hud in stage: ${nest.hudInStage}, board in stage: ${nest.boardInStage}) - ` +
+          `an unbalanced </div> in index.html breaks every landscape race`);
+      }
+      checks++;
+    }
+
     for (const sc of SCREENS) {
       await page.evaluate(sc.go);
       await page.waitForTimeout(60);

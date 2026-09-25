@@ -861,7 +861,18 @@
     if (LB) {
       el.lbStatus.textContent = p.bestLap && !LB.counts(C.speedLevel)
         ? 'The leaderboard is ' + C.speedLevels[C.leaderboardSpeed].name + ' laps only' : '';
-      if (p.bestLap) LB.submitTrial(T.data.id, C.speedLevel, p.bestLap);
+      // A new best also hears where it has put you, and says so under the
+      // time - as long as these are still the results it belongs to.
+      var token = this._rankFor = {};
+      var game = this;
+      var onRank = this.newRecord ? function (rank) {
+        if (game._rankFor !== token || !el.results.classList.contains('show') || !(rank > 0)) return;
+        var line = document.createElement('span');
+        line.className = 'pb-rank';
+        line.textContent = 'You are now ranked ' + LB.ordinal(rank);
+        el.resultsNote.appendChild(line);
+      } : null;
+      if (p.bestLap) LB.submitTrial(T.data.id, C.speedLevel, p.bestLap, onRank);
     }
   };
 

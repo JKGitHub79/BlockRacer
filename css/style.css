@@ -2147,23 +2147,24 @@ body.mode-trial .lb-open { display: block; }
   top: calc(16px + var(--sa-t));
   right: calc(16px + var(--sa-r));
   z-index: 2;
-  padding: 9px 16px;
+  padding: 12px 20px;
   font: inherit;
-  font-size: 12px;
-  letter-spacing: 2px;
+  font-size: 14px;
+  letter-spacing: 3px;
   color: var(--text);
   background: rgba(10, 16, 28, 0.72);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
+#screen-main .lb-corner,
 body.mode-trial #screen-play:not(.progress-page) .lb-corner { display: block; }
 @media (hover: hover) { .lb-corner:hover { border-color: var(--accent); color: var(--accent); } }
 @media (hover: none) {
   .lb-corner { top: calc(8px + var(--sa-t)); right: calc(8px + var(--sa-r));
-    min-height: 42px; padding: 7px 12px; font-size: 11px; }
+    min-height: 46px; padding: 9px 15px; font-size: 12px; letter-spacing: 2px; }
 }
 
 /* The board: a header that stays, and a body that scrolls under it. */
@@ -2179,15 +2180,18 @@ body.mode-trial #screen-play:not(.progress-page) .lb-corner { display: block; }
 }
 .lb-track-view .lb-panel { width: min(460px, 100%); }
 .lb-head { flex: 0 0 auto; text-align: center; }
-.lb-cap { margin: 0 44px 6px; font-size: 10px; letter-spacing: 2px; color: var(--dim); }
-.lb-x {
-  position: absolute; top: 8px; right: 8px;
-  width: 40px; height: 40px;
-  font: inherit; font-size: 22px; line-height: 1;
-  color: var(--dim); background: none; border: 1px solid transparent; border-radius: 6px;
-  cursor: pointer;
+.lb-top { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.lb-cap { flex: 1 1 auto; min-width: 0; margin: 0; padding-right: 84px; font-size: 10px; letter-spacing: 2px; color: var(--dim); }
+/* BACK, as on every screen - the same look as .back, in the panel's corner. */
+.lb-backbtn {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  font: inherit; font-size: 12px; letter-spacing: 2px;
+  color: var(--text); background: #1b2438;
+  border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
 }
-@media (hover: hover) { .lb-x:hover { color: var(--text); border-color: var(--line); } }
+@media (hover: hover) { .lb-backbtn:hover { border-color: var(--accent); color: var(--accent); } }
+@media (hover: none) { .lb-backbtn { min-height: 42px; } }
 .lb-nav { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; }
 .lb-title {
   margin: 0; min-width: 0; flex: 0 1 auto;
@@ -2199,12 +2203,8 @@ body.mode-trial #screen-play:not(.progress-page) .lb-corner { display: block; }
   font: inherit; font-size: 24px; line-height: 1;
   color: var(--text); background: #1b2438; border: 1px solid var(--line); border-radius: 8px; cursor: pointer;
 }
-@media (hover: hover) { .lb-arrow:hover, .lb-back:hover { border-color: var(--lb-theme); } }
-.lb-back {
-  flex: 0 0 auto; padding: 6px 10px; font: inherit; font-size: 11px; letter-spacing: 2px;
-  color: var(--text); background: #1b2438; border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
-}
-.lb-back[hidden], .lb-arrow[hidden], .lb-all[hidden] { display: none; }
+@media (hover: hover) { .lb-arrow:hover { border-color: var(--lb-theme); } }
+.lb-arrow[hidden], .lb-all[hidden] { display: none; }
 .lb-body {
   flex: 1 1 auto; min-height: 0;
   overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
@@ -2214,15 +2214,21 @@ body.mode-trial #screen-play:not(.progress-page) .lb-corner { display: block; }
 /* Three tracks: side by side where there is the width, stacked where not. */
 .lb-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
 @media (min-width: 600px) { .lb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.lb-track { min-width: 0; }
+.lb-track {
+  min-width: 0;
+  padding: 8px 8px 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
 .lb-track-head {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--line);
-  min-height: 40px; box-sizing: border-box;   /* with or without SHOW ALL, rows line up across */
 }
 .lb-track-name { margin: 0; font-size: 12px; letter-spacing: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lb-all {
-  flex: 0 0 auto; padding: 5px 8px; font: inherit; font-size: 10px; letter-spacing: 1px;
+  display: block; width: 100%; margin: 6px 0 2px; padding: 6px 8px;
+  font: inherit; font-size: 10px; letter-spacing: 2px;
   color: var(--lb-theme); background: none; border: 1px solid var(--line); border-radius: 5px; cursor: pointer;
 }
 @media (hover: hover) { .lb-all:hover { border-color: var(--lb-theme); } }
@@ -2249,13 +2255,20 @@ body.mode-trial #screen-play:not(.progress-page) .lb-corner { display: block; }
 /* Short screens - a phone lying down - give every row they can to the lists. */
 @media (max-height: 480px) {
   .lb-panel { padding: 10px 12px 12px; }
-  .lb-cap { margin-bottom: 2px; font-size: 9px; }
-  .lb-x { top: 4px; right: 4px; width: 36px; height: 36px; }
+  .lb-cap { font-size: 9px; }
+  .lb-top { margin-bottom: 4px; }
+  .lb-backbtn { min-height: 34px; padding: 5px 11px; font-size: 11px; }
+  .lb-track { padding: 6px 6px 4px; }
   .lb-nav { margin-bottom: 6px; }
   .lb-title { font-size: 16px; letter-spacing: 3px; }
   .lb-arrow { width: 40px; height: 32px; font-size: 20px; }
   .lb-row { padding: 3px 7px; font-size: 11px; margin: 1px 0; }
-  .lb-track-head { padding-bottom: 3px; min-height: 34px; }
+  .lb-track-head { padding-bottom: 3px; }
+  .lb-all { margin-top: 4px; padding: 4px 8px; }
+  /* A new best's "was" joins the time's line, so the rank takes the line
+     it had and the laps keep their rows. */
+  .results-note .pb-was { display: inline-block; margin: 0 0 0 12px; }
+  .results-note .pb-rank { margin-top: 3px; }
   .lb-full .lb-row { font-size: 12px; padding: 4px 8px; }
 }
 
@@ -2279,3 +2292,9 @@ body.mode-trial #screen-play:not(.progress-page) .lb-corner { display: block; }
 .lb-rule { margin: 8px 0 16px; }
 .lb-rule.bad { color: #ff6b7d; }
 #lb-name-save:disabled { opacity: 0.45; cursor: default; filter: none; }
+
+/* Under a new best's time: where it has put you on the board. Blue, as you
+   are on the board itself. Arrives when the API answers, or not at all. */
+.results-note .pb-rank { display: block; margin-top: 6px; font-size: 11px; letter-spacing: 2px; color: #8fb6ff; }
+/* A narrow panel has no room to centre the caption against BACK's width. */
+@media (max-width: 460px) { .lb-cap { padding-right: 0; text-align: right; font-size: 9px; letter-spacing: 1px; } }

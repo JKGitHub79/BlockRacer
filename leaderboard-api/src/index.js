@@ -146,12 +146,30 @@ async function submitTime(request, env) {
       { 'Retry-After': String(retry) });
   }
 
+  // Where this player now stands on the track, ranked exactly as the
+  // leaderboard ranks it - which may be on an older, better time.
+  const standing = await env.DB.prepare(
+    `WITH best AS (
+       SELECT player_id, time_ms, created_at,
+              ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY time_ms ASC, created_at ASC) AS rn
+       FROM times WHERE track_id = ?1
+     ), ranked AS (
+       SELECT player_id, time_ms, ROW_NUMBER() OVER (ORDER BY time_ms ASC, created_at ASC) AS rank,
+              COUNT(*) OVER () AS total
+       FROM best WHERE rn = 1
+     )
+     SELECT rank, total, time_ms AS best_ms FROM ranked WHERE player_id = ?2`
+  ).bind(body.track_id, body.player_id.toLowerCase()).first();
+
   return json(request, 201, {
     ok: true,
     id: result.meta.last_row_id,
     track_id: body.track_id,
     username: body.username,
-    time_ms: body.time_ms
+    time_ms: body.time_ms,
+    rank: standing ? standing.rank : null,
+    total: standing ? standing.total : null,
+    best_ms: standing ? standing.best_ms : null
   });
 }
 

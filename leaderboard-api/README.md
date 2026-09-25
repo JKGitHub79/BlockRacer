@@ -26,7 +26,9 @@ Block Racer's leaderboard: a Cloudflare Worker over the D1 database
 - `player_id`: a UUID
 - `game_version`: optional, 1-20 characters of `A-Z a-z 0-9 . + -`
 
-Replies `201` when stored, `400` listing every problem, `415` without a JSON
+Replies `201` when stored - with the player's `rank` on the track afterwards,
+the `total` number of players there and their `best_ms`, ranked as the
+leaderboard ranks them - `400` listing every problem, `415` without a JSON
 content type, and `429` with `Retry-After` past 10 submissions an hour from
 one address. The address is stored only as a SHA-256 hash.
 

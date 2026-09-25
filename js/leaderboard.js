@@ -29,6 +29,7 @@
   var me = load();              // this session's copy, even if nothing can be saved
   var pending = null;           // the submission in flight, if any
   var asking = null;            // what to send once a name is given
+  var askingRank = null;        // and who wants to hear where it lands
   var el = {};
 
   function $(id) { return document.getElementById(id); }
@@ -84,14 +85,32 @@
     });
   }
 
-  function post(entry) {
+  function ordinal(n) {
+    var t = n % 100, u = n % 10;
+    return n + (t >= 11 && t <= 13 ? 'th' : u === 1 ? 'st' : u === 2 ? 'nd' : u === 3 ? 'rd' : 'th');
+  }
+  Leaderboard.ordinal = ordinal;
+
+  /* Where a stored lap has put you: the API says, in its reply. One from
+   * before it did is asked instead, from the board. Silent on any failure. */
+  function rankAfter(r, trackId, onRank) {
+    if (!onRank || !r || !r.ok) return;
+    if (r.body && typeof r.body.rank === 'number') { onRank(r.body.rank); return; }
+    fetchBoard(trackId, 50).then(function (data) { if (data.you) onRank(data.you.rank); }, function () {});
+  }
+
+  function post(entry, onRank) {
     var p = api('/times', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(entry)
     }).then(function (r) { return r; }, function () { return null; });   // silently
     pending = p;
-    p.then(function () { if (pending === p) pending = null; cache = {}; });
+    p.then(function (r) {
+      if (pending === p) pending = null;
+      cache = {};
+      rankAfter(r, entry.track_id, onRank);
+    });
     return p;
   }
 
@@ -103,23 +122,24 @@
 
   /* Called when a time trial has finished. `seconds` is the run's best lap.
    * Returns the submission's promise, or null when nothing is sent now. */
-  Leaderboard.submitTrial = function (trackId, speedLevel, seconds) {
+  Leaderboard.submitTrial = function (trackId, speedLevel, seconds, onRank) {
     if (!global.CONFIG.leaderboardUrl || !(seconds > 0) || !Leaderboard.counts(speedLevel)) return null;
     var entry = {
       track_id: trackId,
       time_ms: Math.round(seconds * 1000),
       game_version: global.BR ? String(global.BR.version) : undefined
     };
-    if (!me) { askName(entry); return null; }
+    if (!me) { askName(entry, onRank); return null; }
     entry.username = me.username;
     entry.player_id = me.player_id;
-    return post(entry);
+    return post(entry, onRank);
   };
 
   /* ---- the name ---------------------------------------------------------------- */
 
-  function askName(entry) {
+  function askName(entry, onRank) {
     asking = entry;
+    askingRank = onRank || null;
     el.nameInput.value = '';
     nameChanged();
     el.name.classList.add('show');
@@ -136,19 +156,20 @@
   function closeName() {
     el.name.classList.remove('show');
     asking = null;
+    askingRank = null;
     if (document.activeElement === el.nameInput) el.nameInput.blur();
   }
 
   function saveName() {
     var name = el.nameInput.value;
     if (!NAME.test(name)) { nameChanged(); return; }
-    var entry = asking;
+    var entry = asking, onRank = askingRank;
     save({ player_id: me ? me.player_id : newId(), username: name });
     closeName();
     if (entry) {
       entry.username = me.username;
       entry.player_id = me.player_id;
-      post(entry);
+      post(entry, onRank);
     }
   }
 
@@ -235,14 +256,12 @@
     }
   }
 
-  function setHead(title, kind, backTo) {
+  function setHead(title, kind) {
     var C = global.CONFIG, want = C.leaderboardSpeed;
     el.speed.textContent = want === null || want === undefined ? 'ALL SPEEDS' : C.speedLevels[want].name;
     el.title.textContent = title;
     el.board.classList.toggle('lb-track-view', kind === 'track');
     el.prev.hidden = el.next.hidden = kind !== 'theme';
-    el.back.hidden = !(kind === 'track' && backTo >= 0);
-    if (!el.back.hidden) el.back.textContent = '‹ ' + global.THEMES[backTo].name;
     el.body.scrollTop = 0;
   }
 
@@ -259,20 +278,22 @@
       var sec = make('section', 'lb-track');
       var head = make('div', 'lb-track-head');
       head.appendChild(make('h3', 'lb-track-name', tr.name));
-      var all = make('button', 'lb-all', 'SHOW ALL');
-      all.type = 'button';
-      all.hidden = true;
-      all.addEventListener('click', function () { showTrack(tr.id, t); });
-      head.appendChild(all);
       sec.appendChild(head);
       var ol = make('ol', 'lb-list');
       ol.appendChild(make('li', 'lb-msg', 'LOADING…'));
       sec.appendChild(ol);
+      // Under the list rather than beside the name: a narrow column keeps
+      // the whole name, however long, and the count has the width it needs.
+      var all = make('button', 'lb-all', 'SHOW ALL');
+      all.type = 'button';
+      all.hidden = true;
+      all.addEventListener('click', function () { showTrack(tr.id, t); });
+      sec.appendChild(all);
       grid.appendChild(sec);
       fetchBoard(tr.id, 50).then(function (data) {
         if (view !== token) return;
         fill(ol, data, FIVE);
-        if (data.total > FIVE) { all.hidden = false; all.textContent = 'SHOW ALL · ' + data.total; }
+        if (data.total > FIVE) { all.hidden = false; all.textContent = 'SHOW ALL ' + data.total + ' ›'; }
       }, function () {
         if (view !== token) return;
         ol.textContent = '';
@@ -286,7 +307,7 @@
   function showTrack(id, from) {
     view = { kind: 'track', id: id, from: from };
     var token = view;
-    setHead(trackName(id), 'track', from);
+    setHead(trackName(id), 'track');
     if (from >= 0) el.board.style.setProperty('--lb-theme', global.THEMES[from].accent || '');
     el.body.textContent = '';
     var ol = make('ol', 'lb-list lb-full');
@@ -317,9 +338,21 @@
   /* A theme's three tracks: from the time-trial track screen. */
   Leaderboard.openTheme = function (t) { showTheme(t || 0); open(); };
 
-  /* One track, everyone on it: from a time trial's results. Back goes to
-   * its theme, where it has one. */
-  Leaderboard.openTrack = function (id) { showTrack(id, themeOf(id)); open(); };
+  /* One track, everyone on it: from a time trial's results, which BACK
+   * returns to. Its theme gives it the theme's colour. */
+  Leaderboard.openTrack = function (id) {
+    var t = themeOf(id);
+    showTrack(id, -1);
+    if (t >= 0) el.board.style.setProperty('--lb-theme', global.THEMES[t].accent || '');
+    open();
+  };
+
+  // BACK, and Escape: one step back the way you came - from SHOW ALL to its
+  // theme, from anything else out.
+  function back() {
+    if (view && view.kind === 'track' && view.from >= 0) showTheme(view.from);
+    else Leaderboard.hideBoard();
+  }
 
   Leaderboard.hideBoard = function () {
     view = null;
@@ -352,33 +385,34 @@
     el.body = $('lb-body');
     el.prev = $('lb-prev');
     el.next = $('lb-next');
-    el.back = $('lb-back');
     if (!el.name || !el.board) return;
 
     el.nameInput.addEventListener('input', nameChanged);
     el.nameForm.addEventListener('submit', function (e) { e.preventDefault(); saveName(); });
     $('lb-name-skip').addEventListener('click', closeName);
-    $('lb-close').addEventListener('click', Leaderboard.hideBoard);
+    $('lb-close').addEventListener('click', back);
     el.prev.addEventListener('click', function () { if (view && view.kind === 'theme') showTheme(view.theme - 1); });
     el.next.addEventListener('click', function () { if (view && view.kind === 'theme') showTheme(view.theme + 1); });
-    el.back.addEventListener('click', function () { if (view && view.from >= 0) showTheme(view.from); });
     // A tap on the dimmed screen round the panel closes it, as a click would expect.
     el.board.addEventListener('click', function (e) { if (e.target === el.board) Leaderboard.hideBoard(); });
     document.addEventListener('keydown', function (e) {
       if (el.name.classList.contains('show')) { if (e.key === 'Escape') closeName(); return; }
       if (!el.board.classList.contains('show') || !view) return;
       if (e.key === 'Escape') {
-        if (view.kind === 'track' && view.from >= 0) showTheme(view.from);
-        else Leaderboard.hideBoard();
+        back();
       } else if (view.kind === 'theme' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
         showTheme(view.theme + (e.key === 'ArrowLeft' ? -1 : 1));
         e.preventDefault();
       }
     });
-    var corner = $('btn-lb-corner');
-    if (corner) corner.addEventListener('click', function (e) {
-      e.stopPropagation();
-      Leaderboard.openTheme(global.Screens ? global.Screens.theme : 0);
+    // LEADERBOARD in the corner of the main menu and the trial track screen:
+    // the theme the carousel was last on.
+    Array.prototype.forEach.call(document.querySelectorAll('[data-lb-open]'), function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (global.Sound) global.Sound.play('select');
+        Leaderboard.openTheme(global.Screens ? global.Screens.theme : 0);
+      });
     });
   }
 

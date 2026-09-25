@@ -1020,14 +1020,23 @@ every speed would rank the setting rather than the driving. A trial at any
 other speed keeps its record here and says on the results that the board is
 SWEAT only. Set the constant to `null` to send every speed to one board.
 
-**Two ways in.** On the time-trial track screen, **LEADERBOARD** in the top
-right opens the theme on screen: its three tracks side by side (stacked on a
-narrow screen), the top five of each, with arrows - or the arrow keys - to the
-other themes. The carousel behind stays where it was. **SHOW ALL** on a track
-lists everyone with a time there, as far down as it goes, and scrolls; it only
-appears when there are more than five. **LEADERBOARD** on a trial's results
-opens that track's full list straight away, with a way back to its theme.
-Escape steps back a level, then closes.
+**Three ways in.** **LEADERBOARD** sits in the top right of the main menu and
+of the time-trial track screen, opposite BACK. Either opens the theme the
+carousel was last on: its three tracks, each in its own bordered box - side by
+side, or stacked on a narrow screen - with the top five, and arrows (or the
+arrow keys) to the other themes. The carousel behind stays where it was.
+**SHOW ALL**, under a track's list, lists everyone with a time there, as far
+down as it goes, and scrolls; it only appears when there are more than five.
+**LEADERBOARD** on a trial's results opens that track's full list straight
+away. The board's own **BACK** - the same button as every screen's - goes one
+step back the way you came: from SHOW ALL to its theme, from anything else out,
+back where you opened it. Escape does the same.
+
+**A new best says where it put you.** Under the time, once the API has taken
+the lap: *You are now ranked 6th*. The API answers a submission with your rank
+on the track afterwards; if it cannot be reached, the line simply never
+appears. On a short screen the "was" joins the time's line, so the laps keep
+their rows.
 
 **You are a blue bar** - blue whatever the theme's colour, so it is never
 mistaken for the page's accent. Inside the top five it is your row; below it,

@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.61.0', built: '2026-09-25' };
+window.BR = { version: '0.62.0', built: '2026-09-25' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -95,7 +95,6 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           <p class="hint">R races again &middot; ESC pauses</p>
         </div>
       </div>
-      </div>
      </div>
     </div>
 
@@ -135,11 +134,12 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 <div id="lb-board" class="overlay lb-overlay" role="dialog" aria-modal="true" aria-labelledby="lb-title">
   <div class="panel lb-panel">
     <div class="lb-head">
-      <p class="lb-cap">LEADERBOARD &middot; <span id="lb-speed">SWEAT</span> &middot; BEST LAP</p>
-      <button id="lb-close" class="lb-x" type="button" aria-label="Close">&times;</button>
+      <div class="lb-top">
+        <button id="lb-close" class="lb-backbtn" type="button">&larr; BACK</button>
+        <p class="lb-cap">LEADERBOARD &middot; <span id="lb-speed">SWEAT</span> &middot; BEST LAP</p>
+      </div>
       <div class="lb-nav">
         <button id="lb-prev" class="lb-arrow" type="button" aria-label="Previous theme">&lsaquo;</button>
-        <button id="lb-back" class="lb-back" type="button" hidden>&lsaquo;</button>
         <h2 id="lb-title" class="lb-title">&nbsp;</h2>
         <button id="lb-next" class="lb-arrow" type="button" aria-label="Next theme">&rsaquo;</button>
       </div>
@@ -169,6 +169,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 
 <!-- ========================== the front door ========================== -->
 <section id="screen-main" class="screen main">
+  <button class="lb-corner" type="button" data-lb-open>LEADERBOARD</button>
   <div class="screen-inner">
     <h1 class="wordmark">BLOCK<span>RACER</span></h1>
     <p class="wordmark-sub">One speed. No brakes. Every press turns you exactly 90&deg;.</p>
@@ -245,7 +246,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 <!-- =========================== track select =========================== -->
 <section id="screen-play" class="screen play">
   <button class="back" data-back="mode">&larr; BACK</button>
-  <button id="btn-lb-corner" class="lb-corner" type="button">LEADERBOARD</button>
+  <button id="btn-lb-corner" class="lb-corner" type="button" data-lb-open>LEADERBOARD</button>
   <div class="screen-inner">
     <header class="theme-head">
       <p class="mode-tag" id="play-mode">RACE</p>
