@@ -1,0 +1,227 @@
+/* Block Racer leaderboard API - a Cloudflare Worker over D1 (binding DB).
+ *
+ *   POST /times                     submit a time
+ *   GET  /leaderboard/:track?limit  best time per player, fastest first
+ *
+ * Only the game's own origin gets CORS headers. Nothing here stores an IP
+ * address: the rate limit keys on a SHA-256 of it. */
+
+const ALLOWED_ORIGIN = 'https://jkgithub79.github.io';
+
+// Every racing track in js/tracks.js, and the least time (ms) accepted on it.
+// The tutorial's TRAINING track is not a leaderboard track.
+const MIN_TIME_MS = 1000;
+const TRACKS = new Map([
+  'crossover', 'snowdrift', 'mesa', 'wildwood', 'catalunya', 'caldera', 'staircase',
+  'pinefall', 'hollow', 'canopy',
+  'duneline', 'saltflats', 'canyonrun',
+  'frostline', 'glacier', 'whiteout',
+  'scree', 'quarry', 'overhang',
+  'gridlock', 'crosstown', 'downtown',
+  'foundry', 'pipeworks', 'refinery',
+  'sanctum', 'colonnade', 'labyrinth',
+  'basalt', 'fissure', 'crater',
+  'orbital', 'driftfield', 'horizon',
+  'landfall', 'hive', 'mothership'
+].map((id) => [id, MIN_TIME_MS]));
+
+const RATE_LIMIT = 10;                  // submissions
+const RATE_WINDOW_MS = 60 * 60 * 1000;  // per hour, per hashed IP
+const MAX_TIME_MS = 60 * 60 * 1000;     // an hour: anything longer is not a lap
+const MAX_BODY_BYTES = 2048;
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 50;
+
+const USERNAME = /^[A-Za-z0-9_]{1,16}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const VERSION = /^[0-9A-Za-z.+-]{1,20}$/;
+
+/* ---- responses ------------------------------------------------------------ */
+
+function corsHeaders(request) {
+  const origin = request.headers.get('Origin');
+  const h = { 'Vary': 'Origin' };
+  if (origin === ALLOWED_ORIGIN) {
+    h['Access-Control-Allow-Origin'] = ALLOWED_ORIGIN;
+    h['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS';
+    h['Access-Control-Allow-Headers'] = 'Content-Type';
+    h['Access-Control-Max-Age'] = '86400';
+  }
+  return h;
+}
+
+function json(request, status, body, extra) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      ...corsHeaders(request),
+      ...(extra || {})
+    }
+  });
+}
+
+function fail(request, status, error, details) {
+  return json(request, status, details ? { error, details } : { error });
+}
+
+/* ---- helpers ------------------------------------------------------------- */
+
+async function sha256Hex(text) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Every problem with a submission at once, so a client can fix them together.
+function validate(body) {
+  const errors = [];
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return ['body must be a JSON object'];
+  const { track_id, time_ms, username, player_id, game_version } = body;
+
+  if (typeof track_id !== 'string' || !TRACKS.has(track_id)) {
+    errors.push('track_id must be one of the game\'s tracks');
+  }
+  if (!Number.isInteger(time_ms)) {
+    errors.push('time_ms must be an integer number of milliseconds');
+  } else if (time_ms < (TRACKS.get(track_id) ?? MIN_TIME_MS)) {
+    errors.push(`time_ms is faster than possible (minimum ${TRACKS.get(track_id) ?? MIN_TIME_MS})`);
+  } else if (time_ms > MAX_TIME_MS) {
+    errors.push(`time_ms must be at most ${MAX_TIME_MS}`);
+  }
+  if (typeof username !== 'string' || !USERNAME.test(username)) {
+    errors.push('username must be 1-16 characters of A-Z, a-z, 0-9 or _');
+  }
+  if (typeof player_id !== 'string' || !UUID.test(player_id)) {
+    errors.push('player_id must be a UUID');
+  }
+  if (game_version !== undefined && game_version !== null &&
+      (typeof game_version !== 'string' || !VERSION.test(game_version))) {
+    errors.push('game_version, if given, must be 1-20 characters of A-Z, a-z, 0-9, . + -');
+  }
+  return errors;
+}
+
+/* ---- POST /times ------------------------------------------------------------ */
+
+async function submitTime(request, env) {
+  const type = request.headers.get('Content-Type') || '';
+  if (!type.toLowerCase().startsWith('application/json')) {
+    return fail(request, 415, 'Content-Type must be application/json');
+  }
+  const text = await request.text();
+  if (text.length > MAX_BODY_BYTES) return fail(request, 413, 'body too large');
+
+  let body;
+  try { body = JSON.parse(text); } catch { return fail(request, 400, 'body is not valid JSON'); }
+
+  const errors = validate(body);
+  if (errors.length) return fail(request, 400, 'invalid submission', errors);
+
+  const ip = request.headers.get('CF-Connecting-IP');
+  if (!ip) return fail(request, 400, 'could not identify the client');
+  const ipHash = await sha256Hex(ip);
+  const now = Date.now();
+
+  /* The count and the insert are one statement, so two submissions arriving
+   * together cannot both slip under the limit. No row inserted means the
+   * limit had already been reached. */
+  const result = await env.DB.prepare(
+    `INSERT INTO times (track_id, player_id, username, time_ms, game_version, ip_hash, created_at)
+     SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7
+     WHERE (SELECT COUNT(*) FROM times WHERE ip_hash = ?6 AND created_at > ?8) < ?9`
+  ).bind(
+    body.track_id, body.player_id.toLowerCase(), body.username, body.time_ms,
+    body.game_version ?? null, ipHash, now, now - RATE_WINDOW_MS, RATE_LIMIT
+  ).run();
+
+  if (!result.meta || result.meta.changes !== 1) {
+    // When the oldest submission in the window leaves it, one more is allowed.
+    const oldest = await env.DB.prepare(
+      'SELECT MIN(created_at) AS t FROM times WHERE ip_hash = ?1 AND created_at > ?2'
+    ).bind(ipHash, now - RATE_WINDOW_MS).first();
+    const retry = oldest && oldest.t ? Math.max(1, Math.ceil((oldest.t + RATE_WINDOW_MS - now) / 1000)) : 3600;
+    return json(request, 429,
+      { error: `rate limit: at most ${RATE_LIMIT} submissions per hour`, retry_after_seconds: retry },
+      { 'Retry-After': String(retry) });
+  }
+
+  return json(request, 201, {
+    ok: true,
+    id: result.meta.last_row_id,
+    track_id: body.track_id,
+    username: body.username,
+    time_ms: body.time_ms
+  });
+}
+
+/* ---- GET /leaderboard/:track ------------------------------------------------- */
+
+async function leaderboard(request, env, track) {
+  if (!TRACKS.has(track)) return fail(request, 400, 'unknown track');
+
+  const raw = new URL(request.url).searchParams.get('limit');
+  let limit = DEFAULT_LIMIT;
+  if (raw !== null) {
+    if (!/^\d+$/.test(raw) || Number(raw) < 1) return fail(request, 400, 'limit must be a positive integer');
+    limit = Math.min(Number(raw), MAX_LIMIT);
+  }
+
+  // Each player's best time (the earliest, if they matched it), then the
+  // players in order. player_id is not sent: it is the only thing that
+  // makes a submission count as that player's.
+  const { results } = await env.DB.prepare(
+    `SELECT username, time_ms, game_version, created_at FROM (
+       SELECT username, time_ms, game_version, created_at,
+              ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY time_ms ASC, created_at ASC) AS rn
+       FROM times WHERE track_id = ?1
+     ) WHERE rn = 1
+     ORDER BY time_ms ASC, created_at ASC
+     LIMIT ?2`
+  ).bind(track, limit).all();
+
+  return json(request, 200, {
+    track_id: track,
+    limit,
+    entries: results.map((r, i) => ({
+      rank: i + 1,
+      username: r.username,
+      time_ms: r.time_ms,
+      game_version: r.game_version,
+      created_at: new Date(r.created_at).toISOString()
+    }))
+  });
+}
+
+/* ---- routing ----------------------------------------------------------------- */
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = url.pathname.replace(/\/+$/, '') || '/';
+
+    if (request.method === 'OPTIONS') {
+      const origin = request.headers.get('Origin');
+      if (origin !== ALLOWED_ORIGIN) return new Response(null, { status: 403, headers: { 'Vary': 'Origin' } });
+      return new Response(null, { status: 204, headers: corsHeaders(request) });
+    }
+
+    try {
+      if (path === '/times') {
+        if (request.method !== 'POST') return fail(request, 405, 'use POST');
+        return await submitTime(request, env);
+      }
+      const m = path.match(/^\/leaderboard\/([^/]+)$/);
+      if (m) {
+        if (request.method !== 'GET') return fail(request, 405, 'use GET');
+        let track;
+        try { track = decodeURIComponent(m[1]); } catch { return fail(request, 400, 'unknown track'); }
+        return await leaderboard(request, env, track);
+      }
+      return fail(request, 404, 'not found');
+    } catch (err) {
+      console.error(err);
+      return fail(request, 500, 'internal error');
+    }
+  }
+};

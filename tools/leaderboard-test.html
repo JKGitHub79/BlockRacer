@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leaderboard API test</title>
+<style>
+  :root { color-scheme: dark; --bg: #0b0e14; --panel: #141925; --line: #273043; --text: #e6e9ef; --dim: #8a93a6; --ok: #5fd08a; --bad: #ff6b7d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--text);
+         font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 18px; letter-spacing: 2px; margin: 0 0 4px; }
+  p.note { color: var(--dim); margin: 0 0 16px; }
+  label { display: block; color: var(--dim); margin: 12px 0 4px; }
+  input, select { width: 100%; padding: 8px 10px; background: var(--panel); color: var(--text);
+                  border: 1px solid var(--line); border-radius: 4px; font: inherit; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin: 16px 0; }
+  button { padding: 10px; background: var(--panel); color: var(--text); border: 1px solid var(--line);
+           border-radius: 4px; font: inherit; cursor: pointer; }
+  button:hover { border-color: var(--dim); }
+  #log { display: flex; flex-direction: column; gap: 10px; }
+  .entry { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 10px; overflow-x: auto; }
+  .entry .head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .status { font-weight: 700; }
+  .status.good { color: var(--ok); }
+  .status.bad { color: var(--bad); }
+  pre { margin: 8px 0 0; white-space: pre-wrap; word-break: break-word; color: var(--text); }
+  .dim { color: var(--dim); }
+</style>
+</head>
+<body>
+<main>
+  <h1>LEADERBOARD API TEST</h1>
+  <p class="note">The API only answers pages served from https://jkgithub79.github.io, so open this
+    page there. Opened from a file or another host, the browser blocks every response.</p>
+
+  <label for="api">API URL</label>
+  <input id="api" type="url" placeholder="https://leaderboard-api.&lt;your-subdomain&gt;.workers.dev" autocomplete="url">
+
+  <div class="row">
+    <div>
+      <label for="track">Track</label>
+      <select id="track"></select>
+    </div>
+    <div>
+      <label for="name">Username</label>
+      <input id="name" value="tester_1" maxlength="32">
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button id="b-valid">1 · Submit a valid time</button>
+    <button id="b-fast">2 · Submit an impossible time</button>
+    <button id="b-name">3 · Submit a bad username</button>
+    <button id="b-board">4 · Fetch leaderboard</button>
+  </div>
+
+  <div id="log"></div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var TRACKS = ['crossover', 'snowdrift', 'mesa', 'wildwood', 'catalunya', 'caldera', 'staircase',
+    'pinefall', 'hollow', 'canopy', 'duneline', 'saltflats', 'canyonrun', 'frostline', 'glacier',
+    'whiteout', 'scree', 'quarry', 'overhang', 'gridlock', 'crosstown', 'downtown', 'foundry',
+    'pipeworks', 'refinery', 'sanctum', 'colonnade', 'labyrinth', 'basalt', 'fissure', 'crater',
+    'orbital', 'driftfield', 'horizon', 'landfall', 'hive', 'mothership'];
+  var KEY_API = 'leaderboardTest.api', KEY_PLAYER = 'leaderboardTest.player';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) { /* blocked */ } }
+  };
+
+  TRACKS.forEach(function (id) {
+    var o = document.createElement('option');
+    o.value = o.textContent = id;
+    $('track').appendChild(o);
+  });
+  $('track').value = 'pinefall';
+  $('api').value = store.get(KEY_API) || '';
+  $('api').addEventListener('change', function () { store.set(KEY_API, $('api').value.trim()); });
+
+  function uuid() {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    var b = crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    var h = Array.prototype.map.call(b, function (x) { return (x + 256).toString(16).slice(1); }).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  }
+  // One player id for this browser, so repeat submissions count as one player.
+  var player = store.get(KEY_PLAYER) || uuid();
+  store.set(KEY_PLAYER, player);
+
+  function base() {
+    var u = $('api').value.trim().replace(/\/+$/, '');
+    store.set(KEY_API, u);
+    return u;
+  }
+
+  function show(label, method, url, status, body, sent) {
+    var box = document.createElement('div');
+    box.className = 'entry';
+    var head = document.createElement('div');
+    head.className = 'head';
+    var left = document.createElement('span');
+    left.textContent = label + ' - ' + method + ' ' + url;
+    var st = document.createElement('span');
+    st.className = 'status ' + (status >= 200 && status < 300 ? 'good' : 'bad');
+    st.textContent = status === 0 ? 'NO RESPONSE' : 'HTTP ' + status;
+    head.appendChild(left);
+    head.appendChild(st);
+    box.appendChild(head);
+    if (sent) {
+      var s = document.createElement('pre');
+      s.className = 'dim';
+      s.textContent = 'sent: ' + JSON.stringify(sent);
+      box.appendChild(s);
+    }
+    var pre = document.createElement('pre');
+    pre.textContent = body;
+    box.appendChild(pre);
+    $('log').insertBefore(box, $('log').firstChild);
+  }
+
+  function call(label, method, path, payload) {
+    var root = base();
+    if (!root) { show(label, method, path, 0, 'Enter the API URL first.'); return; }
+    var url = root + path;
+    var opts = { method: method };
+    if (payload) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(payload); }
+    fetch(url, opts).then(function (res) {
+      return res.text().then(function (text) {
+        var body = text;
+        try { body = JSON.stringify(JSON.parse(text), null, 2); } catch (e) { /* not JSON */ }
+        show(label, method, url, res.status, body, payload);
+      });
+    }).catch(function (err) {
+      show(label, method, url, 0, String(err) +
+        '\n(Blocked by CORS or unreachable. The API only allows https://jkgithub79.github.io.)', payload);
+    });
+  }
+
+  function submission(overrides) {
+    var s = {
+      track_id: $('track').value,
+      time_ms: 25000 + Math.floor(Math.random() * 15000),
+      username: $('name').value,
+      player_id: player,
+      game_version: 'test'
+    };
+    for (var k in overrides) s[k] = overrides[k];
+    return s;
+  }
+
+  $('b-valid').addEventListener('click', function () {
+    call('valid time', 'POST', '/times', submission({}));
+  });
+  $('b-fast').addEventListener('click', function () {
+    call('impossible time', 'POST', '/times', submission({ time_ms: 5 }));
+  });
+  $('b-name').addEventListener('click', function () {
+    call('bad username', 'POST', '/times', submission({ username: 'bad name!' }));
+  });
+  $('b-board').addEventListener('click', function () {
+    call('leaderboard', 'GET', '/leaderboard/' + encodeURIComponent($('track').value) + '?limit=20');
+  });
+})();
+</script>
+</body>
+</html>

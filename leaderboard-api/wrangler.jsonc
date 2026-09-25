@@ -1,0 +1,16 @@
+// Block Racer leaderboard API. Built and deployed by Cloudflare from GitHub.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "leaderboard-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "leaderboard",
+      "database_id": "a67febc8-264f-41d9-b900-70cf459c9418",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

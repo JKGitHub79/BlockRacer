@@ -1,0 +1,14 @@
+{
+  "name": "leaderboard-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Block Racer leaderboard: a Cloudflare Worker over D1.",
+  "scripts": {
+    "migrate": "wrangler d1 migrations apply leaderboard --remote",
+    "deploy": "wrangler d1 migrations apply leaderboard --remote && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.140.0"
+  }
+}
