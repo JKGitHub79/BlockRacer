@@ -81,6 +81,7 @@
     var how = Input.how();
     dir = screen(dir);
     if (how === 'swipe') return 'SWIPE ' + NAME[key(dir)] + ' ' + ARROW[key(dir)];
+    if (how === 'auto') return 'TAP TO TURN';
     if (how === 'tap') return sign > 0 ? 'TAP RIGHT' : 'TAP LEFT';
     return sign > 0 ? 'PRESS →' : 'PRESS ←';
   }
@@ -90,6 +91,7 @@
     var how = Input.how();
     dir = screen(dir);
     if (how === 'swipe') return dir.x !== 0 ? 'Swipe up or down' : 'Swipe left or right';
+    if (how === 'auto') return 'Tap';
     if (how === 'tap') return 'Tap either side';
     return 'Press ← or →';
   }
@@ -98,6 +100,10 @@
   function holdHint(k, sign) {
     var how = Input.how();
     var side = sign > 0 ? 'right' : 'left';
+    if (how === 'auto') {
+      return k === 0 ? 'Tap anywhere - it picks the way'
+                     : 'You choose when, it chooses which way';
+    }
     if (k === 0) {
       return how === 'swipe' ? 'Swipe the way you want to go'
            : how === 'tap' ? 'Tap the ' + side + ' side of the screen'
@@ -199,7 +205,7 @@
 
     if (this.hold) {
       while (Input.turns.length) {
-        var s = Input.resolve(Input.turns.shift(), P.dir);
+        var s = Input.resolve(Input.turns.shift(), P.dir, P);
         if (s === this.need) {
           this.hold = false;
           this.wrongUntil = 0;           // not carried to the next corner

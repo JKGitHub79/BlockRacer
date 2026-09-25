@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.53.0', built: '2026-09-24' };
+window.BR = { version: '0.54.0', built: '2026-09-24' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -243,19 +243,22 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
         <div id="control-buttons" class="laps">
           <button data-control="swipe">SWIPE</button>
           <button data-control="tap">TAP</button>
+          <button data-control="auto">AUTO TURN</button>
         </div>
         <p class="hint">For touchscreens. SWIPE turns the car to face the way
           you swipe - up, down, left or right; a swipe the way you are already
           going, or straight back, does nothing, since a turn is always a
           quarter turn. TAP turns left or right with a tap on that half of the
-          screen. The car drives exactly the same either way, and keys and the
-          mouse are not affected.</p>
+          screen. AUTO TURN: tap anywhere and it turns whichever way the track
+          goes next - you still choose when. The car drives exactly the same
+          every way, and keys and the mouse are not affected.</p>
       </div>
 
       <div class="opt">
         <p class="lapline">TUTORIAL</p>
-        <p class="hint">One lap that teaches steering, sliding and finishing,
-          in whatever control style you use. Nothing in it counts.</p>
+        <p class="hint">A lap that teaches steering, sliding and finishing, in
+          whatever control style you use, then one real lap at full speed.
+          Nothing in it counts.</p>
         <button id="btn-tutorial" class="secondary wide-btn">PLAY TUTORIAL</button>
       </div>
 
@@ -406,7 +409,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 <script>
 /* Loaded through the version so the browser fetches fresh files after a
  * deploy. document.write keeps them strictly in order, which they need. */
-['viewport', 'tracks', 'themes', 'config', 'track', 'car', 'ai', 'input', 'music', 'audio',
+['viewport', 'tracks', 'themes', 'config', 'track', 'car', 'ai', 'autoturn', 'input', 'music', 'audio',
  'progress', 'ghost', 'tutorial', 'cosmetics', 'unlocks', 'backdrop', 'render', 'screens', 'game']
   .forEach(function (name) {
     document.write('<script src="js/' + name + '.js?v=' + BR.version + '"><\/script>');

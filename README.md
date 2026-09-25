@@ -1363,6 +1363,29 @@ moment, so two quick swipes are read one after the other correctly. A swipe
 the way you are already going, or straight back, does nothing: no single
 quarter turn gets there, and one swipe is only ever one turn.
 
+**Auto Turn** is the third control style: tap anywhere on the race and the
+car turns whichever way the track goes next. You still choose *when* - the
+tap is the turn - and it never turns, steers or moves the car on its own; it
+only answers left or right, and the answer goes into the same queue and the
+same `Car.turn` as every other input. `js/autoturn.js` decides, in track
+space, so a board turned a quarter on an upright phone changes nothing:
+
+- **Following the route** - heading along the leg the car is on, or just
+  round onto the next one - a tap is the next change of direction in the
+  racing line: the corner, or the lane change, whatever comes next.
+- **Anything else** - stopped against a wall, pointing backwards, off the
+  line, or turned too early into the inside of a corner - a tap turns toward
+  a point four cells further along the line, and away from a wall that would
+  stop it at once. One tap gets a crashed car going again in the direction of
+  the lap; a car pointing backwards takes two, as it would with any control.
+
+Checked on every one of the 37 tracks: placed at the turn point of each of
+their 500 corners it picks the route's way every time, and a simulated player
+who only ever decides when to tap finishes a lap on all of them - with good
+timing, with timing a cell either way, starting pointed backwards, and turning
+early into the inside of every corner. HOME, pause and every other button are
+never a turn. A mouse still taps a side, as it does under Swipe.
+
 A finger has to travel 24 CSS pixels (about 4mm on a phone, where a tap
 wanders one or two) before it counts, so a tap never steers; it fires the
 moment it gets there rather than on lifting, and that finger is then spent

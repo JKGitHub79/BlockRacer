@@ -440,9 +440,11 @@
   };
   try {
     var savedControl = global.localStorage && global.localStorage.getItem(CONTROL_KEY);
-    if (savedControl === 'tap' || savedControl === 'swipe') CONFIG.control = savedControl;
+    if (savedControl === 'tap' || savedControl === 'swipe' || savedControl === 'auto') {
+      CONFIG.control = savedControl;
+    }
   } catch (e) { /* unreadable storage: keep the default */ }
-  var controlParam = /[?&]control=(tap|swipe)/.exec(search);
+  var controlParam = /[?&]control=(tap|swipe|auto)/.exec(search);
   if (controlParam) CONFIG.control = controlParam[1];
 
   CONFIG.musicVolume = 60;

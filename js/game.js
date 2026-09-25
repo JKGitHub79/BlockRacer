@@ -556,7 +556,7 @@
     // Player controls: a turn is the only input, and it also restarts a car
     // that is sitting against a wall.
     var turn;
-    while ((turn = Input.take(this.player.dir)) !== 0) this.playerTurn(turn);
+    while ((turn = Input.take(this.player.dir, this.player)) !== 0) this.playerTurn(turn);
 
     for (var i = 0; i < this.drivers.length; i++) this.drivers[i].update(dt);
 
@@ -676,6 +676,7 @@
       // across a phone-sized board.
       var how = Input.how();
       el.msg.textContent = how === 'swipe' ? 'CRASHED - SWIPE TO TURN AND GO'
+        : how === 'auto' ? 'CRASHED - TAP TO TURN AND GO'
         : how === 'tap' || el.board.clientWidth < 430 ? 'CRASHED - TAP LEFT OR RIGHT'
         : 'CRASHED - press LEFT or RIGHT to turn and go';
       el.msg.classList.add('show');
@@ -956,8 +957,9 @@
   /* Tap or swipe, for touchscreens. Input does the reading; the page needs
    * to know too, because swiping takes the race's touch gestures away from
    * the browser (css: html.swipe-control). */
+  var CONTROL_NAME = { swipe: 'SWIPE', tap: 'TAP', auto: 'AUTO TURN' };
   Game.setControl = function (mode, keep) {
-    C.control = mode === 'tap' ? 'tap' : 'swipe';
+    C.control = CONTROL_NAME[mode] ? mode : 'swipe';
     if (keep) C.saveControl();   // a choice, not boot applying the default
     Input.control = C.control;
     Input.clear();
@@ -965,7 +967,7 @@
     Array.prototype.forEach.call(el.controlButtons.children, function (b) {
       b.classList.toggle('on', b.dataset.control === C.control);
     });
-    document.getElementById('menu-control').textContent = C.control.toUpperCase();
+    document.getElementById('menu-control').textContent = CONTROL_NAME[C.control];
   };
 
   Game.setPlayerGlow = function (on) {

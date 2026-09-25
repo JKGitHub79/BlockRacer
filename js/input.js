@@ -14,29 +14,32 @@
   var RIGHT = ['ArrowRight', 'd', 'D', 'KeyD'];
 
   var Input = {
-    turns: [],          // pending -1 / +1, or a swiped direction {x, y}
-    control: 'swipe',   // how a touchscreen steers: 'swipe' or 'tap'
+    turns: [],          // pending -1 / +1, a swiped direction {x, y}, or {auto}
+    control: 'swipe',   // how a touchscreen steers: 'swipe', 'tap' or 'auto'
     onCommand: null,    // (name) => void  for restart / pause / mute / start
     /* The next turn, given where the car points now. A swiped direction is
      * the one 90-degree turn that points it that way: the sign of the cross
      * product, with screen y running down, is +1 for a right turn exactly as
      * Car.turn has it. Straight on, or straight back - which no single
      * quarter turn reaches - is dropped rather than guessed at. */
-    take: function (heading) {
+    take: function (heading, car) {
       while (this.turns.length) {
-        var s = this.resolve(this.turns.shift(), heading);
+        var s = this.resolve(this.turns.shift(), heading, car);
         if (s) return s;
       }
       return 0;
     },
-    // One queued entry as a turn: -1, +1, or 0 for a swipe no turn reaches.
-    resolve: function (t, heading) {
+    /* One queued entry as a turn: -1, +1, or 0 for a swipe no turn reaches.
+     * An Auto Turn tap is decided here too, as late as a swipe is, from
+     * where the car is and which way it points when the race takes it. */
+    resolve: function (t, heading, car) {
       if (typeof t === 'number') return t;
+      if (t.auto) return global.AutoTurn && car ? global.AutoTurn.choose(car) : 0;
       var s = heading ? heading.x * t.y - heading.y * t.x : 0;
       return s > 0 ? 1 : s < 0 ? -1 : 0;
     },
     /* How this player steers, for anything that has to tell them what to
-     * press: 'keys', 'swipe' or 'tap'. Whatever they last steered with;
+     * press: 'keys', 'swipe', 'tap' or 'auto'. Whatever they last steered with;
      * before that, a touchscreen is assumed to be a finger and anything else
      * a keyboard. */
     how: function () {
@@ -104,6 +107,12 @@
     lastKind = e.pointerType === 'mouse' ? 'keys' : 'touch';
     if (swiping(e)) {
       swipes[e.pointerId] = { x: e.clientX, y: e.clientY, done: false };
+      return;
+    }
+    // Auto Turn: anywhere is a turn, and AutoTurn picks which way when the
+    // race takes it. A finger only - a mouse still taps a side, like Swipe.
+    if (Input.control === 'auto' && e.pointerType !== 'mouse') {
+      Input.turns.push({ auto: true });
       return;
     }
     Input.turns.push(e.clientX < global.innerWidth / 2 ? -1 : 1);
