@@ -1009,6 +1009,52 @@
     drawFlyby(g, t, T.width, T.height, S * 1.7);
   };
 
+  /* A point on the screen, in the track pixels the board is drawn in -
+   * through the quarter turn when the board has one - with how many CSS
+   * pixels one track pixel is. Null when it is off the board. */
+  function screenToTrack(cx, cy) {
+    var rc = Renderer.canvas.getBoundingClientRect();
+    var lx = cx - rc.left, ly = cy - rc.top;
+    if (!(rc.width > 0) || lx < 0 || ly < 0 || lx > rc.width || ly > rc.height) return null;
+    return Renderer.rotated
+      ? { x: T.width - ly / rc.height * T.width, y: lx / rc.width * T.height, px: rc.width / T.height }
+      : { x: lx / rc.width * T.width, y: ly / rc.height * T.height, px: rc.width / T.width };
+  }
+
+  /* Did a press at (cx, cy) land on the saucer? It is drawn from the same
+   * clock this reads, so this is where it was, not a guess. It moves a
+   * board's width in three quarters of a second, so the press is checked
+   * against the last 150ms of its path (a finger lands where the thing WAS)
+   * with a disc a little bigger than the saucer, and never less than 22 CSS
+   * pixels across the radius, which is about a fingertip. Returns which pass
+   * it was (-1 for a miss), so two presses can be matched to one pass. The
+   * saucer itself is untouched: nothing here draws, and nothing about it
+   * looks or behaves any differently for being pressable. */
+  Renderer.ufoHit = function (cx, cy) {
+    if (!(T.theme && T.theme.hive) || C.contrastColors()) return -1;
+    var p = screenToTrack(cx, cy);
+    if (!p) return -1;
+    var r = S * 1.7, reach = Math.max(r * 1.25, 22 / p.px);
+    var now = (global.performance ? performance.now() : Date.now()) / 1000;
+    for (var back = 0; back <= 0.15; back += 0.015) {
+      var t = now - back, k = Math.floor(t / UFO_PERIOD);
+      var at = ufoAt(k, t - k * UFO_PERIOD, T.width, T.height, r);
+      if (at && Math.hypot(at.x - p.x, at.y - p.y) <= reach) return k;
+    }
+    return -1;
+  };
+
+  // Where the saucer is on the screen right now, or null. For the tests.
+  Renderer._ufoScreen = function () {
+    var t = (global.performance ? performance.now() : Date.now()) / 1000, k = Math.floor(t / UFO_PERIOD);
+    var at = ufoAt(k, t - k * UFO_PERIOD, T.width, T.height, S * 1.7);
+    if (!at) return null;
+    var rc = this.canvas.getBoundingClientRect();
+    return this.rotated
+      ? { x: rc.left + at.y / T.height * rc.width, y: rc.top + (T.width - at.x) / T.width * rc.height }
+      : { x: rc.left + at.x / T.width * rc.width, y: rc.top + at.y / T.height * rc.height };
+  };
+
   Renderer.init = function (canvas) {
     this.canvas = canvas;
     this.setTrack();

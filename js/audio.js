@@ -167,6 +167,12 @@
     // Slow and low: a held tone that swells in and hangs on.
     drone:   { waves: [['sine', 1], ['triangle', 0.3, -6], ['sine', 0.15, 5, 2]],
                filter: { f: 480, q: 0.5 }, a: 2.5, d: 0.5, s: 0.9, r: 3, level: 0.16 },
+    // A wide, slow wobble, like a theremin a long way off.
+    theremin: { waves: [['sine', 1], ['sine', 0.15, 0, 2]], vib: [2.6, 40],
+               a: 0.8, d: 0.4, s: 0.8, r: 1.8, level: 0.08 },
+    // A short electronic ping with a quick flutter, into the echo.
+    ping:    { waves: [['sine', 1], ['sine', 0.25, 0, 3.01]], vib: [9, 8],
+               a: 0.004, d: 1.1, s: 0, level: 0.05 },
     // A struck glass: a single high tone with one inharmonic partial.
     glass:   { waves: [['sine', 1], ['sine', 0.22, 0, 2.76]],
                a: 0.02, d: 3.2, s: 0, level: 0.07 },
@@ -533,6 +539,82 @@
     pb: { gap: 0.5, play: function (a, o, t) {
       run(a, o, t, [880, 1109, 1319, 1760], 0.06, { dur: 0.12, gain: 0.08 });
       bell(a, o, t + 0.26, 2637, 0.08, 0.7);
+    } },
+    // Pulled up and out: a chord gliding up three and a half octaves over
+    // 4.2 seconds, trembling faster as it goes, under a rising hiss - and
+    // then nothing, at once.
+    rise: { gap: 3, play: function (a, o, t) {
+      var dur = 4.2;
+      [0, 7, 12.1].forEach(function (semi, i) {
+        var f0 = 70 * Math.pow(2, semi / 12);
+        var osc = a.createOscillator(), g = a.createGain();
+        var lfo = a.createOscillator(), depth = a.createGain();
+        osc.type = i === 2 ? 'triangle' : 'sine';
+        osc.frequency.setValueAtTime(f0, t);
+        osc.frequency.exponentialRampToValueAtTime(f0 * 11, t + dur);
+        lfo.frequency.setValueAtTime(3, t);
+        lfo.frequency.linearRampToValueAtTime(17, t + dur);
+        depth.gain.setValueAtTime(0.05, t);
+        lfo.connect(depth);
+        depth.connect(g.gain);
+        g.gain.setValueAtTime(SILENT, t);
+        g.gain.linearRampToValueAtTime(0.06, t + 1.2);
+        g.gain.linearRampToValueAtTime(0.11, t + dur - 0.04);
+        g.gain.linearRampToValueAtTime(0, t + dur);
+        osc.connect(g);
+        g.connect(o);
+        osc.start(t); lfo.start(t);
+        osc.stop(t + dur + 0.02); lfo.stop(t + dur + 0.02);
+        tidy(osc, [osc, g, lfo, depth]);
+      });
+      var src = a.createBufferSource(), f = a.createBiquadFilter(), ng = a.createGain();
+      src.buffer = noiseBuffer(a);
+      src.loop = true;
+      f.type = 'bandpass';
+      f.Q.setValueAtTime(2, t);
+      f.frequency.setValueAtTime(300, t);
+      f.frequency.exponentialRampToValueAtTime(5000, t + dur);
+      ng.gain.setValueAtTime(SILENT, t);
+      ng.gain.linearRampToValueAtTime(0.1, t + dur - 0.04);
+      ng.gain.linearRampToValueAtTime(0, t + dur);
+      src.connect(f); f.connect(ng); ng.connect(o);
+      src.start(t);
+      src.stop(t + dur + 0.02);
+      tidy(src, [src, f, ng]);
+    } },
+    // Hostile: a distorted low cluster and a burst of noise, hammering four
+    // times in time with the red - 2.5 a second, no faster.
+    hostile: { gap: 3, play: function (a, o, t) {
+      if (!a.__brShaper) {
+        var n = 1024, curve = new Float32Array(n);
+        for (var i = 0; i < n; i++) { var x = i / (n - 1) * 2 - 1; curve[i] = Math.tanh(x * 6); }
+        a.__brShaper = curve;
+      }
+      var shaper = a.createWaveShaper(), g = a.createGain();
+      shaper.curve = a.__brShaper;
+      shaper.connect(g);
+      g.connect(o);
+      g.gain.setValueAtTime(SILENT, t);
+      for (var p = 0; p < 4; p++) {
+        g.gain.setValueAtTime(0.16, t + p * 0.4);
+        g.gain.setValueAtTime(0.05, t + p * 0.4 + 0.2);
+      }
+      g.gain.setValueAtTime(0, t + 1.6);
+      var last = null;
+      [55, 58.27, 77.78].forEach(function (f) {
+        var osc = a.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(f, t);
+        osc.frequency.linearRampToValueAtTime(f * 0.94, t + 1.6);
+        osc.connect(shaper);
+        osc.start(t);
+        osc.stop(t + 1.62);
+        last = osc;
+      });
+      tidy(last, [shaper, g]);
+      for (var q = 0; q < 4; q++) {
+        hiss(a, o, t + q * 0.4, { filter: 'highpass', f: 900, dur: 0.2, gain: 0.09, at: 0.004 });
+      }
     } }
   };
 

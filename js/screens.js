@@ -58,6 +58,7 @@
     if (name === 'options') this.buildLegacy();
     if (name === 'shop') this.paintShop();
     global.Input.clear();
+    if (global.Abduct) global.Abduct.sync();
   };
 
   /* ---- track select ----------------------------------------------------

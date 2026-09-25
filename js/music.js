@@ -214,5 +214,20 @@
       B: '. . . . 12 _ _ _  . . . . . . . .  . . . . . . 9 _  . . . . . . . .' }
   };
 
+  /* Another one nobody is meant to hear, and not the same place: a deeper
+   * drone, a slow wide wobble like something tuning in from far away, and
+   * the odd electronic ping into a long echo, in a scale that belongs to no
+   * key. Cut short when it ends, rather than faded. */
+  SONGS.drift = {
+    bpm: 34, gain: 0.79, root: 33, scale: 'hungarian', prog: [0, 0, 4, 0], form: 'ABAB',
+    delay: 0.55, fadeIn: 3,
+    drums: {},
+    bass: { inst: 'drone', oct: 0, pat: 'x---------------' },
+    arp:  { inst: 'ping', oct: 3, pat: '......x.........', seq: [0, 2, 1, 3] },
+    lead: { inst: 'theremin', oct: 1,
+      A: '. . . . . . . .  4 _ _ _ _ _ . .  . . . . . . . .  3 _ _ _ 2 _ _ _',
+      B: '. . . . . . . .  . . 6 _ _ _ _ _  . . . . . . . .  . . . . 5 _ _ _' }
+  };
+
   global.MUSIC = { scales: SCALES, songs: SONGS };
 })(typeof window !== 'undefined' ? window : globalThis);

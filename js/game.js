@@ -353,6 +353,7 @@
     this.state = 'countdown';
     this.updateStandings();
     this.tutorial = tutorial && global.Tutorial ? global.Tutorial.begin(this) : null;
+    if (global.Abduct) global.Abduct.sync();
 
     /* A trial's ghost: the record lap for this track and speed, if one was
      * driven since ghosts existed, and a recorder for the lap you are about
@@ -1099,7 +1100,8 @@
 
   Game.command = function (name) {
     // Nothing but mute while something else has the screen.
-    if (global.Secret && global.Secret.active && name !== 'mute') return;
+    if (((global.Secret && global.Secret.active) || (global.Abduct && global.Abduct.active)) &&
+        name !== 'mute') return;
     // Everything here is a race control. On a menu screen the keys belong to
     // the screen, not to a race that is not running.
     var racing = global.Screens.current === 'race';
