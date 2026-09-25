@@ -1007,7 +1007,15 @@ is said, and the results screen is exactly what it was.
 
 **The first lap worth sending asks for a name** - 1-16 of `A-Z a-z 0-9 _`,
 the API's own rule, checked as you type - and makes a player id with
-`crypto.randomUUID()`. Both are kept under `blockracer.leaderboard.v1`, so
+`crypto.randomUUID()`. **A name is one player's.** SAVE asks the API for it
+first, and one another player already has - in any mix of capitals, so `Bolt`
+and `bolt` are the same name - is refused in the box with *Username already in
+use*, which stays open for another. Nothing is kept until the API has said yes,
+so offline the box says it could not check rather than keeping a name that may
+not be yours. A name saved before names were checked, that turns out to be
+someone else's, is refused when a lap is sent: the box opens again with the
+same message, the lap goes in under the new name, and the player id - and with
+it every time already on the board - is kept. Both are kept under `blockracer.leaderboard.v1`, so
 every later lap from that browser is the same player and is sent without
 asking. NOT NOW sends nothing and asks again next time. RESET DATA leaves the
 name and id alone: the times already on the board are still yours. While the

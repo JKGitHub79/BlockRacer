@@ -1,5 +1,6 @@
 /* Block Racer leaderboard API - a Cloudflare Worker over D1 (binding DB).
  *
+ *   POST /players                   claim a username for a player id
  *   POST /times                     submit a time
  *   GET  /leaderboard/:track?limit  best time per player, fastest first
  *
@@ -29,6 +30,8 @@ const RATE_LIMIT = 10;                  // submissions
 const RATE_WINDOW_MS = 60 * 60 * 1000;  // per hour, per hashed IP
 const MAX_TIME_MS = 60 * 60 * 1000;     // an hour: anything longer is not a lap
 const MAX_BODY_BYTES = 2048;
+const NAME_LIMIT = 10;                  // names claimed or changed, per hashed IP per hour
+const TAKEN = 'Username already in use';
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 1000;                // "show all": every player there is, within reason
 
@@ -104,16 +107,99 @@ function validate(body) {
 
 /* ---- POST /times ------------------------------------------------------------ */
 
-async function submitTime(request, env) {
+// A JSON body, or the Response that says why there is not one.
+async function readJson(request) {
   const type = request.headers.get('Content-Type') || '';
   if (!type.toLowerCase().startsWith('application/json')) {
-    return fail(request, 415, 'Content-Type must be application/json');
+    return { error: fail(request, 415, 'Content-Type must be application/json') };
   }
   const text = await request.text();
-  if (text.length > MAX_BODY_BYTES) return fail(request, 413, 'body too large');
+  if (text.length > MAX_BODY_BYTES) return { error: fail(request, 413, 'body too large') };
+  try { return { body: JSON.parse(text) }; } catch { return { error: fail(request, 400, 'body is not valid JSON') }; }
+}
 
-  let body;
-  try { body = JSON.parse(text); } catch { return fail(request, 400, 'body is not valid JSON'); }
+function taken(request) {
+  return json(request, 409, { error: TAKEN, code: 'username_taken' });
+}
+
+/* ---- names ------------------------------------------------------------------ */
+
+/* Give `username` to `playerId`, or say whose it is. 'ok' when the player
+ * has it now (already had it, took a free one, or changed to a free one);
+ * 'taken' when another player holds it. Unique ignoring case. A player who
+ * changes name takes their times with them, so the board shows one name per
+ * player and the old one is free again. The UNIQUE index is the referee
+ * when two players reach for one name at the same moment. */
+async function claimName(env, playerId, username, ipHash, now) {
+  const key = username.toLowerCase();
+  const holder = await env.DB.prepare(
+    'SELECT player_id, username FROM players WHERE username_key = ?1'
+  ).bind(key).first();
+  if (holder && holder.player_id !== playerId) return 'taken';
+  if (holder && holder.username === username) return 'ok';
+  try {
+    await env.DB.prepare(
+      `INSERT INTO players (player_id, username, username_key, ip_hash, created_at, updated_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?5)
+       ON CONFLICT (player_id) DO UPDATE SET
+         username = excluded.username, username_key = excluded.username_key,
+         ip_hash = excluded.ip_hash, updated_at = excluded.updated_at`
+    ).bind(playerId, username, key, ipHash, now).run();
+  } catch (err) {
+    if (/UNIQUE/i.test(String(err && err.message))) return 'taken';
+    throw err;
+  }
+  await env.DB.prepare('UPDATE times SET username = ?2 WHERE player_id = ?1 AND username <> ?2')
+    .bind(playerId, username).run();
+  return 'ok';
+}
+
+/* POST /players { player_id, username }: claim a name before using it. */
+async function registerPlayer(request, env) {
+  const read = await readJson(request);
+  if (read.error) return read.error;
+  const body = read.body;
+  const errors = [];
+  if (!body || typeof body !== 'object' || Array.isArray(body)) errors.push('body must be a JSON object');
+  else {
+    if (typeof body.username !== 'string' || !USERNAME.test(body.username)) {
+      errors.push('username must be 1-16 characters of A-Z, a-z, 0-9 or _');
+    }
+    if (typeof body.player_id !== 'string' || !UUID.test(body.player_id)) errors.push('player_id must be a UUID');
+  }
+  if (errors.length) return fail(request, 400, 'invalid player', errors);
+
+  const ip = request.headers.get('CF-Connecting-IP');
+  if (!ip) return fail(request, 400, 'could not identify the client');
+  const ipHash = await sha256Hex(ip);
+  const now = Date.now();
+  const pid = body.player_id.toLowerCase();
+
+  // Asking about a name you already have is free; taking or changing one is
+  // limited, so nobody can sweep up every name going.
+  const mine = await env.DB.prepare('SELECT username FROM players WHERE player_id = ?1').bind(pid).first();
+  if (!(mine && mine.username === body.username)) {
+    const holder = await env.DB.prepare('SELECT player_id FROM players WHERE username_key = ?1')
+      .bind(body.username.toLowerCase()).first();
+    if (holder && holder.player_id !== pid) return taken(request);
+    const recent = await env.DB.prepare(
+      'SELECT COUNT(*) AS n FROM players WHERE ip_hash = ?1 AND updated_at > ?2'
+    ).bind(ipHash, now - RATE_WINDOW_MS).first();
+    if (recent && recent.n >= NAME_LIMIT) {
+      return json(request, 429, { error: `rate limit: at most ${NAME_LIMIT} names per hour`, retry_after_seconds: 3600 },
+        { 'Retry-After': '3600' });
+    }
+  }
+  if (await claimName(env, pid, body.username, ipHash, now) === 'taken') return taken(request);
+  return json(request, 201, { ok: true, player_id: pid, username: body.username });
+}
+
+/* ---- times ------------------------------------------------------------------- */
+
+async function submitTime(request, env) {
+  const read = await readJson(request);
+  if (read.error) return read.error;
+  const body = read.body;
 
   const errors = validate(body);
   if (errors.length) return fail(request, 400, 'invalid submission', errors);
@@ -122,6 +208,12 @@ async function submitTime(request, env) {
   if (!ip) return fail(request, 400, 'could not identify the client');
   const ipHash = await sha256Hex(ip);
   const now = Date.now();
+
+  // A time goes under a name only its own player holds. A name nobody holds
+  // yet is claimed by the first time sent with it.
+  if (await claimName(env, body.player_id.toLowerCase(), body.username, ipHash, now) === 'taken') {
+    return taken(request);
+  }
 
   /* The count and the insert are one statement, so two submissions arriving
    * together cannot both slip under the limit. No row inserted means the
@@ -244,6 +336,10 @@ export default {
     }
 
     try {
+      if (path === '/players') {
+        if (request.method !== 'POST') return fail(request, 405, 'use POST');
+        return await registerPlayer(request, env);
+      }
       if (path === '/times') {
         if (request.method !== 'POST') return fail(request, 405, 'use POST');
         return await submitTime(request, env);

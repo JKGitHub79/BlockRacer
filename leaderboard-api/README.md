@@ -13,6 +13,14 @@ Block Racer's leaderboard: a Cloudflare Worker over the D1 database
 
 ## Endpoints
 
+`POST /players` with `{ "player_id", "username" }` claims a name. Names are
+unique ignoring case and each player holds one: `201` when it is yours (new,
+already yours, or changed to - your times move to the new name and the old one
+is free again), `409 { "error": "Username already in use", "code":
+"username_taken" }` when another player holds it, `429` past 10 claims an hour
+from one address. `migrations/0002_players.sql` gives every name already on the
+board to whoever used it first.
+
 `POST /times` with a JSON body:
 
 ```json
@@ -26,6 +34,8 @@ Block Racer's leaderboard: a Cloudflare Worker over the D1 database
 - `player_id`: a UUID
 - `game_version`: optional, 1-20 characters of `A-Z a-z 0-9 . + -`
 
+A time is only stored under a name its player holds: a name nobody holds yet
+is claimed by it, and one another player holds gets the same `409`.
 Replies `201` when stored - with the player's `rank` on the track afterwards,
 the `total` number of players there and their `best_ms`, ranked as the
 leaderboard ranks them - `400` listing every problem, `415` without a JSON

@@ -2298,3 +2298,5 @@ body.mode-trial #screen-play:not(.progress-page) .lb-corner { display: block; }
 .results-note .pb-rank { display: block; margin-top: 6px; font-size: 11px; letter-spacing: 2px; color: #8fb6ff; }
 /* A narrow panel has no room to centre the caption against BACK's width. */
 @media (max-width: 460px) { .lb-cap { padding-right: 0; text-align: right; font-size: 9px; letter-spacing: 1px; } }
+/* NOT NOW and SAVE, one line each even on the narrowest phone. */
+#lb-name .row button { white-space: nowrap; padding-left: 8px; padding-right: 8px; }

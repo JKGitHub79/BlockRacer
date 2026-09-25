@@ -30,6 +30,7 @@
   var pending = null;           // the submission in flight, if any
   var asking = null;            // what to send once a name is given
   var askingRank = null;        // and who wants to hear where it lands
+  var claimId = null;           // a new player's id, kept across tries at a name
   var el = {};
 
   function $(id) { return document.getElementById(id); }
@@ -40,7 +41,9 @@
     try {
       var raw = global.localStorage && global.localStorage.getItem(KEY);
       var d = raw ? JSON.parse(raw) : null;
-      if (d && UUID.test(d.player_id) && NAME.test(d.username)) return d;
+      // A player whose name turned out to be someone else's keeps their id
+      // and is asked for a new name, so their times stay theirs.
+      if (d && UUID.test(d.player_id)) return { player_id: d.player_id, username: NAME.test(d.username) ? d.username : null };
     } catch (e) { /* unreadable: ask again */ }
     return null;
   }
@@ -109,6 +112,7 @@
     p.then(function (r) {
       if (pending === p) pending = null;
       cache = {};
+      if (r && r.status === 409 && r.body && r.body.code === 'username_taken') return nameTaken(entry, onRank);
       rankAfter(r, entry.track_id, onRank);
     });
     return p;
@@ -129,48 +133,95 @@
       time_ms: Math.round(seconds * 1000),
       game_version: global.BR ? String(global.BR.version) : undefined
     };
-    if (!me) { askName(entry, onRank); return null; }
+    if (!me || !me.username) { askName(entry, onRank); return null; }
     entry.username = me.username;
     entry.player_id = me.player_id;
     return post(entry, onRank);
   };
 
-  /* ---- the name ---------------------------------------------------------------- */
+  /* ---- the name ----------------------------------------------------------------
+   *
+   * A name is one player's. SAVE asks the API for it first (POST /players),
+   * and a name someone else has - in any mix of capitals - is refused in the
+   * box, which stays open for another. Nothing is saved until the API has
+   * said yes, so a name that could not be checked is not kept either. */
 
-  function askName(entry, onRank) {
+  var TAKEN = 'Username already in use';
+  var RULE = '';                 // the box's own line, read from the page
+
+  function ruleSays(text, bad) {
+    el.nameRule.textContent = text || RULE;
+    el.nameRule.classList.toggle('bad', !!bad);
+  }
+
+  function askName(entry, onRank, why) {
     asking = entry;
     askingRank = onRank || null;
     el.nameInput.value = '';
     nameChanged();
+    if (why) ruleSays(why, true);
     el.name.classList.add('show');
     // A tap brings the keyboard up anyway; a desktop gets the cursor in the box.
     setTimeout(function () { try { el.nameInput.focus({ preventScroll: true }); } catch (e) { el.nameInput.focus(); } }, 30);
   }
 
   function nameChanged() {
-    var ok = NAME.test(el.nameInput.value);
-    el.nameSave.disabled = !ok;
-    el.nameRule.classList.toggle('bad', el.nameInput.value.length > 0 && !ok);
+    var v = el.nameInput.value, ok = NAME.test(v);
+    el.nameSave.disabled = !ok || el.name.classList.contains('checking');
+    ruleSays(RULE, v.length > 0 && !ok);
   }
 
   function closeName() {
-    el.name.classList.remove('show');
+    el.name.classList.remove('show', 'checking');
     asking = null;
     askingRank = null;
     if (document.activeElement === el.nameInput) el.nameInput.blur();
   }
 
+  /* The lap that was sent under a name that turned out to be someone else's
+   * (one saved before names were checked). The name goes; the id stays. If
+   * its results are still up, the box asks for another now and sends the
+   * lap under it; otherwise the next lap asks. */
+  function nameTaken(entry, onRank) {
+    save({ player_id: me.player_id, username: null });
+    var S = global.Screens, G = global.Game;
+    if (S && S.current === 'race' && G && G.state === 'finished' && !Leaderboard.busy()) {
+      askName({ track_id: entry.track_id, time_ms: entry.time_ms, game_version: entry.game_version }, onRank, TAKEN);
+    }
+  }
+
   function saveName() {
     var name = el.nameInput.value;
-    if (!NAME.test(name)) { nameChanged(); return; }
-    var entry = asking, onRank = askingRank;
-    save({ player_id: me ? me.player_id : newId(), username: name });
-    closeName();
-    if (entry) {
-      entry.username = me.username;
-      entry.player_id = me.player_id;
-      post(entry, onRank);
-    }
+    if (!NAME.test(name) || el.name.classList.contains('checking')) { nameChanged(); return; }
+    var id = me ? me.player_id : (claimId = claimId || newId());
+    el.name.classList.add('checking');
+    el.nameSave.disabled = true;
+    ruleSays('CHECKING\u2026', false);
+    api('/players', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player_id: id, username: name })
+    }).then(function (r) { return r; }, function () { return null; }).then(function (r) {
+      el.name.classList.remove('checking');
+      if (!el.name.classList.contains('show')) return;          // closed meanwhile
+      if (r && r.ok) {
+        var entry = asking, onRank = askingRank;
+        save({ player_id: id, username: name });
+        claimId = null;
+        closeName();
+        if (entry) {
+          entry.username = me.username;
+          entry.player_id = me.player_id;
+          post(entry, onRank);
+        }
+        return;
+      }
+      el.nameSave.disabled = !NAME.test(el.nameInput.value);
+      if (r && r.status === 409) ruleSays(TAKEN, true);
+      else if (r && r.status === 429) ruleSays('Too many names tried - try again later', true);
+      else ruleSays('Could not check that name - try again', true);
+      try { el.nameInput.focus({ preventScroll: true }); } catch (e) { /* fine */ }
+    });
   }
 
   /* ---- the boards ------------------------------------------------------------
@@ -379,6 +430,7 @@
     el.nameInput = $('lb-name-input');
     el.nameRule = $('lb-name-rule');
     el.nameSave = $('lb-name-save');
+    RULE = el.nameRule ? el.nameRule.textContent : '';
     el.board = $('lb-board');
     el.title = $('lb-title');
     el.speed = $('lb-speed');
