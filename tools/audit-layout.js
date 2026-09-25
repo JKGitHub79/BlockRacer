@@ -131,7 +131,7 @@ const SCREENS = [
         const doc = document.documentElement;
         const out = {
           hScroll: doc.scrollWidth - window.innerWidth,
-          missing: [], offRight: [], offBottom: [], tiny: []
+          missing: [], offRight: [], offBottom: [], tiny: [], outPanel: []
         };
         const b = box && document.querySelector(box);
         /* documentElement.scrollHeight is never reported as less than the
@@ -157,6 +157,15 @@ const SCREENS = [
               out.offRight.push(sel);
             }
             if (b.bottom > VH - SAFE.b + 1 || b.top < SAFE.t - 1) out.offBottom.push(sel);
+            /* Inside its panel, too. On screen is not enough: CONTINUE once
+             * stuck out past the side of the pause panel by 4-10px on every
+             * screen wider than 400px, and nothing here noticed. */
+            const panel = el.closest('.panel');
+            if (panel) {
+              const p = panel.getBoundingClientRect(), cs = getComputedStyle(panel);
+              if (b.left < p.left + parseFloat(cs.borderLeftWidth) - 0.5 ||
+                  b.right > p.right - parseFloat(cs.borderRightWidth) + 0.5) out.outPanel.push(sel);
+            }
           });
         });
         // the carousel must keep its three cards in one row
@@ -191,6 +200,7 @@ const SCREENS = [
       if (r.missing.length) bad.push('missing ' + r.missing.join(','));
       if (r.tiny.length) bad.push('zero-sized ' + [...new Set(r.tiny)].join(','));
       if (r.offRight.length) bad.push('off the side: ' + [...new Set(r.offRight)].join(','));
+      if (r.outPanel.length) bad.push('out of its panel: ' + [...new Set(r.outPanel)].join(','));
       if (sc.fits && r.vScroll > 1) bad.push('needs ' + r.vScroll + 'px of scroll');
       if (sc.fits && r.offBottom.length) {
         bad.push('under the browser chrome or the notch: ' +
