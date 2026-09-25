@@ -10,9 +10,9 @@
  *
  * Two cases:
  *
- *   Following the route. The car is heading along the leg it is on (or has
- *   just turned onto the next one and the standings have not caught up), so
- *   the next turn is simply the next change of direction in the route - the
+ *   Following the route. The car is running along a leg of it (onLeg - worked
+ *   out here from where the car is, not taken from the standings), so the
+ *   next turn is simply the next change of direction in the route - the
  *   corner, the lane change, whatever the line does next. Whichever of left
  *   and right points the car that way is the answer.
  *
@@ -40,8 +40,8 @@
   }
 
   // The point `dist` cells further along the racing line than the car.
-  function ahead(car, dist) {
-    var n = T.ROUTE.length, j = mod(car.leg, n);
+  function ahead(car, dist, leg) {
+    var n = T.ROUTE.length, j = mod(leg, n);
     var s = along(j, car.x, car.y), rem = T.LEG_LEN[j] - s;
     var p = { x: T.ROUTE[j].x + T.LEG_DIR[j].x * s, y: T.ROUTE[j].y + T.LEG_DIR[j].y * s };
     var guard = n;
@@ -64,12 +64,63 @@
     return null;
   }
 
-  /* Is the car genuinely round the corner at the end of leg j - or near
-   * enough to it that it is taking it - rather than having turned early
-   * into the inside of it? */
-  function atCorner(car, j) {
-    var slack = Math.max(C.slide, 0) + 2;
-    return T.LEG_LEN[j] - along(j, car.x, car.y) <= slack;
+  /* Which leg of the route the car is on, worked out here for itself.
+   *
+   * Not car.leg. That comes from the standings, which only ever look a leg
+   * or two either side of the last answer and refuse to jump far - right for
+   * a running order, wrong for this: once a car leaves the line (skips a lane
+   * change, is shoved across by the field, spins, comes off a wall) it can go
+   * on reporting a leg twenty cells away, and a tap then turned the car for
+   * that leg's corner. The wrong way.
+   *
+   * The leg a car is ON is one that runs the way it is pointing, that it is
+   * alongside - no more than a road's width off to the side, not behind where
+   * the leg starts by more than a slide's worth of turning early, and not so
+   * far past its end that it has clearly carried on somewhere else - and the
+   * nearest of those. None, and it is not on the route. A hair of preference
+   * for legs just ahead of the standings' answer settles ties between
+   * parallel legs the right way round. */
+  var SIDE = 5, OVERRUN = 4;                 // cells
+  function onLeg(car) {
+    var n = T.ROUTE.length, d = car.dir, hint = mod(car.leg || 0, n);
+    var best = Infinity, leg = -1, early = Math.max(C.slide, 0) + 1.5;
+    for (var i = 0; i < n; i++) {
+      var ld = T.LEG_DIR[i];
+      if (!same(ld, d)) continue;
+      var a = T.ROUTE[i];
+      var t = (car.x - a.x) * ld.x + (car.y - a.y) * ld.y;
+      if (t < -early || t > T.LEG_LEN[i] + OVERRUN) continue;
+      var side = Math.abs((car.x - a.x) * ld.y - (car.y - a.y) * ld.x);
+      if (side > SIDE) continue;
+      var off = t < 0 ? -t : t > T.LEG_LEN[i] ? t - T.LEG_LEN[i] : 0;
+      var score = side * side + off * off + 0.01 * mod(i - hint, n);
+      if (score < best) { best = score; leg = i; }
+    }
+    return leg;
+  }
+
+  function offLine(j, car) {
+    var s = along(j, car.x, car.y), a = T.ROUTE[j], ld = T.LEG_DIR[j];
+    return Math.hypot(a.x + ld.x * s - car.x, a.y + ld.y * s - car.y);
+  }
+
+  /* Where to aim a recovery. The standings' leg while the car is still beside
+   * it - a car that has just hit a wall is nearly always where the standings
+   * think - and otherwise the nearest leg of all, whichever way it runs. A
+   * crashed car's heading says little, so only a car still moving pays extra
+   * for a leg it would have to turn right round for. */
+  var NEAR = 3;                              // cells
+  function recoverLeg(car) {
+    var n = T.ROUTE.length, best = Infinity, leg = mod(car.leg || 0, n);
+    if (offLine(leg, car) <= NEAR) return leg;
+    for (var i = 0; i < n; i++) {
+      var s = along(i, car.x, car.y), a = T.ROUTE[i], ld = T.LEG_DIR[i];
+      var px = a.x + ld.x * s - car.x, py = a.y + ld.y * s - car.y;
+      var back = !car.crashed && car.dir.x * ld.x + car.dir.y * ld.y < 0;
+      var score = px * px + py * py + (back ? 9 : 0) + 0.01 * mod(i - leg, n);
+      if (score < best) { best = score; leg = i; }
+    }
+    return leg;
   }
 
   function turnToward(d, want) {
@@ -80,10 +131,10 @@
   }
 
   // Off the route: turn toward the line a little way on, away from walls.
-  function recover(car) {
+  function recover(car, leg) {
     var d = car.dir;
     var right = { x: -d.y, y: d.x }, left = { x: d.y, y: -d.x };
-    var t = ahead(car, AHEAD);
+    var t = ahead(car, AHEAD, leg);
     var vx = t.x - car.x, vy = t.y - car.y, len = Math.hypot(vx, vy) || 1;
     vx /= len; vy /= len;
     var score = function (c) {
@@ -99,18 +150,14 @@
   /* -1 or +1: the turn a tap should make for `car` right now. */
   AutoTurn.choose = function (car) {
     if (!car || !T.ROUTE) return 0;
-    var n = T.ROUTE.length, d = car.dir, j = mod(car.leg || 0, n);
-    if (!car.crashed) {
-      var on = null;
-      if (same(T.LEG_DIR[j], d)) on = j;
-      else if (same(T.LEG_DIR[mod(j + 1, n)], d) && atCorner(car, j)) on = mod(j + 1, n);
-      if (on !== null) {
-        var want = nextChange(on, d);
-        var s = want ? turnToward(d, want) : 0;
-        if (s) return s;
-      }
+    var d = car.dir, j = onLeg(car);
+    // On a leg and moving: the tap is the route's next turn.
+    if (j >= 0 && !car.crashed) {
+      var want = nextChange(j, d);
+      var s = want ? turnToward(d, want) : 0;
+      if (s) return s;
     }
-    return recover(car);
+    return recover(car, recoverLeg(car));
   };
 
   global.AutoTurn = AutoTurn;

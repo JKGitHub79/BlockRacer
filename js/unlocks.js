@@ -16,7 +16,7 @@
  * Every timer belongs to a generation. Showing or dismissing bumps it, and a
  * callback that wakes up to find the generation has moved on does nothing.
  * Without that, the hide timer from a toast you dismissed by pressing NEXT
- * TRACK would fire three seconds later and snatch away the toast for the
+ * TRACK would fire five seconds later and snatch away the toast for the
  * NEXT race's unlock - or worse, a late "show" would put an old notification
  * over a screen it has nothing to do with.
  *
@@ -26,7 +26,7 @@
 (function (global) {
   'use strict';
 
-  var HOLD = 2800;     // on screen, after the slide in
+  var HOLD = 4800;     // on screen, after the slide in: long enough to read two rows
   var OUT = 380;       // the slide out, which the stylesheet also times
 
   var el = null;

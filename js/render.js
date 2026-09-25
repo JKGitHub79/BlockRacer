@@ -1302,24 +1302,54 @@
   }
 
   /* Your record lap: your own car, in your own paint, at a third of its
-   * strength. No shadow, no halo, no ring and no crash flash - everything that
-   * says "this is a solid thing you are driving" is left off, so it reads as a
+   * strength. No shadow, no halo and no crash flash - everything that says
+   * "this is a solid thing you are driving" is left off, so it reads as a
    * trace of a lap rather than a second car. In high contrast it is a plain
-   * white shape, for the same reason every other texture goes. */
+   * white shape, for the same reason every other texture goes.
+   *
+   * It does wear the same edge as your car, though, so the two are the same
+   * size on the road: without it the ghost was a bare body beside a car with
+   * a ring round it, and read as a smaller car. The edge and the body are
+   * put together at full strength on a canvas of their own and only then
+   * laid down faded - faded one over the other, the ring would show through
+   * the body and wash its paint out. */
+  var ghostBuf = null;
   function drawGhost(g, pose) {
     var L = C.carLength * S, W = C.carWidth * S;
     var hc = !!C.contrastColors();
     var Cos = global.Cosmetics;
+    var m = g.getTransform ? g.getTransform() : null;
+    var k = m ? Math.max(Math.hypot(m.a, m.b), Math.hypot(m.c, m.d)) || 1 : 1;
+    var pad = 9;                                    // room for the widest edge
+    var bw = Math.ceil((L + pad * 2) * k), bh = Math.ceil((W + pad * 2) * k);
+    if (!ghostBuf) ghostBuf = document.createElement('canvas');
+    if (ghostBuf.width !== bw || ghostBuf.height !== bh) { ghostBuf.width = bw; ghostBuf.height = bh; }
+    var b = ghostBuf.getContext('2d');
+    b.setTransform(1, 0, 0, 1, 0, 0);
+    b.clearRect(0, 0, bw, bh);
+    b.setTransform(k, 0, 0, k, bw / 2, bh / 2);
+
+    var ring = (Cos && Cos.fillSilhouette) ? function (grow, style) {
+      Cos.fillSilhouette(b, L, W, Cos.equippedVehicle(), grow, style);
+    } : function (grow, style) {
+      b.fillStyle = style;
+      b.fillRect(-L / 2 - grow, -W / 2 - grow, L + grow * 2, W + grow * 2);
+    };
+    // the player's edges, in the ghost's colours: see drawCar
+    if (hc) { ring(7, '#ffffff'); ring(3.5, '#000000'); }
+    else ring(2, 'rgba(255,255,255,0.9)');
+    if (Cos) {
+      Cos.drawCar(b, L, W, Cos.equippedSkin(), Cos.equippedVehicle(), 0, hc ? '#ffffff' : null);
+    } else {
+      b.fillStyle = '#ffffff';
+      b.fillRect(-L / 2, -W / 2, L, W);
+    }
+
     g.save();
     g.globalAlpha = hc ? 0.5 : 0.42;
     g.translate(pose.x * S, pose.y * S);
     g.rotate(pose.a);
-    if (Cos) {
-      Cos.drawCar(g, L, W, Cos.equippedSkin(), Cos.equippedVehicle(), 0, hc ? '#ffffff' : null);
-    } else {
-      g.fillStyle = '#ffffff';
-      g.fillRect(-L / 2, -W / 2, L, W);
-    }
+    g.drawImage(ghostBuf, -bw / k / 2, -bh / k / 2, bw / k, bh / k);
     g.restore();
   }
 

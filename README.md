@@ -1370,9 +1370,14 @@ only answers left or right, and the answer goes into the same queue and the
 same `Car.turn` as every other input. `js/autoturn.js` decides, in track
 space, so a board turned a quarter on an upright phone changes nothing:
 
-- **Following the route** - heading along the leg the car is on, or just
-  round onto the next one - a tap is the next change of direction in the
-  racing line: the corner, or the lane change, whatever comes next.
+- **Following the route** - running along a leg of the racing line - a tap
+  is the next change of direction in it: the corner, or the lane change,
+  whatever comes next. Which leg is worked out from where the car actually
+  is and which way it points, not taken from the standings: those only look
+  a leg or two either side of their last answer, so after a skipped lane
+  change, a shove from the field or a spin they could still name a leg well
+  away from the car, and the tap then turned it for that leg's corner - the
+  wrong way.
 - **Anything else** - stopped against a wall, pointing backwards, off the
   line, or turned too early into the inside of a corner - a tap turns toward
   a point four cells further along the line, and away from a wall that would
@@ -1383,7 +1388,10 @@ Checked on every one of the 37 tracks: placed at the turn point of each of
 their 500 corners it picks the route's way every time, and a simulated player
 who only ever decides when to tap finishes a lap on all of them - with good
 timing, with timing a cell either way, starting pointed backwards, and turning
-early into the inside of every corner. HOME, pause and every other button are
+early into the inside of every corner. A second check replays every tap
+of simulated laps - on time, early, late, skipping lane changes, and with
+stray taps thrown in - and compares the chosen turn with the other one by
+the real physics. HOME, pause and every other button are
 never a turn. A mouse still taps a side, as it does under Swipe.
 
 A finger has to travel 24 CSS pixels (about 4mm on a phone, where a tap
@@ -2069,7 +2077,8 @@ identical across a resize.
 
 Finish a race that unlocks something and a panel drops in from the top of the
 screen - `COW SKIN UNLOCKED!`, `RALLY CAR UNLOCKED!`, with the chip or the car
-beside it - holds for just under three seconds and goes back up.
+beside it - holds for just under five seconds and goes back up. Any button
+that leaves the results screen takes it away at once.
 
 **What was unlocked is not tracked anywhere new.** `Cosmetics.snapshot()` is
 the answer the existing `skinUnlocked` / `vehicleUnlocked` give right now; the
@@ -2092,7 +2101,7 @@ without being different notifications.
 
 **Every timer belongs to a generation.** Showing or dismissing bumps it, and a
 timer that wakes to find it has moved on does nothing. Without that, the hide
-timer of a panel you dismissed by pressing NEXT TRACK would fire three seconds
+timer of a panel you dismissed by pressing NEXT TRACK would fire five seconds
 later and snatch away the next race's notification - which the tests check for
 directly. Every change of screen goes through `Screens.show`, so that is the
 one place it is dismissed: BACK, RACE AGAIN, NEXT TRACK and restart all take it
