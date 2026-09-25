@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.56.0', built: '2026-09-24' };
+window.BR = { version: '0.57.0', built: '2026-09-24' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -116,6 +116,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 <div id="secret" class="secret" aria-hidden="true">
   <canvas id="secret-view"></canvas>
   <div id="secret-say" class="secret-say" role="status" aria-live="polite"></div>
+  <p id="secret-word" class="secret-word">IT&rsquo;S HERE.</p>
 </div>
 
 <!-- First ever launch only (js/tutorial.js). Either answer is remembered. -->
@@ -415,7 +416,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 /* Loaded through the version so the browser fetches fresh files after a
  * deploy. document.write keeps them strictly in order, which they need. */
 ['viewport', 'tracks', 'themes', 'config', 'track', 'car', 'ai', 'autoturn', 'input', 'music', 'audio',
- 'progress', 'ghost', 'tutorial', 'secret', 'abduct', 'cosmetics', 'unlocks', 'backdrop', 'render', 'screens', 'game']
+ 'progress', 'ghost', 'tutorial', 'secret', 'abduct', 'rift', 'cosmetics', 'unlocks', 'backdrop', 'render', 'screens', 'game']
   .forEach(function (name) {
     document.write('<script src="js/' + name + '.js?v=' + BR.version + '"><\/script>');
   });

@@ -2104,3 +2104,20 @@ body.mode-tutorial .stat.trial-only { display: none; }
   pointer-events: none;
 }
 .secret-say.show { opacity: 1; }
+
+/* Two words, small, in the middle of nothing. */
+.secret-word {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  color: #fff;
+  font-size: 13px;
+  letter-spacing: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 1.6s ease;
+  pointer-events: none;
+}
+.secret-word.show { opacity: 1; }

@@ -615,6 +615,85 @@
       for (var q = 0; q < 4; q++) {
         hiss(a, o, t + q * 0.4, { filter: 'highpass', f: 900, dur: 0.2, gain: 0.09, at: 0.004 });
       }
+    } },
+    // Something wrong with the machine: seven seconds that start as a low,
+    // barely-there hum and come apart - the drone driven into distortion,
+    // its pitch sliding, a rumble underneath, interference chattering
+    // faster on top - and then stop dead, exactly at the end.
+    unravel: { gap: 5, play: function (a, o, t) {
+      var dur = 7, end = t + dur;
+      if (!a.__brShaper) {
+        var n = 1024, curve = new Float32Array(n);
+        for (var i = 0; i < n; i++) { var x = i / (n - 1) * 2 - 1; curve[i] = Math.tanh(x * 6); }
+        a.__brShaper = curve;
+      }
+      var nodes = [];
+      var keep = function (x) { nodes.push(x); return x; };
+      // the drone: two detuned saws, driven harder and harder
+      var drive = keep(a.createGain()), shaper = keep(a.createWaveShaper());
+      var lp = keep(a.createBiquadFilter()), dg = keep(a.createGain());
+      shaper.curve = a.__brShaper;
+      drive.gain.setValueAtTime(0.15, t);
+      drive.gain.exponentialRampToValueAtTime(3.5, end);
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(140, t);
+      lp.frequency.exponentialRampToValueAtTime(1600, end);
+      dg.gain.setValueAtTime(SILENT, t);
+      dg.gain.linearRampToValueAtTime(0.05, t + 1.5);
+      dg.gain.linearRampToValueAtTime(0.12, end - 0.015);
+      dg.gain.linearRampToValueAtTime(0, end);
+      drive.connect(shaper); shaper.connect(lp); lp.connect(dg); dg.connect(o);
+      var wobble = keep(a.createOscillator()), wdepth = keep(a.createGain());
+      wobble.frequency.setValueAtTime(0.7, t);
+      wobble.frequency.linearRampToValueAtTime(6, end);
+      wdepth.gain.setValueAtTime(4, t);
+      wdepth.gain.linearRampToValueAtTime(90, end);          // cents
+      wobble.connect(wdepth);
+      [41, 41.8].forEach(function (f) {
+        var osc = keep(a.createOscillator());
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(f, t);
+        osc.frequency.linearRampToValueAtTime(f * 0.82, end);
+        wdepth.connect(osc.detune);
+        osc.connect(drive);
+        osc.start(t); osc.stop(end + 0.02);
+      });
+      wobble.start(t); wobble.stop(end + 0.02);
+      // the rumble under it
+      var rum = keep(a.createBufferSource()), rlp = keep(a.createBiquadFilter()), rg = keep(a.createGain());
+      rum.buffer = noiseBuffer(a); rum.loop = true;
+      rlp.type = 'lowpass'; rlp.frequency.setValueAtTime(90, t);
+      rg.gain.setValueAtTime(SILENT, t);
+      rg.gain.linearRampToValueAtTime(0.18, end - 0.015);
+      rg.gain.linearRampToValueAtTime(0, end);
+      rum.connect(rlp); rlp.connect(rg); rg.connect(o);
+      rum.start(t); rum.stop(end + 0.02);
+      // interference: a narrow band of noise chopped on and off, faster
+      var hz = keep(a.createBufferSource()), bp = keep(a.createBiquadFilter());
+      var chop = keep(a.createGain()), ig = keep(a.createGain());
+      var gate = keep(a.createOscillator()), gdepth = keep(a.createGain());
+      hz.buffer = noiseBuffer(a); hz.loop = true;
+      bp.type = 'bandpass'; bp.Q.setValueAtTime(7, t);
+      bp.frequency.setValueAtTime(900, t);
+      bp.frequency.exponentialRampToValueAtTime(3200, end);
+      gate.type = 'square';
+      gate.frequency.setValueAtTime(3, t);
+      gate.frequency.exponentialRampToValueAtTime(23, end);
+      gdepth.gain.setValueAtTime(0.5, t);
+      chop.gain.setValueAtTime(0.5, t);
+      gate.connect(gdepth); gdepth.connect(chop.gain);
+      ig.gain.setValueAtTime(SILENT, t);
+      ig.gain.linearRampToValueAtTime(0.015, t + 2);
+      ig.gain.linearRampToValueAtTime(0.08, end - 0.015);
+      ig.gain.linearRampToValueAtTime(0, end);
+      hz.connect(bp); bp.connect(chop); chop.connect(ig); ig.connect(o);
+      hz.start(t); hz.stop(end + 0.02); gate.start(t); gate.stop(end + 0.02);
+      tidy(rum, nodes);
+    } },
+    // A broken moment: a crackle and a wrong little tone.
+    glitch: { gap: 0.08, play: function (a, o, t) {
+      hiss(a, o, t, { filter: 'highpass', f: 2500, dur: 0.06, gain: 0.07 });
+      blip(a, o, t, { type: 'square', f: 180 + Math.random() * 1400, dur: 0.05, gain: 0.03 });
     } }
   };
 
