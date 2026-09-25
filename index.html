@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.59.0', built: '2026-09-25' };
+window.BR = { version: '0.60.0', built: '2026-09-25' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -90,7 +90,41 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
             <button id="btn-again" class="secondary">RACE AGAIN</button>
             <button id="btn-next" class="primary">NEXT TRACK &rarr;</button>
           </div>
+          <button id="btn-board" class="secondary wide-btn lb-open">LEADERBOARD</button>
+          <p id="lb-status" class="hint lb-status"></p>
           <p class="hint">R races again &middot; ESC pauses</p>
+        </div>
+      </div>
+
+      <div id="lb-name" class="overlay lb-overlay" role="dialog" aria-modal="true" aria-labelledby="lb-name-title">
+        <form id="lb-name-form" class="panel" novalidate autocomplete="off">
+          <h2 id="lb-name-title">LEADERBOARD</h2>
+          <p class="lapline">A name for your times</p>
+          <input id="lb-name-input" class="lb-input" type="text" maxlength="16"
+                 autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"
+                 aria-describedby="lb-name-rule">
+          <p id="lb-name-rule" class="hint lb-rule">1&ndash;16 letters, numbers or _</p>
+          <div class="row">
+            <button id="lb-name-skip" type="button" class="secondary">NOT NOW</button>
+            <button id="lb-name-save" type="submit" class="primary">SAVE</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="lb-board" class="overlay lb-overlay" role="dialog" aria-modal="true" aria-labelledby="lb-board-title">
+        <div class="panel wide">
+          <h2 id="lb-board-title">LEADERBOARD</h2>
+          <p id="lb-board-sub" class="lapline"></p>
+          <div class="results-scroll">
+            <table class="results lb-table">
+              <thead><tr><th>#</th><th>Driver</th><th>Best lap</th></tr></thead>
+              <tbody id="lb-board-body"></tbody>
+            </table>
+          </div>
+          <p id="lb-board-note" class="hint lb-note"></p>
+          <div class="row">
+            <button id="lb-board-close" class="primary">BACK</button>
+          </div>
         </div>
       </div>
      </div>
@@ -417,7 +451,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 /* Loaded through the version so the browser fetches fresh files after a
  * deploy. document.write keeps them strictly in order, which they need. */
 ['viewport', 'tracks', 'themes', 'config', 'track', 'car', 'ai', 'autoturn', 'input', 'music', 'audio',
- 'progress', 'ghost', 'tutorial', 'secret', 'abduct', 'rift', 'beyond', 'cosmetics', 'unlocks', 'backdrop', 'render', 'screens', 'game']
+ 'progress', 'ghost', 'tutorial', 'secret', 'abduct', 'rift', 'beyond', 'cosmetics', 'unlocks', 'leaderboard', 'backdrop', 'render', 'screens', 'game']
   .forEach(function (name) {
     document.write('<script src="js/' + name + '.js?v=' + BR.version + '"><\/script>');
   });

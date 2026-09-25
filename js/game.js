@@ -663,6 +663,7 @@
     el.resultsHead = document.getElementById('results-head');
     el.btnAgain = document.getElementById('btn-again');
     el.timeLabel = document.getElementById('hud-time-label');
+    el.lbStatus = document.getElementById('lb-status');
   };
 
   Game.drawHud = function () {
@@ -853,6 +854,15 @@
     this.showNextButton();
     this.setResultsPrimary(true);
     el.results.classList.add('show');
+
+    // The online board, on top of the record above: the run's best lap, sent
+    // (or a name asked for first) and never waited on.
+    var LB = global.Leaderboard;
+    if (LB) {
+      el.lbStatus.textContent = p.bestLap && !LB.counts(C.speedLevel)
+        ? 'The leaderboard is ' + C.speedLevels[C.leaderboardSpeed].name + ' laps only' : '';
+      if (p.bestLap) LB.submitTrial(T.data.id, C.speedLevel, p.bestLap);
+    }
   };
 
   Game.showNextButton = function () {
@@ -1105,7 +1115,8 @@
   Game.command = function (name) {
     // Nothing but mute while something else has the screen.
     if (((global.Secret && global.Secret.active) || (global.Abduct && global.Abduct.active) ||
-         (global.Rift && global.Rift.active) || (global.Beyond && global.Beyond.active)) &&
+         (global.Rift && global.Rift.active) || (global.Beyond && global.Beyond.active) ||
+        (global.Leaderboard && global.Leaderboard.busy())) &&
         name !== 'mute') return;
     // Everything here is a race control. On a menu screen the keys belong to
     // the screen, not to a race that is not running.
@@ -1225,6 +1236,10 @@
     document.getElementById('btn-again').addEventListener('click', function (e) {
       e.stopPropagation();
       Game.startRace();
+    });
+    document.getElementById('btn-board').addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (global.Leaderboard) global.Leaderboard.show(T.data.id, T.name);
     });
     document.getElementById('btn-quit').addEventListener('click', function (e) {
       e.stopPropagation();

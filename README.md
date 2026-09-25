@@ -996,6 +996,36 @@ Stored under `blockracer.laps.v1`, wrapped exactly as the medals are, and
 filtered on read to positive times under an hour - an hour is not a lap, it is
 a corrupt or hand-edited entry.
 
+### The online leaderboard
+
+On top of those records, not instead of them. When a time trial finishes, the
+run's best lap goes to the leaderboard API (`leaderboard-api/`, a Cloudflare
+Worker over D1) as whole milliseconds, from `js/leaderboard.js`. The address
+is one constant, `CONFIG.leaderboardUrl`. The local record is written first
+and never depends on it: offline, rejected or slow, nothing is sent, nothing
+is said, and the results screen is exactly what it was.
+
+**The first lap worth sending asks for a name** - 1-16 of `A-Z a-z 0-9 _`,
+the API's own rule, checked as you type - and makes a player id with
+`crypto.randomUUID()`. Both are kept under `blockracer.leaderboard.v1`, so
+every later lap from that browser is the same player and is sent without
+asking. NOT NOW sends nothing and asks again next time. RESET DATA leaves the
+name and id alone: the times already on the board are still yours. While the
+box is open the game's keys stand aside - `R`, `M` and space are letters in a
+name, not a restart, a mute and a start.
+
+**Only SWEAT laps are sent** (`CONFIG.leaderboardSpeed`). The API has no speed
+field, and for the same reason records are keyed by speed, one board holding
+every speed would rank the setting rather than the driving. A trial at any
+other speed keeps its record here and says on the results that the board is
+SWEAT only. Set the constant to `null` to send every speed to one board.
+
+**LEADERBOARD** on a trial's results opens that track's top 20, your own row in
+the accent colour. The API marks it, from the player id the request carries -
+ids are compared on the server, never sent back - so two players with one name
+are still told apart. A board opened while your lap is still on its way waits
+for it, so the time you just set is on it.
+
 ## The landscapes
 
 Painted in code - `js/backdrop.js` - from rectangles, triangles and gradients,

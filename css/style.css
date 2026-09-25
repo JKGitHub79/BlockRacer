@@ -2128,3 +2128,37 @@ body.mode-tutorial .stat.trial-only { display: none; }
   pointer-events: none;
 }
 .secret-word.show { opacity: 1; }
+
+/* ---- online leaderboard ---------------------------------------------------
+   Over the results, so above them. Only a time trial has a board to open. */
+.lb-overlay { z-index: 11; }
+.lb-open { display: none; margin-top: -8px; }
+body.mode-trial .lb-open { display: block; }
+.lb-status:empty, .lb-note:empty { display: none; }
+.lb-status { margin-top: 8px; }
+#lb-board .panel { max-height: calc(100dvh - 20px); display: flex; flex-direction: column; }
+#lb-board .results-scroll { margin-bottom: 12px; }
+.lb-table td:first-child, .lb-table th:first-child { width: 3em; }
+.lb-table td:last-child, .lb-table th:last-child { text-align: right; }
+.lb-table td:nth-child(2) { overflow-wrap: anywhere; }
+.lb-table td.lb-msg { text-align: center; color: var(--dim); letter-spacing: 2px; padding: 18px 0; }
+.lb-note { margin: 0 0 12px; }
+.lb-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0 0;
+  padding: 11px 12px;
+  font: inherit;
+  font-size: 16px;               /* under 16px, iOS zooms the page on focus */
+  letter-spacing: 2px;
+  text-align: center;
+  color: var(--text);
+  background: #0f1522;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.lb-input:focus { outline: none; border-color: var(--accent); }
+.lb-rule { margin: 8px 0 16px; }
+.lb-rule.bad { color: #ff6b7d; }
+#lb-name-save:disabled { opacity: 0.45; cursor: default; filter: none; }

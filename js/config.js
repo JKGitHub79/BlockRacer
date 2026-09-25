@@ -231,7 +231,20 @@
       racingLine:'rgba(120,180,255,0.22)',
       check:     'rgba(90,220,255,0.07)',
       checkNext: 'rgba(90,220,255,0.26)'
-    }
+    },
+
+    /* ---- Online leaderboard -------------------------------------------
+     * Where time-trial laps are sent, and read back from (js/leaderboard.js;
+     * the API itself is leaderboard-api/). The lap records on this device
+     * are still the ones in js/progress.js - this is extra, and the game
+     * behaves exactly the same when it cannot be reached.
+     *
+     * The API has no field for game speed, and a SWEAT lap is half a
+     * BEGINNER one, so a board mixing them would rank the setting rather
+     * than the driving. Only laps set at this speed level are sent, and the
+     * board says which it is. null sends every speed onto one board. */
+    leaderboardUrl: 'https://leaderboard-api.jamiekhoshaba.workers.dev',
+    leaderboardSpeed: 3            // SWEAT
   };
 
   // URL parameters win over the defaults.

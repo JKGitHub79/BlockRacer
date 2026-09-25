@@ -59,8 +59,16 @@
     return list.indexOf(e.key) !== -1 || list.indexOf(e.code) !== -1;
   }
 
+  // A box being typed in: its keys are letters, not turns or commands.
+  function typing(e) {
+    var t = e.target;
+    if (!t || !t.tagName) return false;
+    if (t.isContentEditable || t.tagName === 'TEXTAREA') return true;
+    return t.tagName === 'INPUT' && !/^(range|checkbox|radio|button|submit|reset)$/i.test(t.type);
+  }
+
   global.addEventListener('keydown', function (e) {
-    if (e.repeat) return;
+    if (e.repeat || typing(e)) return;
     if (matches(LEFT, e) || matches(RIGHT, e)) lastKind = 'keys';
     if (matches(LEFT, e)) {
       Input.turns.push(-1);

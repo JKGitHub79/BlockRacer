@@ -31,8 +31,9 @@ content type, and `429` with `Retry-After` past 10 submissions an hour from
 one address. The address is stored only as a SHA-256 hash.
 
 `GET /leaderboard/:track?limit=20` - each player's best time on the track,
-fastest first, as `{ rank, username, time_ms, game_version, created_at }`.
-`limit` is 1-50, default 20.
+fastest first, as `{ rank, username, time_ms, game_version, created_at, me }`.
+`limit` is 1-50, default 20. Pass your own `player_id` to have your row marked
+`me: true`; ids are only compared, never returned.
 
 CORS allows only `https://jkgithub79.github.io`. `tools/leaderboard-test.html`
 exercises all of it, and has to be opened from there.

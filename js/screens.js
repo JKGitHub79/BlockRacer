@@ -35,6 +35,7 @@
     // comes through here, so this is the one place an unlock notification
     // is taken down early.
     if (global.Unlocks) global.Unlocks.dismiss();
+    if (global.Leaderboard) global.Leaderboard.hide();
     // Out of the tutorial, whichever way: put back what it displaced.
     if (name !== 'race' && global.Game && global.Game.mode === 'tutorial') global.Game.endTutorial();
     this.current = name;

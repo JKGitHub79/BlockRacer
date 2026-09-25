@@ -160,7 +160,12 @@ async function submitTime(request, env) {
 async function leaderboard(request, env, track) {
   if (!TRACKS.has(track)) return fail(request, 400, 'unknown track');
 
-  const raw = new URL(request.url).searchParams.get('limit');
+  const params = new URL(request.url).searchParams;
+  const raw = params.get('limit');
+  // Optional: the caller's own player_id, so its rows can be marked `me`.
+  // It is only compared, never returned - the answer is "yours" or not.
+  const mine = params.get('player_id');
+  if (mine !== null && !UUID.test(mine)) return fail(request, 400, 'player_id must be a UUID');
   let limit = DEFAULT_LIMIT;
   if (raw !== null) {
     if (!/^\d+$/.test(raw) || Number(raw) < 1) return fail(request, 400, 'limit must be a positive integer');
@@ -171,14 +176,14 @@ async function leaderboard(request, env, track) {
   // players in order. player_id is not sent: it is the only thing that
   // makes a submission count as that player's.
   const { results } = await env.DB.prepare(
-    `SELECT username, time_ms, game_version, created_at FROM (
-       SELECT username, time_ms, game_version, created_at,
+    `SELECT username, time_ms, game_version, created_at, player_id = ?3 AS me FROM (
+       SELECT player_id, username, time_ms, game_version, created_at,
               ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY time_ms ASC, created_at ASC) AS rn
        FROM times WHERE track_id = ?1
      ) WHERE rn = 1
      ORDER BY time_ms ASC, created_at ASC
      LIMIT ?2`
-  ).bind(track, limit).all();
+  ).bind(track, limit, mine ? mine.toLowerCase() : null).all();
 
   return json(request, 200, {
     track_id: track,
@@ -188,7 +193,8 @@ async function leaderboard(request, env, track) {
       username: r.username,
       time_ms: r.time_ms,
       game_version: r.game_version,
-      created_at: new Date(r.created_at).toISOString()
+      created_at: new Date(r.created_at).toISOString(),
+      me: r.me === 1
     }))
   });
 }
