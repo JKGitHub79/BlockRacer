@@ -12,16 +12,17 @@
  * kept in localStorage, so every later lap from this browser is the same
  * player. NOT NOW sends nothing and asks again next time.
  *
- * The board is one track's top 20, your own row picked out: by the API,
- * which marks the row that belongs to the player id it is given, or - from
- * an API that does not know how - by your name. */
+ * The boards: a theme's three tracks, top five each, from the time-trial
+ * track screen; and one track, everyone on it, from a trial's results or
+ * SHOW ALL. Your own row is a blue bar - picked out by the API, which marks
+ * the player id it is given and ranks it wherever it is, or, by an API from
+ * before that, by your name. */
 (function (global) {
   'use strict';
 
   var KEY = 'blockracer.leaderboard.v1';   // { player_id, username }
   var NAME = /^[A-Za-z0-9_]{1,16}$/;
   var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  var TOP = 20;
   var TIMEOUT_MS = 8000;
 
   var Leaderboard = {};
@@ -90,7 +91,7 @@
       body: JSON.stringify(entry)
     }).then(function (r) { return r; }, function () { return null; });   // silently
     pending = p;
-    p.then(function () { if (pending === p) pending = null; });
+    p.then(function () { if (pending === p) pending = null; cache = {}; });
     return p;
   }
 
@@ -151,7 +152,19 @@
     }
   }
 
-  /* ---- the board ------------------------------------------------------------------ */
+  /* ---- the boards ------------------------------------------------------------
+   *
+   * One layer, two views. A THEME: its three tracks side by side (stacked on
+   * a narrow screen), the top five of each, arrows to the next theme. And a
+   * TRACK: everyone who has a time there, as far down as it goes, scrolling.
+   * You are a blue bar wherever you are - in the list if you made it, under
+   * it with your real position if you did not. */
+
+  var FIVE = 5;
+  var ALL = 1000;             // the API's own ceiling
+  var FRESH_MS = 30000;       // a board this recent is shown again without asking
+  var cache = {};             // track id -> { at, limit, data }
+  var view = null;            // { kind: 'theme', theme } | { kind: 'track', id, theme, from }
 
   function fmt(ms) {
     var t = ms / 1000;
@@ -160,66 +173,156 @@
     return m + ':' + (s < 10 ? '0' : '') + s.toFixed(3);
   }
 
-  function row(cells, mine) {
-    var tr = document.createElement('tr');
-    if (mine) tr.className = 'me';
-    cells.forEach(function (c) {
-      var td = document.createElement('td');
-      td.textContent = c;             // names are the API's, and never markup
-      tr.appendChild(td);
-    });
-    return tr;
+  function make(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;   // names are the API's, never markup
+    return n;
   }
 
-  function message(text) {
-    el.boardBody.textContent = '';
-    var tr = document.createElement('tr'), td = document.createElement('td');
-    td.colSpan = 3;
-    td.className = 'lb-msg';
-    td.textContent = text;
-    tr.appendChild(td);
-    el.boardBody.appendChild(tr);
+  function trackName(id) {
+    var t = (global.TRACKS || []).filter(function (x) { return x.id === id; })[0];
+    return t ? t.name : id.toUpperCase();
   }
 
-  /* One track's top 20. Waits for a lap still on its way, so a time you
-   * have just set is on the board you open straight after. */
-  Leaderboard.show = function (trackId, trackName) {
-    var C = global.CONFIG, want = C.leaderboardSpeed;
-    var speed = want === null || want === undefined ? 'ALL SPEEDS' : C.speedLevels[want].name;
-    el.boardSub.textContent = (trackName || trackId) + ' · ' + speed + ' · BEST LAP';
-    el.boardNote.textContent = '';
-    message('LOADING…');
-    el.board.classList.add('show');
-    var token = el.board.token = {};
-    var q = '/leaderboard/' + encodeURIComponent(trackId) + '?limit=' + TOP +
+  function themeOf(id) {
+    return global.Screens && global.Screens.themeOfTrack ? global.Screens.themeOfTrack(id) : -1;
+  }
+
+  /* One track's board, as { entries, total, you }. An API from before `you`
+   * and `total` existed is read too: `you` is then whichever listed row is
+   * yours, and `total` is what came back. */
+  function fetchBoard(id, limit) {
+    var c = cache[id];
+    if (c && c.limit >= limit && Date.now() - c.at < FRESH_MS) return Promise.resolve(c.data);
+    var q = '/leaderboard/' + encodeURIComponent(id) + '?limit=' + limit +
             (me ? '&player_id=' + encodeURIComponent(me.player_id) : '');
-    Promise.resolve(pending).then(function () { return api(q); }).then(function (r) {
-      if (el.board.token !== token) return;
-      if (!r.ok || !r.body || !Array.isArray(r.body.entries)) { message('LEADERBOARD UNAVAILABLE'); return; }
+    return Promise.resolve(pending).then(function () { return api(q); }).then(function (r) {
+      if (!r.ok || !r.body || !Array.isArray(r.body.entries)) throw new Error('unavailable');
       var list = r.body.entries;
-      if (!list.length) { message('NO TIMES YET'); return; }
-      // An API that marks rows says so on every row; one that does not, on none.
       var marked = list.some(function (e) { return typeof e.me === 'boolean'; });
-      var found = false;
-      el.boardBody.textContent = '';
-      list.forEach(function (e, i) {
-        var mine = marked ? e.me === true : !!(me && e.username === me.username);
-        if (mine) found = true;
-        el.boardBody.appendChild(row([String(e.rank || i + 1), e.username, fmt(e.time_ms)], mine));
+      var isMe = function (e) { return marked ? e.me === true : !!(me && e.username === me.username); };
+      list.forEach(function (e, i) { e.rank = e.rank || i + 1; e.mine = isMe(e); });
+      var you = r.body.you;
+      if (you === undefined) you = list.filter(function (e) { return e.mine; })[0] || null;
+      if (you) you.mine = true;
+      var data = { entries: list, total: typeof r.body.total === 'number' ? r.body.total : list.length, you: you };
+      cache[id] = { at: Date.now(), limit: limit, data: data };
+      return data;
+    });
+  }
+
+  function row(e) {
+    var li = make('li', 'lb-row' + (e.mine ? ' me' : ''));
+    li.appendChild(make('span', 'lb-rank', String(e.rank)));
+    li.appendChild(make('span', 'lb-who', e.username));
+    li.appendChild(make('span', 'lb-time', fmt(e.time_ms)));
+    if (e.mine) li.setAttribute('aria-label', 'You, position ' + e.rank + ', ' + e.username + ', ' + fmt(e.time_ms));
+    return li;
+  }
+
+  /* The list: the first `upTo` rows, then - if you are further down - a gap
+   * and your own row with its real position. */
+  function fill(ol, data, upTo) {
+    ol.textContent = '';
+    if (!data.entries.length) { ol.appendChild(make('li', 'lb-msg', 'NO TIMES YET')); return; }
+    var shown = data.entries.slice(0, upTo);
+    shown.forEach(function (e) { ol.appendChild(row(e)); });
+    var you = data.you;
+    if (you && !shown.some(function (e) { return e.mine; })) {
+      ol.appendChild(make('li', 'lb-gap', '⋯'));
+      ol.appendChild(row(you));
+    }
+  }
+
+  function setHead(title, kind, backTo) {
+    var C = global.CONFIG, want = C.leaderboardSpeed;
+    el.speed.textContent = want === null || want === undefined ? 'ALL SPEEDS' : C.speedLevels[want].name;
+    el.title.textContent = title;
+    el.board.classList.toggle('lb-track-view', kind === 'track');
+    el.prev.hidden = el.next.hidden = kind !== 'theme';
+    el.back.hidden = !(kind === 'track' && backTo >= 0);
+    if (!el.back.hidden) el.back.textContent = '‹ ' + global.THEMES[backTo].name;
+    el.body.scrollTop = 0;
+  }
+
+  function showTheme(t) {
+    var THEMES = global.THEMES, n = THEMES.length;
+    t = ((t % n) + n) % n;
+    view = { kind: 'theme', theme: t };
+    var token = view;
+    setHead(THEMES[t].name, 'theme');
+    el.board.style.setProperty('--lb-theme', THEMES[t].accent || '');
+    el.body.textContent = '';
+    var grid = make('div', 'lb-grid');
+    THEMES[t].tracks.forEach(function (tr) {
+      var sec = make('section', 'lb-track');
+      var head = make('div', 'lb-track-head');
+      head.appendChild(make('h3', 'lb-track-name', tr.name));
+      var all = make('button', 'lb-all', 'SHOW ALL');
+      all.type = 'button';
+      all.hidden = true;
+      all.addEventListener('click', function () { showTrack(tr.id, t); });
+      head.appendChild(all);
+      sec.appendChild(head);
+      var ol = make('ol', 'lb-list');
+      ol.appendChild(make('li', 'lb-msg', 'LOADING…'));
+      sec.appendChild(ol);
+      grid.appendChild(sec);
+      fetchBoard(tr.id, 50).then(function (data) {
+        if (view !== token) return;
+        fill(ol, data, FIVE);
+        if (data.total > FIVE) { all.hidden = false; all.textContent = 'SHOW ALL · ' + data.total; }
+      }, function () {
+        if (view !== token) return;
+        ol.textContent = '';
+        ol.appendChild(make('li', 'lb-msg', 'UNAVAILABLE'));
       });
-      if (!found && me && want !== null && want !== undefined) {
-        var rec = global.Progress ? global.Progress.lapRecord(trackId, want) : 0;
-        el.boardNote.textContent = rec
-          ? 'Not in the top ' + TOP + ' yet · your record ' + fmt(Math.round(rec * 1000))
-          : 'Not in the top ' + TOP + ' yet';
+    });
+    el.body.appendChild(grid);
+  }
+
+  // `from`: the theme to go back to, or -1 to close instead.
+  function showTrack(id, from) {
+    view = { kind: 'track', id: id, from: from };
+    var token = view;
+    setHead(trackName(id), 'track', from);
+    if (from >= 0) el.board.style.setProperty('--lb-theme', global.THEMES[from].accent || '');
+    el.body.textContent = '';
+    var ol = make('ol', 'lb-list lb-full');
+    ol.appendChild(make('li', 'lb-msg', 'LOADING…'));
+    var note = make('p', 'lb-foot');
+    el.body.appendChild(ol);
+    el.body.appendChild(note);
+    fetchBoard(id, ALL).then(function (data) {
+      if (view !== token) return;
+      fill(ol, data, ALL);
+      note.textContent = data.total ? data.total + (data.total === 1 ? ' DRIVER' : ' DRIVERS') : '';
+      if (!data.you && me) {
+        var want = global.CONFIG.leaderboardSpeed;
+        var rec = global.Progress && want !== null && want !== undefined ? global.Progress.lapRecord(id, want) : 0;
+        if (rec) note.textContent += (note.textContent ? ' · ' : '') + 'your record ' + fmt(Math.round(rec * 1000)) + ' is not on it yet';
       }
     }, function () {
-      if (el.board.token === token) message('LEADERBOARD UNAVAILABLE');
+      if (view !== token) return;
+      ol.textContent = '';
+      ol.appendChild(make('li', 'lb-msg', 'LEADERBOARD UNAVAILABLE'));
     });
-  };
+  }
+
+  function open() {
+    el.board.classList.add('show');
+  }
+
+  /* A theme's three tracks: from the time-trial track screen. */
+  Leaderboard.openTheme = function (t) { showTheme(t || 0); open(); };
+
+  /* One track, everyone on it: from a time trial's results. Back goes to
+   * its theme, where it has one. */
+  Leaderboard.openTrack = function (id) { showTrack(id, themeOf(id)); open(); };
 
   Leaderboard.hideBoard = function () {
-    el.board.token = null;
+    view = null;
     el.board.classList.remove('show');
   };
 
@@ -244,19 +347,38 @@
     el.nameRule = $('lb-name-rule');
     el.nameSave = $('lb-name-save');
     el.board = $('lb-board');
-    el.boardSub = $('lb-board-sub');
-    el.boardBody = $('lb-board-body');
-    el.boardNote = $('lb-board-note');
+    el.title = $('lb-title');
+    el.speed = $('lb-speed');
+    el.body = $('lb-body');
+    el.prev = $('lb-prev');
+    el.next = $('lb-next');
+    el.back = $('lb-back');
     if (!el.name || !el.board) return;
 
     el.nameInput.addEventListener('input', nameChanged);
     el.nameForm.addEventListener('submit', function (e) { e.preventDefault(); saveName(); });
     $('lb-name-skip').addEventListener('click', closeName);
-    $('lb-board-close').addEventListener('click', Leaderboard.hideBoard);
+    $('lb-close').addEventListener('click', Leaderboard.hideBoard);
+    el.prev.addEventListener('click', function () { if (view && view.kind === 'theme') showTheme(view.theme - 1); });
+    el.next.addEventListener('click', function () { if (view && view.kind === 'theme') showTheme(view.theme + 1); });
+    el.back.addEventListener('click', function () { if (view && view.from >= 0) showTheme(view.from); });
+    // A tap on the dimmed screen round the panel closes it, as a click would expect.
+    el.board.addEventListener('click', function (e) { if (e.target === el.board) Leaderboard.hideBoard(); });
     document.addEventListener('keydown', function (e) {
-      if (e.key !== 'Escape') return;
-      if (el.name.classList.contains('show')) closeName();
-      else if (el.board.classList.contains('show')) Leaderboard.hideBoard();
+      if (el.name.classList.contains('show')) { if (e.key === 'Escape') closeName(); return; }
+      if (!el.board.classList.contains('show') || !view) return;
+      if (e.key === 'Escape') {
+        if (view.kind === 'track' && view.from >= 0) showTheme(view.from);
+        else Leaderboard.hideBoard();
+      } else if (view.kind === 'theme' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        showTheme(view.theme + (e.key === 'ArrowLeft' ? -1 : 1));
+        e.preventDefault();
+      }
+    });
+    var corner = $('btn-lb-corner');
+    if (corner) corner.addEventListener('click', function (e) {
+      e.stopPropagation();
+      Leaderboard.openTheme(global.Screens ? global.Screens.theme : 0);
     });
   }
 

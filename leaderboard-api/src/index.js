@@ -30,7 +30,7 @@ const RATE_WINDOW_MS = 60 * 60 * 1000;  // per hour, per hashed IP
 const MAX_TIME_MS = 60 * 60 * 1000;     // an hour: anything longer is not a lap
 const MAX_BODY_BYTES = 2048;
 const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 50;
+const MAX_LIMIT = 1000;                // "show all": every player there is, within reason
 
 const USERNAME = /^[A-Za-z0-9_]{1,16}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -172,30 +172,43 @@ async function leaderboard(request, env, track) {
     limit = Math.min(Number(raw), MAX_LIMIT);
   }
 
-  // Each player's best time (the earliest, if they matched it), then the
-  // players in order. player_id is not sent: it is the only thing that
-  // makes a submission count as that player's.
+  /* Each player's best time (the earliest, if they matched it), ranked.
+   * One pass gives the top `limit`, how many players there are, and - when
+   * the caller says who it is - its own rank wherever that is, so a player
+   * sixteenth of forty can be told so under a top five. player_id is only
+   * compared, never sent: it is the only thing that makes a submission
+   * count as that player's. */
   const { results } = await env.DB.prepare(
-    `SELECT username, time_ms, game_version, created_at, player_id = ?3 AS me FROM (
+    `WITH best AS (
        SELECT player_id, username, time_ms, game_version, created_at,
               ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY time_ms ASC, created_at ASC) AS rn
        FROM times WHERE track_id = ?1
-     ) WHERE rn = 1
-     ORDER BY time_ms ASC, created_at ASC
-     LIMIT ?2`
+     ), ranked AS (
+       SELECT player_id, username, time_ms, game_version, created_at,
+              ROW_NUMBER() OVER (ORDER BY time_ms ASC, created_at ASC) AS rank,
+              COUNT(*) OVER () AS total
+       FROM best WHERE rn = 1
+     )
+     SELECT rank, total, username, time_ms, game_version, created_at, player_id = ?3 AS me
+     FROM ranked WHERE rank <= ?2 OR player_id = ?3
+     ORDER BY rank`
   ).bind(track, limit, mine ? mine.toLowerCase() : null).all();
 
+  const shape = (r) => ({
+    rank: r.rank,
+    username: r.username,
+    time_ms: r.time_ms,
+    game_version: r.game_version,
+    created_at: new Date(r.created_at).toISOString(),
+    me: r.me === 1
+  });
+  const own = results.find((r) => r.me === 1);
   return json(request, 200, {
     track_id: track,
     limit,
-    entries: results.map((r, i) => ({
-      rank: i + 1,
-      username: r.username,
-      time_ms: r.time_ms,
-      game_version: r.game_version,
-      created_at: new Date(r.created_at).toISOString(),
-      me: r.me === 1
-    }))
+    total: results.length ? results[0].total : 0,
+    entries: results.filter((r) => r.rank <= limit).map(shape),
+    you: mine ? (own ? shape(own) : null) : undefined
   });
 }
 

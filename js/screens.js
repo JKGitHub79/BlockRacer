@@ -658,6 +658,7 @@
 
     global.addEventListener('keydown', function (e) {
       if (Screens.current !== 'play') return;
+      if (global.Leaderboard && global.Leaderboard.busy()) return;   // its arrows, not ours
       if (e.key === 'ArrowLeft') Screens.stepTheme(-1);
       else if (e.key === 'ArrowRight') Screens.stepTheme(1);
     });

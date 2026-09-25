@@ -2130,19 +2130,136 @@ body.mode-tutorial .stat.trial-only { display: none; }
 .secret-word.show { opacity: 1; }
 
 /* ---- online leaderboard ---------------------------------------------------
-   Over the results, so above them. Only a time trial has a board to open. */
+   Above the screens and the results, below the tutorial and the toast. */
 .lb-overlay { z-index: 11; }
-.lb-open { display: none; margin-top: -8px; }
+
+/* On a trial's results, under the row, with room of its own. */
+.lb-open { display: none; margin-top: 14px; }
 body.mode-trial .lb-open { display: block; }
-.lb-status:empty, .lb-note:empty { display: none; }
-.lb-status { margin-top: 8px; }
-#lb-board .panel { max-height: calc(100dvh - 20px); display: flex; flex-direction: column; }
-#lb-board .results-scroll { margin-bottom: 12px; }
-.lb-table td:first-child, .lb-table th:first-child { width: 3em; }
-.lb-table td:last-child, .lb-table th:last-child { text-align: right; }
-.lb-table td:nth-child(2) { overflow-wrap: anywhere; }
-.lb-table td.lb-msg { text-align: center; color: var(--dim); letter-spacing: 2px; padding: 18px 0; }
-.lb-note { margin: 0 0 12px; }
+.lb-status:empty { display: none; }
+.lb-status { margin-top: 10px; }
+
+/* The track screen's corner opposite BACK, only for a time trial and not on
+   the PROGRESS page, which belongs to no theme. Styled as BACK is. */
+.lb-corner {
+  display: none;
+  position: absolute;
+  top: calc(16px + var(--sa-t));
+  right: calc(16px + var(--sa-r));
+  z-index: 2;
+  padding: 9px 16px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--text);
+  background: rgba(10, 16, 28, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+body.mode-trial #screen-play:not(.progress-page) .lb-corner { display: block; }
+@media (hover: hover) { .lb-corner:hover { border-color: var(--accent); color: var(--accent); } }
+@media (hover: none) {
+  .lb-corner { top: calc(8px + var(--sa-t)); right: calc(8px + var(--sa-r));
+    min-height: 42px; padding: 7px 12px; font-size: 11px; }
+}
+
+/* The board: a header that stays, and a body that scrolls under it. */
+.lb-panel {
+  --lb-theme: var(--accent);
+  position: relative;
+  width: min(780px, 100%);
+  max-height: calc(var(--app-h) - 20px - var(--sa-t) - var(--sa-b));
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px 18px;
+  text-align: left;
+}
+.lb-track-view .lb-panel { width: min(460px, 100%); }
+.lb-head { flex: 0 0 auto; text-align: center; }
+.lb-cap { margin: 0 44px 6px; font-size: 10px; letter-spacing: 2px; color: var(--dim); }
+.lb-x {
+  position: absolute; top: 8px; right: 8px;
+  width: 40px; height: 40px;
+  font: inherit; font-size: 22px; line-height: 1;
+  color: var(--dim); background: none; border: 1px solid transparent; border-radius: 6px;
+  cursor: pointer;
+}
+@media (hover: hover) { .lb-x:hover { color: var(--text); border-color: var(--line); } }
+.lb-nav { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; }
+.lb-title {
+  margin: 0; min-width: 0; flex: 0 1 auto;
+  font-size: 22px; letter-spacing: 5px; color: var(--lb-theme);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lb-arrow {
+  flex: 0 0 auto; width: 44px; height: 40px;
+  font: inherit; font-size: 24px; line-height: 1;
+  color: var(--text); background: #1b2438; border: 1px solid var(--line); border-radius: 8px; cursor: pointer;
+}
+@media (hover: hover) { .lb-arrow:hover, .lb-back:hover { border-color: var(--lb-theme); } }
+.lb-back {
+  flex: 0 0 auto; padding: 6px 10px; font: inherit; font-size: 11px; letter-spacing: 2px;
+  color: var(--text); background: #1b2438; border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
+}
+.lb-back[hidden], .lb-arrow[hidden], .lb-all[hidden] { display: none; }
+.lb-body {
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  margin: 0 -6px; padding: 0 6px;
+}
+
+/* Three tracks: side by side where there is the width, stacked where not. */
+.lb-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 600px) { .lb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.lb-track { min-width: 0; }
+.lb-track-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--line);
+  min-height: 40px; box-sizing: border-box;   /* with or without SHOW ALL, rows line up across */
+}
+.lb-track-name { margin: 0; font-size: 12px; letter-spacing: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-all {
+  flex: 0 0 auto; padding: 5px 8px; font: inherit; font-size: 10px; letter-spacing: 1px;
+  color: var(--lb-theme); background: none; border: 1px solid var(--line); border-radius: 5px; cursor: pointer;
+}
+@media (hover: hover) { .lb-all:hover { border-color: var(--lb-theme); } }
+@media (hover: none) { .lb-all { min-height: 32px; } }
+
+.lb-list { list-style: none; margin: 0; padding: 0; }
+.lb-row {
+  display: grid; grid-template-columns: 2.4em minmax(0, 1fr) auto; gap: 8px; align-items: center;
+  margin: 2px 0; padding: 5px 8px; border-radius: 5px; font-size: 12px;
+}
+.lb-rank { color: var(--dim); }
+.lb-who { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-time { font-variant-numeric: tabular-nums; }
+/* You: a blue bar, whatever the theme's colour, so it reads the same on
+   every page and is never mistaken for the theme's own accent. */
+.lb-row.me { background: #1f54d6; color: #fff; box-shadow: inset 3px 0 0 #9cc3ff; }
+.lb-row.me .lb-rank { color: #d6e4ff; }
+.lb-gap { text-align: center; color: var(--dim); letter-spacing: 3px; line-height: 1; padding: 2px 0; }
+.lb-msg { padding: 14px 0; text-align: center; font-size: 11px; letter-spacing: 2px; color: var(--dim); }
+.lb-full .lb-row { font-size: 13px; padding: 6px 10px; }
+.lb-foot { margin: 10px 0 0; text-align: center; font-size: 10px; letter-spacing: 2px; color: var(--dim); }
+.lb-foot:empty { display: none; }
+
+/* Short screens - a phone lying down - give every row they can to the lists. */
+@media (max-height: 480px) {
+  .lb-panel { padding: 10px 12px 12px; }
+  .lb-cap { margin-bottom: 2px; font-size: 9px; }
+  .lb-x { top: 4px; right: 4px; width: 36px; height: 36px; }
+  .lb-nav { margin-bottom: 6px; }
+  .lb-title { font-size: 16px; letter-spacing: 3px; }
+  .lb-arrow { width: 40px; height: 32px; font-size: 20px; }
+  .lb-row { padding: 3px 7px; font-size: 11px; margin: 1px 0; }
+  .lb-track-head { padding-bottom: 3px; min-height: 34px; }
+  .lb-full .lb-row { font-size: 12px; padding: 4px 8px; }
+}
+
+/* The name box. */
 .lb-input {
   display: block;
   width: 100%;

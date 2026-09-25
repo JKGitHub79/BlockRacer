@@ -1020,11 +1020,23 @@ every speed would rank the setting rather than the driving. A trial at any
 other speed keeps its record here and says on the results that the board is
 SWEAT only. Set the constant to `null` to send every speed to one board.
 
-**LEADERBOARD** on a trial's results opens that track's top 20, your own row in
-the accent colour. The API marks it, from the player id the request carries -
-ids are compared on the server, never sent back - so two players with one name
-are still told apart. A board opened while your lap is still on its way waits
-for it, so the time you just set is on it.
+**Two ways in.** On the time-trial track screen, **LEADERBOARD** in the top
+right opens the theme on screen: its three tracks side by side (stacked on a
+narrow screen), the top five of each, with arrows - or the arrow keys - to the
+other themes. The carousel behind stays where it was. **SHOW ALL** on a track
+lists everyone with a time there, as far down as it goes, and scrolls; it only
+appears when there are more than five. **LEADERBOARD** on a trial's results
+opens that track's full list straight away, with a way back to its theme.
+Escape steps back a level, then closes.
+
+**You are a blue bar** - blue whatever the theme's colour, so it is never
+mistaken for the page's accent. Inside the top five it is your row; below it,
+the five are shown as they are, then a gap, then your row with your real
+position, sixteenth or sixtieth. The API works that out from the player id the
+request carries - ids are compared on the server, never sent back - so two
+players with one name are still told apart. A board opened while your lap is
+still on its way waits for it, and boards are kept for thirty seconds so
+flicking between themes does not ask again.
 
 ## The landscapes
 

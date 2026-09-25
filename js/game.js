@@ -1239,7 +1239,7 @@
     });
     document.getElementById('btn-board').addEventListener('click', function (e) {
       e.stopPropagation();
-      if (global.Leaderboard) global.Leaderboard.show(T.data.id, T.name);
+      if (global.Leaderboard) global.Leaderboard.openTrack(T.data.id);
     });
     document.getElementById('btn-quit').addEventListener('click', function (e) {
       e.stopPropagation();

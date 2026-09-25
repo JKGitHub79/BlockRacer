@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.60.0', built: '2026-09-25' };
+window.BR = { version: '0.61.0', built: '2026-09-25' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -95,37 +95,6 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           <p class="hint">R races again &middot; ESC pauses</p>
         </div>
       </div>
-
-      <div id="lb-name" class="overlay lb-overlay" role="dialog" aria-modal="true" aria-labelledby="lb-name-title">
-        <form id="lb-name-form" class="panel" novalidate autocomplete="off">
-          <h2 id="lb-name-title">LEADERBOARD</h2>
-          <p class="lapline">A name for your times</p>
-          <input id="lb-name-input" class="lb-input" type="text" maxlength="16"
-                 autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"
-                 aria-describedby="lb-name-rule">
-          <p id="lb-name-rule" class="hint lb-rule">1&ndash;16 letters, numbers or _</p>
-          <div class="row">
-            <button id="lb-name-skip" type="button" class="secondary">NOT NOW</button>
-            <button id="lb-name-save" type="submit" class="primary">SAVE</button>
-          </div>
-        </form>
-      </div>
-
-      <div id="lb-board" class="overlay lb-overlay" role="dialog" aria-modal="true" aria-labelledby="lb-board-title">
-        <div class="panel wide">
-          <h2 id="lb-board-title">LEADERBOARD</h2>
-          <p id="lb-board-sub" class="lapline"></p>
-          <div class="results-scroll">
-            <table class="results lb-table">
-              <thead><tr><th>#</th><th>Driver</th><th>Best lap</th></tr></thead>
-              <tbody id="lb-board-body"></tbody>
-            </table>
-          </div>
-          <p id="lb-board-note" class="hint lb-note"></p>
-          <div class="row">
-            <button id="lb-board-close" class="primary">BACK</button>
-          </div>
-        </div>
       </div>
      </div>
     </div>
@@ -144,6 +113,38 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       <h3 class="race-only">ORDER</h3>
       <ol id="standings" class="race-only"></ol>
     </aside>
+  </div>
+</div>
+
+<!-- ========================= online leaderboard ======================== -->
+<div id="lb-name" class="overlay lb-overlay" role="dialog" aria-modal="true" aria-labelledby="lb-name-title">
+  <form id="lb-name-form" class="panel" novalidate autocomplete="off">
+    <h2 id="lb-name-title">LEADERBOARD</h2>
+    <p class="lapline">A name for your times</p>
+    <input id="lb-name-input" class="lb-input" type="text" maxlength="16"
+           autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"
+           aria-describedby="lb-name-rule">
+    <p id="lb-name-rule" class="hint lb-rule">1&ndash;16 letters, numbers or _</p>
+    <div class="row">
+      <button id="lb-name-skip" type="button" class="secondary">NOT NOW</button>
+      <button id="lb-name-save" type="submit" class="primary">SAVE</button>
+    </div>
+  </form>
+</div>
+
+<div id="lb-board" class="overlay lb-overlay" role="dialog" aria-modal="true" aria-labelledby="lb-title">
+  <div class="panel lb-panel">
+    <div class="lb-head">
+      <p class="lb-cap">LEADERBOARD &middot; <span id="lb-speed">SWEAT</span> &middot; BEST LAP</p>
+      <button id="lb-close" class="lb-x" type="button" aria-label="Close">&times;</button>
+      <div class="lb-nav">
+        <button id="lb-prev" class="lb-arrow" type="button" aria-label="Previous theme">&lsaquo;</button>
+        <button id="lb-back" class="lb-back" type="button" hidden>&lsaquo;</button>
+        <h2 id="lb-title" class="lb-title">&nbsp;</h2>
+        <button id="lb-next" class="lb-arrow" type="button" aria-label="Next theme">&rsaquo;</button>
+      </div>
+    </div>
+    <div id="lb-body" class="lb-body"></div>
   </div>
 </div>
 
@@ -244,6 +245,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
 <!-- =========================== track select =========================== -->
 <section id="screen-play" class="screen play">
   <button class="back" data-back="mode">&larr; BACK</button>
+  <button id="btn-lb-corner" class="lb-corner" type="button">LEADERBOARD</button>
   <div class="screen-inner">
     <header class="theme-head">
       <p class="mode-tag" id="play-mode">RACE</p>
