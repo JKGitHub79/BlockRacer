@@ -3,10 +3,10 @@
  *
  * The graph is built once, the first time the player touches the page:
  *
- *   song voices -> song gain -\
- *                              > music bus -> duck -\
- *   (each song fades itself)                        > master -> limiter -> out
- *   effect voices ------------------> sfx bus ------/
+ *   song voices -> song gain -> muffle -\
+ *   (each song fades itself)             > music bus -> duck -\
+ *   a place (see PLACES) ---------------/                     > master -> limiter -> out
+ *   effect voices ------------------------------> sfx bus ------/
  *
  * The two buses are the two volume sliders. `duck` pulls the music down
  * under the countdown, the pause menu and the finishing fanfare. `master` is
@@ -35,7 +35,7 @@
   var FADE_IN = 1.0, FADE_OUT = 0.8;
   var SILENT = 0.0001;        // exponential ramps cannot reach zero
 
-  var ctx = null, master = null, musicBus = null, sfxBus = null, duck = null;
+  var ctx = null, master = null, musicBus = null, sfxBus = null, duck = null, muffler = null;
   var Sound = { muted: false, musicVolume: 60, sfxVolume: 80 };
 
   /* ---- building blocks ----------------------------------------------- */
@@ -75,6 +75,16 @@
     p.setValueAtTime(peak * sus, held);
     p.exponentialRampToValueAtTime(SILENT, held + rel);
     return held + rel;
+  }
+
+  // A soft clip, made once per context.
+  function tanhCurve(a) {
+    if (!a.__brShaper) {
+      var n = 1024, curve = new Float32Array(n);
+      for (var i = 0; i < n; i++) { var x = i / (n - 1) * 2 - 1; curve[i] = Math.tanh(x * 6); }
+      a.__brShaper = curve;
+    }
+    return a.__brShaper;
   }
 
   // Take the voice's nodes out of the graph once its last source has ended.
@@ -694,7 +704,269 @@
     glitch: { gap: 0.08, play: function (a, o, t) {
       hiss(a, o, t, { filter: 'highpass', f: 2500, dur: 0.06, gain: 0.07 });
       blip(a, o, t, { type: 'square', f: 180 + Math.random() * 1400, dur: 0.05, gain: 0.03 });
+    } },
+    // Once, close, and cut off: a crowd of torn voices through one throat,
+    // a burst of air and a blow underneath - all of it gone in the same
+    // hundredth of a second it ends on.
+    scream: { gap: 2, play: function (a, o, t) {
+      var dur = 0.62, end = t + dur, nodes = [];
+      var keep = function (x) { nodes.push(x); return x; };
+      var drive = keep(a.createGain()), shaper = keep(a.createWaveShaper());
+      var lp = keep(a.createBiquadFilter()), g = keep(a.createGain());
+      shaper.curve = tanhCurve(a);
+      drive.gain.setValueAtTime(2.2, t);
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(5200, t);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.3, t + 0.012);
+      g.gain.setValueAtTime(0.3, t + 0.26);
+      g.gain.linearRampToValueAtTime(0.22, end - 0.01);
+      g.gain.linearRampToValueAtTime(0, end);
+      drive.connect(shaper); shaper.connect(lp); lp.connect(g); g.connect(o);
+      var forms = [[850, 5, 1], [1350, 6, 0.8], [2700, 7, 0.45]].map(function (fm) {
+        var bp = keep(a.createBiquadFilter()), fg = keep(a.createGain());
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(fm[0], t);
+        bp.frequency.linearRampToValueAtTime(fm[0] * 0.8, end);
+        bp.Q.setValueAtTime(fm[1], t);
+        fg.gain.setValueAtTime(fm[2], t);
+        bp.connect(fg); fg.connect(drive);
+        return bp;
+      });
+      var last = null;
+      [310, 415, 560, 745, 990].forEach(function (f, i) {
+        var osc = keep(a.createOscillator()), vib = keep(a.createOscillator()), vd = keep(a.createGain());
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(f * 0.85, t);
+        osc.frequency.linearRampToValueAtTime(f * 1.3, t + 0.07);
+        osc.frequency.linearRampToValueAtTime(f * 0.78, end);
+        vib.frequency.setValueAtTime(9 + i * 1.3, t);
+        vd.gain.setValueAtTime(70 + i * 12, t);
+        vib.connect(vd); vd.connect(osc.detune);
+        forms.forEach(function (bp) { osc.connect(bp); });
+        osc.start(t); osc.stop(end + 0.01);
+        vib.start(t); vib.stop(end + 0.01);
+        last = osc;
+      });
+      var air = keep(a.createBufferSource()), hp = keep(a.createBiquadFilter()), ag = keep(a.createGain());
+      air.buffer = noiseBuffer(a);
+      hp.type = 'highpass';
+      hp.frequency.setValueAtTime(1300, t);
+      ag.gain.setValueAtTime(0, t);
+      ag.gain.linearRampToValueAtTime(0.16, t + 0.01);
+      ag.gain.linearRampToValueAtTime(0.07, end - 0.01);
+      ag.gain.linearRampToValueAtTime(0, end);
+      air.connect(hp); hp.connect(ag); ag.connect(o);
+      air.start(t); air.stop(end + 0.01);
+      var boom = keep(a.createOscillator()), bg = keep(a.createGain());
+      boom.type = 'sine';
+      boom.frequency.setValueAtTime(72, t);
+      boom.frequency.exponentialRampToValueAtTime(27, end);
+      bg.gain.setValueAtTime(0, t);
+      bg.gain.linearRampToValueAtTime(0.55, t + 0.008);
+      bg.gain.linearRampToValueAtTime(0.3, end - 0.01);
+      bg.gain.linearRampToValueAtTime(0, end);
+      boom.connect(bg); bg.connect(o);
+      boom.start(t); boom.stop(end + 0.01);
+      tidy(last, nodes);
     } }
+  };
+
+  /* ---- places --------------------------------------------------------------
+   *
+   * Not songs and not effects: somewhere, running for as long as the game
+   * keeps it, in layers the game turns up and down while it plays. Each is
+   * built against a context and an output like everything else here and
+   * hands back its layers (gains, all starting at silence) and `events`,
+   * which scatters whatever happens there now and then over a stretch of
+   * time. Sound.place runs one live; the tests render one offline. */
+
+  // A room nobody has measured: noise dying away over `sec`, a little
+  // different in each ear.
+  function hall(a, sec) {
+    var key = '__brHall' + sec;
+    if (a[key]) return a[key];
+    var len = Math.floor(a.sampleRate * sec), b = a.createBuffer(2, len, a.sampleRate);
+    for (var ch = 0; ch < 2; ch++) {
+      var d = b.getChannelData(ch);
+      for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.4);
+    }
+    a[key] = b;
+    return b;
+  }
+
+  function pan(a, out, x, t) {
+    if (!a.createStereoPanner) return out;
+    var p = a.createStereoPanner();
+    p.pan.setValueAtTime(x, t);
+    p.connect(out);
+    return p;
+  }
+
+  /* A voice a very long way off: a sawtooth pushed through two vowel bands
+   * with breath in it, a wide slow shake, a rise and a long fall. What makes
+   * it far is not here - it is the filter and the room it is sent through. */
+  function cry(a, out, t, o) {
+    var dur = o.dur, f = o.f, end = t + dur, nodes = [];
+    var keep = function (x) { nodes.push(x); return x; };
+    var dest = pan(a, out, o.pan || 0, t);
+    if (dest !== out) nodes.push(dest);
+    var g = keep(a.createGain());
+    g.gain.setValueAtTime(SILENT, t);
+    g.gain.exponentialRampToValueAtTime(o.gain, t + dur * 0.3);
+    g.gain.setValueAtTime(o.gain, t + dur * 0.55);
+    g.gain.exponentialRampToValueAtTime(SILENT, end);
+    g.connect(dest);
+    var bands = [[o.v1 || 780, 5], [o.v2 || 1180, 6]].map(function (v) {
+      var bp = keep(a.createBiquadFilter());
+      bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(v[0], t);
+      bp.Q.setValueAtTime(v[1], t);
+      bp.connect(g);
+      return bp;
+    });
+    var osc = keep(a.createOscillator()), vib = keep(a.createOscillator()), vd = keep(a.createGain());
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f * 0.7, t);
+    osc.frequency.linearRampToValueAtTime(f * 1.22, t + dur * 0.25);
+    osc.frequency.linearRampToValueAtTime(f * 1.05, t + dur * 0.6);
+    osc.frequency.linearRampToValueAtTime(f * 0.5, end);
+    vib.frequency.setValueAtTime(o.rate, t);
+    vd.gain.setValueAtTime(o.depth, t);
+    vib.connect(vd); vd.connect(osc.detune);
+    var br = keep(a.createBufferSource()), bg = keep(a.createGain());
+    br.buffer = noiseBuffer(a); br.loop = true;
+    bg.gain.setValueAtTime(0.3, t);
+    br.connect(bg);
+    bands.forEach(function (bp) { osc.connect(bp); bg.connect(bp); });
+    osc.start(t); osc.stop(end + 0.02);
+    vib.start(t); vib.stop(end + 0.02);
+    br.start(t, Math.random() * 0.5); br.stop(end + 0.02);
+    tidy(osc, nodes);
+  }
+
+  var PLACES = {
+    /* Somewhere past the end of a road. A floor of rumble that breathes, a
+     * low drone a tritone wide, air moving through something big, a thin
+     * whine for when everything else goes quiet - and, sent through a long
+     * dark room, things far off: blows, groans, and voices. */
+    beyond: function (a, out) {
+      var t0 = a.currentTime, nodes = [], sources = [];
+      var keep = function (x) { nodes.push(x); return x; };
+      var layers = {};
+      function layer(name, dest) {
+        var g = keep(a.createGain());
+        g.gain.setValueAtTime(0, t0);
+        g.connect(dest || out);
+        layers[name] = g;
+        return g;
+      }
+      function loopNoise() {
+        var n = keep(a.createBufferSource());
+        n.buffer = noiseBuffer(a); n.loop = true;
+        sources.push(n);
+        return n;
+      }
+      function osc(type, f) {
+        var o = keep(a.createOscillator());
+        o.type = type; o.frequency.setValueAtTime(f, t0);
+        sources.push(o);
+        return o;
+      }
+
+      // the floor, breathing about once every twelve seconds
+      var rn = loopNoise(), rlp = keep(a.createBiquadFilter()), breath = keep(a.createGain());
+      var blfo = osc('sine', 0.083), bdepth = keep(a.createGain());
+      rlp.type = 'lowpass'; rlp.frequency.setValueAtTime(75, t0); rlp.Q.setValueAtTime(0.8, t0);
+      breath.gain.setValueAtTime(0.7, t0);
+      bdepth.gain.setValueAtTime(0.3, t0);
+      blfo.connect(bdepth); bdepth.connect(breath.gain);
+      rn.connect(rlp); rlp.connect(breath); breath.connect(layer('rumble'));
+      // and a grind above it, low enough to feel and high enough that a
+      // phone's speaker, which has no bass at all, still gives it back
+      var gbp = keep(a.createBiquadFilter()), gg = keep(a.createGain());
+      gbp.type = 'bandpass'; gbp.frequency.setValueAtTime(165, t0); gbp.Q.setValueAtTime(0.9, t0);
+      gg.gain.setValueAtTime(0.4, t0);
+      rn.connect(gbp); gbp.connect(gg); gg.connect(breath);
+
+      // the drone
+      var dlp = keep(a.createBiquadFilter());
+      dlp.type = 'lowpass'; dlp.frequency.setValueAtTime(190, t0);
+      dlp.connect(layer('drone'));
+      osc('sine', 36.7).connect(dlp);
+      osc('triangle', 51.9).connect(dlp);
+      osc('sine', 37.1).connect(dlp);
+      var dhi = keep(a.createBiquadFilter()), dhg = keep(a.createGain());
+      dhi.type = 'lowpass'; dhi.frequency.setValueAtTime(280, t0);
+      dhg.gain.setValueAtTime(0.35, t0);
+      osc('sawtooth', 73.4).connect(dhi); dhi.connect(dhg); dhg.connect(layers.drone);
+
+      // air
+      var an = loopNoise(), abp = keep(a.createBiquadFilter());
+      var alfo = osc('sine', 0.047), adepth = keep(a.createGain());
+      abp.type = 'bandpass'; abp.frequency.setValueAtTime(420, t0); abp.Q.setValueAtTime(1.3, t0);
+      adepth.gain.setValueAtTime(170, t0);
+      alfo.connect(adepth); adepth.connect(abp.frequency);
+      an.connect(abp); abp.connect(layer('air'));
+
+      // the whine
+      var wg = layer('whine');
+      osc('sine', 3150).connect(wg);
+      osc('sine', 3167).connect(wg);
+
+      // the long room everything far away is heard through
+      var room = keep(a.createConvolver()), roomOut = keep(a.createBiquadFilter());
+      room.buffer = hall(a, 4.5);
+      roomOut.type = 'lowpass'; roomOut.frequency.setValueAtTime(1400, t0);
+      room.connect(roomOut); roomOut.connect(out);
+      function distant(name, cutoff, dry) {
+        var lp = keep(a.createBiquadFilter()), d = keep(a.createGain());
+        lp.type = 'lowpass'; lp.frequency.setValueAtTime(cutoff, t0); lp.Q.setValueAtTime(0.5, t0);
+        d.gain.setValueAtTime(dry, t0);
+        layer(name, lp);
+        lp.connect(room); lp.connect(d); d.connect(out);
+        return layers[name];
+      }
+      var far = distant('far', 520, 0.3);
+      var cries = distant('cries', 640, 0.12);
+
+      sources.forEach(function (s) { s.start(t0); });
+
+      // Something now and then, over [from, to): a blow or a groan, and
+      // further off still, a few voices at once.
+      var nextFar = t0 + 2 + Math.random() * 3, nextCry = t0 + 4 + Math.random() * 3;
+      function events(from, to) {
+        while (nextFar < to) {
+          var tf = Math.max(nextFar, from);
+          if (Math.random() < 0.55) {
+            hiss(a, far, tf, { filter: 'lowpass', f: 120, dur: 1.4, gain: 0.9, at: 0.03 });
+          } else {
+            blip(a, far, tf, { type: 'sawtooth', f: 58 + Math.random() * 14, f2: 38, glide: 2.8, dur: 3, gain: 0.5, at: 1.1 });
+          }
+          nextFar = tf + 3.5 + Math.random() * 5.5;
+        }
+        while (nextCry < to) {
+          var tc = Math.max(nextCry, from), n = 2 + Math.floor(Math.random() * 2);
+          var side = Math.random() * 1.4 - 0.7;
+          for (var i = 0; i < n; i++) {
+            cry(a, cries, tc + i * (0.2 + Math.random() * 0.5), {
+              f: 380 + Math.random() * 380, dur: 1.8 + Math.random() * 1.6,
+              gain: 0.6 - i * 0.12, rate: 4.5 + Math.random() * 3, depth: 30 + Math.random() * 50,
+              v1: 700 + Math.random() * 200, v2: 1050 + Math.random() * 300,
+              pan: Math.max(-1, Math.min(1, side + Math.random() * 0.4 - 0.2))
+            });
+          }
+          nextCry = tc + 5 + Math.random() * 7;
+        }
+      }
+
+      return {
+        layers: layers,
+        events: events,
+        stop: function (t) { sources.forEach(function (s) { try { s.stop(t); } catch (e) { /* done */ } }); },
+        nodes: nodes
+      };
+    }
   };
 
   /* ---- the live context -------------------------------------------------- */
@@ -726,6 +998,13 @@
     duck.connect(master);
     musicBus = ctx.createGain();
     musicBus.connect(duck);
+    // Songs reach the music bus through a lowpass that is normally wide open
+    // (Sound.muffle); anything else on the music bus goes round it.
+    muffler = ctx.createBiquadFilter();
+    muffler.type = 'lowpass';
+    muffler.frequency.setValueAtTime(20000, 0);
+    muffler.Q.setValueAtTime(0.5, 0);
+    muffler.connect(musicBus);
     sfxBus = ctx.createGain();
     sfxBus.connect(master);
     master.gain.setValueAtTime(Sound.muted ? 0 : 1, 0);
@@ -748,7 +1027,7 @@
     if (player && player.id === target) return;
     if (player) { player.stop(fade); player = null; }
     if (!target) return;
-    player = new Player(ctx, musicBus, target);
+    player = new Player(ctx, muffler, target);
     player.start(ctx.currentTime + 0.05);
     player.pump();
     if (!pumping) pumping = setInterval(pumpAll, PUMP_MS);
@@ -879,10 +1158,69 @@
     if (ctx) ramp(master.gain, m ? 0 : 1, 0.05);
   };
 
+  /* Muffle the song - as if heard through a wall, then from further off -
+   * down to `hz` over `over` seconds. Nothing, or 0, opens it again at once. */
+  Sound.muffle = function (hz, over) {
+    if (!ctx) return;
+    var f = muffler.frequency, now = ctx.currentTime;
+    f.cancelScheduledValues(now);
+    if (!(hz > 0)) { f.setValueAtTime(20000, now); return; }
+    f.setValueAtTime(Math.max(20, f.value), now);
+    f.exponentialRampToValueAtTime(hz, now + (over || 0.05));
+  };
+
+  /* Somewhere to be, in place of a song: see PLACES. It plays on the music
+   * bus, so the music slider and mute are its volume, and it keeps going
+   * until stopped. The handle turns its layers up and down and stops it -
+   * at once, or over `fade` seconds. Without a context there is nothing to
+   * hear and the handle does nothing. */
+  var placeOn = null;
+  Sound.place = function (name) {
+    if (placeOn) placeOn.stop(0);
+    var none = { set: function () {}, stop: function () {} };
+    if (!ctx || !PLACES[name]) return none;
+    var out = ctx.createGain();
+    out.gain.setValueAtTime(1, ctx.currentTime);
+    out.connect(musicBus);
+    var p = PLACES[name](ctx, out), live = true;
+    var pump = function () { if (live) p.events(ctx.currentTime, ctx.currentTime + 1.5); };
+    pump();
+    var timer = setInterval(pump, 500);
+    var handle = {
+      // layer to `value` (a gain) over `over` seconds
+      set: function (layer, value, over) {
+        var g = p.layers[layer];
+        if (!live || !g) return;
+        var now = ctx.currentTime;
+        g.gain.cancelScheduledValues(now);
+        g.gain.setValueAtTime(g.gain.value, now);
+        g.gain.linearRampToValueAtTime(value, now + Math.max(0.01, over || 0));
+      },
+      stop: function (fade) {
+        if (!live) return;
+        live = false;
+        clearInterval(timer);
+        if (placeOn === handle) placeOn = null;
+        var now = ctx.currentTime, f = Math.max(0.005, fade || 0);
+        out.gain.cancelScheduledValues(now);
+        out.gain.setValueAtTime(out.gain.value, now);
+        out.gain.linearRampToValueAtTime(0, now + f);
+        p.stop(now + f + 0.02);
+        setTimeout(function () {
+          try { out.disconnect(); } catch (e) { /* gone */ }
+          p.nodes.forEach(function (n) { try { n.disconnect(); } catch (e) { /* gone */ } });
+        }, (f + 6) * 1000);
+      }
+    };
+    placeOn = handle;
+    return handle;
+  };
+
   // What is playing, for the tests and for anyone curious in the console.
   Sound.state = function () {
     return { context: ctx ? ctx.state : 'none', song: player ? player.id : null, want: want,
-             duck: duckLevel, music: Sound.musicVolume, sfx: Sound.sfxVolume, muted: Sound.muted };
+             duck: duckLevel, music: Sound.musicVolume, sfx: Sound.sfxVolume, muted: Sound.muted,
+             place: !!placeOn, muffle: muffler ? Math.round(muffler.frequency.value) : null };
   };
 
   // The offline renderers the tests measure. The live game never calls them.
@@ -892,7 +1230,15 @@
     return t;
   };
   Sound._renderSfx = function (a, out, name, arg) { SFX[name].play(a, out, 0.01, arg); };
-  Sound._names = { songs: Object.keys(SONGS), sfx: Object.keys(SFX), inst: Object.keys(INST) };
+  // A place for `sec` seconds with its layers held at `levels`.
+  Sound._renderPlace = function (a, out, name, sec, levels) {
+    var p = PLACES[name](a, out);
+    Object.keys(levels).forEach(function (k) { p.layers[k].gain.setValueAtTime(levels[k], 0); });
+    p.events(0, sec);
+    p.stop(sec);
+    return p;
+  };
+  Sound._names = { songs: Object.keys(SONGS), sfx: Object.keys(SFX), inst: Object.keys(INST), places: Object.keys(PLACES) };
 
   // The old names, which game.js has always called.
   Sound.beep = function () { Sound.play('count'); };

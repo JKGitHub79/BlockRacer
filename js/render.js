@@ -1044,6 +1044,15 @@
     return -1;
   };
 
+  /* A point on the track, in cells, to where it is on the screen now, in
+   * CSS pixels - through the quarter turn when the board has one. */
+  Renderer.trackToClient = function (x, y) {
+    var rc = this.canvas.getBoundingClientRect(), px = x * S, py = y * S;
+    return this.rotated
+      ? { x: rc.left + py / T.height * rc.width, y: rc.top + (T.width - px) / T.width * rc.height }
+      : { x: rc.left + px / T.width * rc.width, y: rc.top + py / T.height * rc.height };
+  };
+
   // Where the saucer is on the screen right now, or null. For the tests.
   Renderer._ufoScreen = function () {
     var t = (global.performance ? performance.now() : Date.now()) / 1000, k = Math.floor(t / UFO_PERIOD);
