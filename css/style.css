@@ -2058,3 +2058,49 @@ body.mode-tutorial .stat.trial-only { display: none; }
   body.in-race #standings .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   body.in-race #standings .lp { display: none; }
 }
+
+/* A black layer over everything, with its own canvas and one line of text.
+   Taps land on it and go nowhere. */
+.secret {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  opacity: 0;
+  transition: opacity 2s ease;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.secret.on { display: block; }
+.secret.show { opacity: 1; }
+.secret canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  transition: opacity 2.5s ease;
+}
+.secret canvas.show { opacity: 1; }
+.secret-say {
+  position: absolute;
+  top: calc(var(--sa-t) + 9vh);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 16px 22px;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+  color: #fff;
+  font-size: clamp(14px, 3.8vw, 18px);
+  letter-spacing: 2px;
+  line-height: 1.55;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+  pointer-events: none;
+}
+.secret-say.show { opacity: 1; }

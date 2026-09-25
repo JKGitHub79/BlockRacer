@@ -164,6 +164,12 @@
                a: 0.04, d: 0.2, s: 0.8, r: 0.25, level: 0.24 },
     pad:     { waves: [['sawtooth', 1, -8], ['sawtooth', 1, 8]], filter: { f: 800, q: 0.7 },
                a: 0.35, d: 0.4, s: 0.8, r: 0.5, level: 0.035 },
+    // Slow and low: a held tone that swells in and hangs on.
+    drone:   { waves: [['sine', 1], ['triangle', 0.3, -6], ['sine', 0.15, 5, 2]],
+               filter: { f: 480, q: 0.5 }, a: 2.5, d: 0.5, s: 0.9, r: 3, level: 0.16 },
+    // A struck glass: a single high tone with one inharmonic partial.
+    glass:   { waves: [['sine', 1], ['sine', 0.22, 0, 2.76]],
+               a: 0.02, d: 3.2, s: 0, level: 0.07 },
     stab:    { waves: [['sawtooth', 1], ['square', 0.5, 5]],
                filter: { f: 1800, env: 1500, q: 3, decay: 0.1 },
                a: 0.003, d: 0.15, s: 0, level: 0.06 }
@@ -401,7 +407,7 @@
   Player.prototype.start = function (t) {
     this.next = t;
     this.out.gain.setValueAtTime(SILENT, t);
-    this.out.gain.exponentialRampToValueAtTime(this.song.gain || 1, t + FADE_IN);
+    this.out.gain.exponentialRampToValueAtTime(this.song.gain || 1, t + (this.song.fadeIn || FADE_IN));
   };
   Player.prototype.pump = function () {
     var now = this.a.currentTime;
@@ -416,14 +422,16 @@
       this.step = (this.step + 1) % STEPS;
     }
   };
-  Player.prototype.stop = function () {
+  // `fade` seconds to silence: the song's own, or the default crossfade.
+  Player.prototype.stop = function (fade) {
     var g = this.out.gain, now = this.a.currentTime, nodes = this.nodes;
+    var f = fade || this.song.fadeOut || FADE_OUT;
     g.cancelScheduledValues(now);
     g.setValueAtTime(Math.max(SILENT, g.value), now);
-    g.exponentialRampToValueAtTime(SILENT, now + FADE_OUT);
+    g.exponentialRampToValueAtTime(SILENT, now + f);
     setTimeout(function () {
       nodes.forEach(function (n) { try { n.disconnect(); } catch (e) { /* gone */ } });
-    }, (FADE_OUT + LOOKAHEAD + 3) * 1000);
+    }, (f + LOOKAHEAD + 3) * 1000);
   };
 
   /* ---- sound effects ---------------------------------------------------
@@ -573,11 +581,11 @@
   }
 
   // Bring what is playing into line with what is wanted.
-  function applyMusic() {
+  function applyMusic(fade) {
     if (!ctx) return;
     var target = Sound.musicVolume > 0 && want && SONGS[want] ? want : null;
     if (player && player.id === target) return;
-    if (player) { player.stop(); player = null; }
+    if (player) { player.stop(fade); player = null; }
     if (!target) return;
     player = new Player(ctx, musicBus, target);
     player.start(ctx.currentTime + 0.05);
@@ -652,15 +660,15 @@
   /* Play the named song, crossfading from whatever is on. The same song again
    * carries straight on. `delayMs` waits before switching, and a newer call
    * in the meantime cancels it - for a carousel flicked through quickly. */
-  Sound.music = function (id, delayMs) {
+  Sound.music = function (id, delayMs, fade) {
     clearTimeout(pending);
     pending = 0;
     if (delayMs > 0 && id !== want) {
-      pending = setTimeout(function () { pending = 0; Sound.music(id); }, delayMs);
+      pending = setTimeout(function () { pending = 0; Sound.music(id, 0, fade); }, delayMs);
       return;
     }
     want = id || null;
-    applyMusic();
+    applyMusic(fade);   // `fade`: seconds for what is playing to fade out
   };
 
   /* A sound effect, now or `delay` seconds from now. */

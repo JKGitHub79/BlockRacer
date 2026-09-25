@@ -303,6 +303,7 @@
     this.time = 0;
     this.results = [];
     this.touchedAt = -1;
+    if (global.Secret) global.Secret.reset();
     this.countdown = C.countdown;
 
     // The track grids as many as its road holds, which on a tight circuit is
@@ -596,6 +597,7 @@
 
     this.updateStandings();
     if (this.ghostRec) this.updateGhost();
+    if (global.Secret && global.Secret.watch(this, dt)) return;
 
     var allDone = this.cars.every(function (c) { return c.finished; });
     if (this.player.finished || allDone) {
@@ -1096,6 +1098,8 @@
   };
 
   Game.command = function (name) {
+    // Nothing but mute while something else has the screen.
+    if (global.Secret && global.Secret.active && name !== 'mute') return;
     // Everything here is a race control. On a menu screen the keys belong to
     // the screen, not to a race that is not running.
     var racing = global.Screens.current === 'race';

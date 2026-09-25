@@ -197,5 +197,22 @@
     }
   };
 
+  /* Not a song anyone is meant to hear. No drums and no tune: a low drone
+   * that swells in over seconds, a chord that shifts up a semitone and back,
+   * and now and then one high glass note into a long echo, with a lot of
+   * nothing between them. Faded in and out slowly (`fadeIn`/`fadeOut`) and
+   * played through the same engine and volume as everything else - trimmed
+   * to sit about 5 dB under the other songs rather than level with them. */
+  SONGS.stillness = {
+    bpm: 40, gain: 0.43, root: 38, scale: 'phrygian', prog: [0, 0, 1, 0], form: 'ABAB',
+    delay: 0.45, fadeIn: 4, fadeOut: 3,
+    drums: {},
+    bass: { inst: 'drone', oct: 0, pat: 'x---------------' },
+    pad:  { inst: 'drone', oct: 1 },
+    lead: { inst: 'glass', oct: 2,
+      A: '. . . . . . . .  . . 8 _ _ _ . .  . . . . . . . .  . . . . 11 _ _ _',
+      B: '. . . . 12 _ _ _  . . . . . . . .  . . . . . . 9 _  . . . . . . . .' }
+  };
+
   global.MUSIC = { scales: SCALES, songs: SONGS };
 })(typeof window !== 'undefined' ? window : globalThis);
