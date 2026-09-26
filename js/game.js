@@ -387,8 +387,14 @@
     }
   }
 
-  /* A boost, seen from behind: sparks thrown off the tail. The flame itself
-   * is drawn on the car (js/render.js); these are what it leaves behind. */
+  function levelSpark(lv) {
+    var F = C.proFlames[Math.max(0, Math.min(C.proFlames.length - 1, lv - 1))];
+    return F.spark[Math.random() < 0.5 ? 0 : 1];
+  }
+
+  /* A boost, seen from behind: sparks thrown off the tail, in the colours of
+   * the level that earned it. The flame itself is drawn on the car
+   * (js/render.js); these are what it leaves behind. */
   function exhaust(game, car) {
     if (Math.random() > 0.55) return;
     var a = car.bodyAngle(), back = -C.carLength * 0.55;
@@ -398,8 +404,34 @@
       x: bx, y: by,
       vx: -Math.cos(a + spread) * sp, vy: -Math.sin(a + spread) * sp,
       life: 0.35 + Math.random() * 0.25,
-      color: Math.random() < 0.5 ? '#ffb347' : '#5ef2ff'
+      color: levelSpark(car.boostLevel || 3)
     });
+  }
+
+  /* A held slide (Pro controls), once it has reached level 1: sparks off the
+   * back tyres, in the colour of the level it has reached - the colour of the
+   * flame letting go now would give. Reaching a new level throws a burst, so
+   * the change reads even mid-corner. */
+  function slideSparks(game, car) {
+    var lv = car.drift && !car.crashed ? C.proLevelFor(car.drift.t) : 0;
+    var fresh = lv > (game.slideLevel || 0);
+    game.slideLevel = lv;
+    if (!lv) return;
+    var n = fresh ? 10 : 1 + (Math.random() < 0.5 ? 1 : 0);
+    var a = car.bodyAngle(), cos = Math.cos(a), sin = Math.sin(a);
+    var back = -C.carLength * 0.42, travel = car.velAngle;
+    for (var i = 0; i < n; i++) {
+      var side = (Math.random() < 0.5 ? -1 : 1) * C.carWidth * 0.45;
+      var spread = (Math.random() - 0.5) * 1.4, sp = (fresh ? 3 : 1.5) + Math.random() * 3;
+      game.particles.push({
+        x: car.x + back * cos - side * sin,
+        y: car.y + back * sin + side * cos,
+        // thrown back along the way the car is still going, and outwards
+        vx: -Math.cos(travel + spread) * sp, vy: -Math.sin(travel + spread) * sp,
+        life: 0.35 + Math.random() * 0.35,
+        color: levelSpark(lv)
+      });
+    }
   }
 
   function touchingAny(me, cars) {
@@ -538,7 +570,8 @@
     var P = this.player;
     if (!P || !P.drift) return;
     var standing = P.crashed;
-    if (P.releaseDrift()) Sound.play('boost');
+    var lv = P.releaseDrift();
+    if (lv) Sound.play('boost', lv);
     else if (standing) Sound.play('rev');
   };
 
@@ -609,6 +642,7 @@
       var hit = car.step(dt);
       if (car.isPlayer && car.spin && !wasSpinning) Sound.play('spin');
       if (car.isPlayer && car.boostT > 0) exhaust(this, car);
+      if (car.isPlayer) slideSparks(this, car);
       if (hit && hit.crashed) {
         spawnSparks(this, hit, car.color);
         if (car.isPlayer) Sound.play('crash');
@@ -1042,19 +1076,39 @@
     document.getElementById('menu-control').textContent = CONTROL_NAME[C.control];
   };
 
-  /* The three Pro settings on the options screen: slide needed for a boost,
-   * how much, how long. Kept between sessions (CONFIG.savePro). */
+  /* The Pro levels on the options screen: a tab per level, in its flame's
+   * colour, and three sliders for the one chosen - seconds of slide to
+   * reach it, boost, boost time. Kept between sessions (CONFIG.savePro). */
   var PRO_FIELDS = {
-    boostAfter: { id: 'pro-after', label: 'pro-after-v', show: function (v) { return v.toFixed(1) + 's'; } },
-    boostPct: { id: 'pro-pct', label: 'pro-pct-v', show: function (v) { return '+' + v + '%'; } },
-    boostTime: { id: 'pro-time', label: 'pro-time-v', show: function (v) { return v.toFixed(1) + 's'; } }
+    after: { id: 'pro-after', label: 'pro-after-v', show: function (v) { return v.toFixed(1) + 's'; } },
+    pct: { id: 'pro-pct', label: 'pro-pct-v', show: function (v) { return '+' + v + '%'; } },
+    time: { id: 'pro-time', label: 'pro-time-v', show: function (v) { return v.toFixed(1) + 's'; } }
+  };
+  var proLevel = 0;
+  Game.showProLevel = function (i) {
+    proLevel = Math.max(0, Math.min(C.pro.levels.length - 1, i | 0));
+    var L = C.pro.levels[proLevel];
+    Object.keys(PRO_FIELDS).forEach(function (name) {
+      var f = PRO_FIELDS[name], r = document.getElementById(f.id), l = document.getElementById(f.label);
+      if (r) r.value = L[name];
+      if (l) l.textContent = f.show(L[name]);
+    });
+    var lvEl = document.getElementById('pro-lv');
+    if (lvEl) lvEl.textContent = String(proLevel + 1);
+    var tabs = document.getElementById('pro-levels');
+    if (tabs) Array.prototype.forEach.call(tabs.children, function (b, k) {
+      b.classList.toggle('on', k === proLevel);
+      b.setAttribute('aria-selected', k === proLevel ? 'true' : 'false');
+    });
+    var sum = document.getElementById('pro-summary');
+    if (sum) sum.textContent = C.pro.levels.map(function (x, k) {
+      return 'L' + (k + 1) + ' ' + x.after.toFixed(1) + 's +' + x.pct + '% ' + x.time.toFixed(1) + 's';
+    }).join('  \u00b7  ');
   };
   Game.setPro = function (name, value, keep) {
-    C.pro[name] = C.clampPro(name, value);
+    C.setProLevel(proLevel, name, value);
     if (keep) C.savePro();
-    var f = PRO_FIELDS[name], r = document.getElementById(f.id), l = document.getElementById(f.label);
-    if (r) r.value = C.pro[name];
-    if (l) l.textContent = f.show(C.pro[name]);
+    Game.showProLevel(proLevel);
   };
 
   Game.setPlayerGlow = function (on) {
@@ -1295,12 +1349,29 @@
       var r = document.getElementById(PRO_FIELDS[name].id), L = C.proLimits[name];
       if (!r) return;
       r.min = L.min; r.max = L.max; r.step = L.step;
-      Game.setPro(name, C.pro[name]);
       r.addEventListener('input', function (e) {
         e.stopPropagation();
         Game.setPro(name, parseFloat(r.value), true);
       });
     });
+    var proTabs = document.getElementById('pro-levels');
+    if (proTabs) Array.prototype.forEach.call(proTabs.children, function (b, k) {
+      // each tab wears its level's flame
+      var sw = b.querySelector('.pro-sw'), F = C.proFlames[k];
+      if (sw && F) sw.style.background = 'linear-gradient(90deg, ' + F.inner + ', ' + F.outer + ')';
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        Game.showProLevel(k);
+      });
+    });
+    var proReset = document.getElementById('pro-reset');
+    if (proReset) proReset.addEventListener('click', function (e) {
+      e.stopPropagation();
+      C.resetProLevels();
+      C.savePro();
+      Game.showProLevel(proLevel);
+    });
+    Game.showProLevel(0);
     Array.prototype.forEach.call(el.contrastButtons.children, function (b) {
       b.addEventListener('click', function (e) {
         e.stopPropagation();

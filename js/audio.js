@@ -701,10 +701,12 @@
       tidy(rum, nodes);
     } },
     // Pro controls. A boost: a rush of air rising, and a bright upward chirp.
-    boost: { gap: 0.3, play: function (a, o, t) {
-      hiss(a, o, t, { filter: 'bandpass', f: 500, f2: 2600, dur: 0.45, gain: 0.16, q: 1.2, at: 0.02 });
-      blip(a, o, t, { type: 'sawtooth', f: 220, f2: 660, glide: 0.25, dur: 0.3, gain: 0.05 });
-      blip(a, o, t + 0.04, { type: 'square', f: 880, f2: 1320, glide: 0.12, dur: 0.14, gain: 0.03 });
+    // Higher, and a little longer, for each level (1-4) of slide that earned it.
+    boost: { gap: 0.2, play: function (a, o, t, lv) {
+      var k = 1 + 0.15 * (Math.max(1, Math.min(4, lv || 3)) - 1), len = 0.35 + 0.05 * (lv || 3);
+      hiss(a, o, t, { filter: 'bandpass', f: 500 * k, f2: 2600 * k, dur: len, gain: 0.16, q: 1.2, at: 0.02 });
+      blip(a, o, t, { type: 'sawtooth', f: 220 * k, f2: 660 * k, glide: 0.25, dur: 0.3, gain: 0.05 });
+      blip(a, o, t + 0.04, { type: 'square', f: 880 * k, f2: 1320 * k, glide: 0.12, dur: 0.14, gain: 0.03 });
     } },
     // A spin-out: tyres howling round a full turn, and dying away.
     spin: { gap: 1, play: function (a, o, t) {

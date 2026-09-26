@@ -40,6 +40,7 @@
     this.drift = null;        // a held slide: { t } seconds of it so far
     this.boostT = 0;          // seconds of boost left
     this.boostMul = 1;        // speed while it lasts
+    this.boostLevel = 0;      // which level earned it, 1-4: the flame's colour
     this.spin = null;         // a spin-out: { t, v0 }
     this.spinAngle = 0;       // the body's extra turn while spinning
 
@@ -319,7 +320,8 @@
 
   /* The slide is let go: the car goes the way it faces - swinging into line
    * as any turn does, or, stopped against a wall, straight off that way.
-   * True when it earned a boost. */
+   * The level the slide reached sets the boost; returns that level, 0 for
+   * none. */
   Car.prototype.releaseDrift = function () {
     var d = this.drift;
     if (!d) return false;
@@ -329,14 +331,16 @@
       this.velAngle = this.headingAngle();
       this.lean = 0;
       this.unstick();
-      return false;
+      return 0;
     }
-    if (d.t >= C.pro.boostAfter && C.pro.boostPct > 0 && C.pro.boostTime > 0) {
-      this.boostT = C.pro.boostTime;
-      this.boostMul = 1 + C.pro.boostPct / 100;
-      return true;
+    var lv = C.proLevelFor(d.t), L = lv ? C.pro.levels[lv - 1] : null;
+    if (L && L.pct > 0 && L.time > 0) {
+      this.boostT = L.time;
+      this.boostMul = 1 + L.pct / 100;
+      this.boostLevel = lv;
+      return lv;
     }
-    return false;
+    return 0;
   };
 
   // Held too long: a full turn, slowing to a stop.

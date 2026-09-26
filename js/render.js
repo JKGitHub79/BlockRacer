@@ -1367,21 +1367,24 @@
                  global.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   /* The boost's flame, in the car's own space (nose at +x): a flickering
-   * cone off the tail, hot blue inside orange - yellow and white in high
-   * contrast, where additive glow would vanish into the white ground. It
-   * shrinks away over the boost's last tenth of a second. */
+   * cone off the tail in the colours of the level that earned it
+   * (CONFIG.proFlames) - level 4 twice as long as level 3. Glowing on the
+   * dark ground; laid on flat in high contrast, where additive glow would
+   * vanish into the white. It shrinks away over the boost's last tenth of a
+   * second. */
   function drawFlame(g, L, W, car, hc) {
     var now = (global.performance ? performance.now() : Date.now()) / 1000;
     var f = 0.78 + 0.22 * Math.sin(now * 53) * Math.sin(now * 29);
     var fade = Math.min(1, car.boostT / 0.12);
-    var len = L * (0.6 + 0.35 * f) * fade, half = W * 0.34, tail = -L / 2 + 1;
+    var F = C.proFlames[Math.max(0, Math.min(C.proFlames.length - 1, (car.boostLevel || 3) - 1))];
+    var len = L * (0.6 + 0.35 * f) * fade * F.long, half = W * 0.34, tail = -L / 2 + 1;
     g.save();
     if (!hc) g.globalCompositeOperation = 'lighter';
-    g.fillStyle = hc ? '#ffd400' : 'rgba(255,140,40,0.85)';
+    g.fillStyle = F.outer;
     g.beginPath();
     g.moveTo(tail, -half); g.lineTo(-L / 2 - len, 0); g.lineTo(tail, half);
     g.closePath(); g.fill();
-    g.fillStyle = hc ? '#ffffff' : 'rgba(130,235,255,0.95)';
+    g.fillStyle = F.inner;
     g.beginPath();
     g.moveTo(tail, -half * 0.5); g.lineTo(-L / 2 - len * 0.55, 0); g.lineTo(tail, half * 0.5);
     g.closePath(); g.fill();

@@ -1494,9 +1494,20 @@ picks the way, you pick the moment. But the press is **held**:
   mark the road as it slides.
 - **Let go** - it goes the way it faces, swinging into line as any turn does.
   Slid into a wall meanwhile, it drives straight off from the wall that way.
-- **Slide for more than `boostAfter` (1 s) and let go** - a boost: `boostPct`
-  (20%) over top speed for `boostTime` (0.5 s). A flame off the tail and
-  sparks behind it show it, it has its own sound, and the phone buzzes.
+- **Let go after a slide, and it boosts** - the longer the slide, the bigger
+  the boost. Four levels, each reached after so many seconds of sliding:
+
+  | Level | Slide for | Boost | For | Flame |
+  | --- | --- | --- | --- | --- |
+  | 1 | 0.2 s | +20% | 0.2 s | blue |
+  | 2 | 0.3 s | +30% | 0.3 s | violet |
+  | 3 | 0.5 s | +40% | 0.5 s | orange and ice |
+  | 4 | 1.0 s | +50% | 1.0 s | orange and ice, twice as long |
+
+  Sparks fly off the back tyres from level 1 on, in the colour of the level
+  reached so far - the colour of the flame letting go now would give - with a
+  burst each time a new level is reached. The boost has its own sound, higher
+  for each level, and the phone buzzes.
 - **Slide for more than `spinAfter` (3 s)** - too long: the car spins a full
   turn in `spinTime` (0.8 s), slowing to a stop, and sets off again the way it
   faces `restartDelay` (0.5 s) later. Nothing you press counts until it does.
@@ -1506,10 +1517,13 @@ or after a slide has run into a wall, earns nothing. A second press lets the
 first slide go. Keys and the mouse hold too under Pro (a mouse picks the side,
 as it does under Auto Turn); a window that loses focus lets go.
 
-All of it is `CONFIG.pro` in `js/config.js`. The three a player is likely to
-want - SLIDE FOR BOOST, BOOST and BOOST TIME - are sliders under the control
-buttons while PRO is chosen, kept between sessions (`blockracer.pro.v1`) and
-clamped to `CONFIG.proLimits`.
+All of it is `CONFIG.pro` in `js/config.js`, the flames' colours
+`CONFIG.proFlames`. Each level's seconds, boost and boost time are on the
+options screen while PRO is chosen - a tab per level, in its flame's colour,
+three sliders for the one chosen, a line summing up all four, and DEFAULT
+LEVELS - kept between sessions (`blockracer.pro.v2`) and clamped to
+`CONFIG.proLimits`, with each level's seconds kept between its neighbours' so
+the levels always come in order.
 
 **The buzz.** Android browsers vibrate (`navigator.vibrate`). iOS Safari has
 no vibration API at all; since iOS 18 it does tick the haptic engine when a

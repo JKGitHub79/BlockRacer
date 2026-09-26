@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.65.0', built: '2026-09-26' };
+window.BR = { version: '0.66.0', built: '2026-09-26' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -297,16 +297,27 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           screen. AUTO TURN: tap anywhere and it turns whichever way the track
           goes next - you still choose when. PRO CONTROLS is Auto Turn with a
           slide: HOLD and the car swings round to face the corner while it keeps
-          sliding at full speed; LET GO and it goes that way. Slide long enough
-          and letting go boosts you; slide too long and you spin out. The keys
+          sliding at full speed; LET GO and it goes that way. The longer the
+          slide, the bigger the boost when you let go - four levels, each with a
+          flame of its own, and the sparks show which you have reached. Slide
+          too long and you spin out. The keys
           and the mouse hold too, under PRO; otherwise they are not affected.</p>
         <div id="pro-opts" class="pro-opts" hidden>
-          <p class="lapline">SLIDE FOR BOOST &middot; <b id="pro-after-v">1.0s</b></p>
-          <input id="pro-after" class="slider" type="range" aria-label="Slide needed for a boost, seconds">
+          <p class="lapline">SLIDE LEVELS</p>
+          <div id="pro-levels" class="laps pro-levels" role="tablist">
+            <button data-level="0" role="tab"><i class="pro-sw"></i>L1</button>
+            <button data-level="1" role="tab"><i class="pro-sw"></i>L2</button>
+            <button data-level="2" role="tab"><i class="pro-sw"></i>L3</button>
+            <button data-level="3" role="tab"><i class="pro-sw pro-sw-long"></i>L4</button>
+          </div>
+          <p class="lapline">LEVEL <b id="pro-lv">1</b> &middot; SLIDE FOR <b id="pro-after-v">0.2s</b></p>
+          <input id="pro-after" class="slider" type="range" aria-label="Seconds of slide to reach this level">
           <p class="lapline">BOOST &middot; <b id="pro-pct-v">+20%</b></p>
-          <input id="pro-pct" class="slider" type="range" aria-label="Boost, percent over top speed">
-          <p class="lapline">BOOST TIME &middot; <b id="pro-time-v">0.5s</b></p>
-          <input id="pro-time" class="slider" type="range" aria-label="Boost length, seconds">
+          <input id="pro-pct" class="slider" type="range" aria-label="Boost at this level, percent over top speed">
+          <p class="lapline">BOOST TIME &middot; <b id="pro-time-v">0.2s</b></p>
+          <input id="pro-time" class="slider" type="range" aria-label="Boost length at this level, seconds">
+          <p id="pro-summary" class="hint pro-summary"></p>
+          <button id="pro-reset" class="secondary wide-btn">DEFAULT LEVELS</button>
         </div>
       </div>
 

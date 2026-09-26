@@ -95,8 +95,8 @@
     delete holds[id];
     if (Input.holding() || Input.control !== 'pro') return;
     var G = global.Game, P = G && G.player;
-    if (P && P.drift && !P.crashed && P.drift.t >= global.CONFIG.pro.boostAfter &&
-        global.CONFIG.pro.boostPct > 0) buzz();
+    var C = global.CONFIG, lv = P && P.drift && !P.crashed ? C.proLevelFor(P.drift.t) : 0;
+    if (lv && C.pro.levels[lv - 1].pct > 0) buzz();
   }
   Input._buzz = buzz;
 

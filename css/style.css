@@ -2316,3 +2316,10 @@ body.mode-trial #screen-play:not(.progress-page) .lb-corner { display: block; }
 .pro-opts { margin-top: 12px; padding-top: 6px; border-top: 1px solid var(--line); }
 .pro-opts[hidden] { display: none; }
 .pro-opts .lapline { margin: 10px 0 4px; }
+
+/* The four slide levels: a tab each, with a swatch of that level's flame. */
+.pro-levels { margin-bottom: 6px; }
+.pro-levels button { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.pro-sw { display: inline-block; width: 14px; height: 8px; border-radius: 4px; flex: 0 0 auto; }
+.pro-sw-long { width: 24px; }
+.pro-summary { margin: 10px 0 8px; font-size: 10px; line-height: 1.6; }

@@ -250,26 +250,44 @@
      * The fourth control style (Options, CONTROL STYLE: PRO CONTROLS). A tap
      * is an Auto Turn tap. HOLD, and the car swings round to face the way
      * Auto Turn would turn it but keeps sliding the way it was going, at full
-     * speed; LET GO and it goes the way it faces. A slide held longer than
-     * `boostAfter` ends in a boost - `boostPct` percent over top speed for
-     * `boostTime` seconds. One held longer than `spinAfter` is too much: the
-     * car spins a full turn in `spinTime`, stops, and sets off again the way
-     * it faces `restartDelay` later. The first three are on the options
-     * screen and kept between sessions; the rest live here. Only the
+     * speed; LET GO and it goes the way it faces.
+     *
+     * The longer the slide, the bigger the boost on letting go. Four LEVELS,
+     * each reached after `after` seconds of sliding: `pct` percent over top
+     * speed for `time` seconds, and a flame of its own colour (`flame`, with
+     * `long` stretching it). Sparks fly off the tyres from level 1 on, in the
+     * colour of the level reached so far. A slide held longer than
+     * `spinAfter` is too much: the car spins a full turn in `spinTime`,
+     * stops, and sets off again the way it faces `restartDelay` later.
+     *
+     * The levels' seconds, percent and time are on the options screen and
+     * kept between sessions; the colours and the rest live here. Only the
      * player's car ever slides like this. */
     pro: {
-      boostAfter: 1.0,             // seconds of slide before letting go boosts
-      boostPct: 20,                // percent over top speed
-      boostTime: 0.5,              // seconds
+      levels: [
+        { after: 0.2, pct: 20, time: 0.2 },
+        { after: 0.3, pct: 30, time: 0.3 },
+        { after: 0.5, pct: 40, time: 0.5 },
+        { after: 1.0, pct: 50, time: 1.0 }
+      ],
       spinAfter: 3.0,              // seconds of slide before it spins out
       spinTime: 0.8,               // seconds for the full turn, slowing to a stop
       restartDelay: 0.5,           // seconds stopped before it sets off again
       rotateRate: 14               // rad/s the body swings round at
     },
+    /* The flame, and the sparks, for each level: blue, then violet, then the
+     * orange-and-ice of the first boost there was - and level 4 the same as
+     * level 3, twice as long. */
+    proFlames: [
+      { outer: 'rgba(70,130,255,0.9)',  inner: 'rgba(210,235,255,0.95)', spark: ['#4f8dff', '#cfe6ff'], long: 1 },
+      { outer: 'rgba(190,80,255,0.9)',  inner: 'rgba(255,205,255,0.95)', spark: ['#c05cff', '#ffc8ff'], long: 1 },
+      { outer: 'rgba(255,140,40,0.85)', inner: 'rgba(130,235,255,0.95)', spark: ['#ffb347', '#5ef2ff'], long: 1 },
+      { outer: 'rgba(255,140,40,0.85)', inner: 'rgba(130,235,255,0.95)', spark: ['#ffb347', '#5ef2ff'], long: 2 }
+    ],
     proLimits: {
-      boostAfter: { min: 0.3, max: 2.5, step: 0.1 },
-      boostPct: { min: 0, max: 50, step: 5 },
-      boostTime: { min: 0.1, max: 2.0, step: 0.1 }
+      after: { min: 0.1, max: 2.5, step: 0.1 },   // and each above the level before it
+      pct:   { min: 0,   max: 100, step: 5 },
+      time:  { min: 0.1, max: 2.0, step: 0.1 }
     }
   };
 
@@ -486,30 +504,52 @@
   var controlParam = /[?&]control=(tap|swipe|auto|pro)/.exec(search);
   if (controlParam) CONFIG.control = controlParam[1];
 
-  /* The three Pro settings the options screen offers, kept together under
-   * their own key. Anything unreadable or out of range falls back to the
-   * value above rather than being trusted. */
-  var PRO_KEY = 'blockracer.pro.v1';
-  CONFIG.clampPro = function (name, v) {
-    var L = CONFIG.proLimits[name];
-    v = Math.round(Number(v) / L.step) * L.step;
-    if (!isFinite(v)) return CONFIG.pro[name];
-    return +Math.max(L.min, Math.min(L.max, v)).toFixed(2);
+  /* The Pro levels: which one a slide of `t` seconds has reached (0 for
+   * none yet, 1 to 4), and the settings the options screen offers, kept
+   * under their own key. A level's seconds stay strictly between its
+   * neighbours', so the levels always come in order. Anything unreadable or
+   * out of range falls back rather than being trusted. v2: the four levels
+   * replaced v1's single boost, which is not carried over. */
+  var PRO_DEFAULTS = JSON.parse(JSON.stringify(CONFIG.pro.levels));
+  var PRO_KEY = 'blockracer.pro.v2';
+  CONFIG.proLevelFor = function (t) {
+    var L = CONFIG.pro.levels, lv = 0;
+    for (var i = 0; i < L.length; i++) if (t >= L[i].after - 1e-9) lv = i + 1;
+    return lv;
+  };
+  CONFIG.clampProLevel = function (i, name, v) {
+    var lim = CONFIG.proLimits[name], L = CONFIG.pro.levels;
+    v = Math.round(Number(v) / lim.step) * lim.step;
+    if (!isFinite(v)) return L[i][name];
+    var lo = lim.min, hi = lim.max;
+    if (name === 'after') {
+      if (i > 0) lo = Math.max(lo, L[i - 1].after + lim.step);
+      if (i < L.length - 1) hi = Math.min(hi, L[i + 1].after - lim.step);
+    }
+    return +Math.max(lo, Math.min(hi, v)).toFixed(2);
+  };
+  CONFIG.setProLevel = function (i, name, v) {
+    CONFIG.pro.levels[i][name] = CONFIG.clampProLevel(i, name, v);
+    return CONFIG.pro.levels[i][name];
+  };
+  CONFIG.resetProLevels = function () {
+    CONFIG.pro.levels = JSON.parse(JSON.stringify(PRO_DEFAULTS));
   };
   CONFIG.savePro = function () {
     try {
       if (global.localStorage) {
-        global.localStorage.setItem(PRO_KEY, JSON.stringify({
-          boostAfter: CONFIG.pro.boostAfter, boostPct: CONFIG.pro.boostPct, boostTime: CONFIG.pro.boostTime
-        }));
+        global.localStorage.setItem(PRO_KEY, JSON.stringify({ levels: CONFIG.pro.levels }));
       }
     } catch (e) { /* storage blocked or full */ }
   };
   try {
     var savedPro = global.localStorage && JSON.parse(global.localStorage.getItem(PRO_KEY) || 'null');
-    if (savedPro && typeof savedPro === 'object') {
-      Object.keys(CONFIG.proLimits).forEach(function (k) {
-        if (savedPro[k] !== undefined) CONFIG.pro[k] = CONFIG.clampPro(k, savedPro[k]);
+    if (savedPro && Array.isArray(savedPro.levels) && savedPro.levels.length === CONFIG.pro.levels.length) {
+      // in order, so each level's seconds are checked against the one before
+      savedPro.levels.forEach(function (lv, i) {
+        ['after', 'pct', 'time'].forEach(function (k) {
+          if (lv && lv[k] !== undefined) CONFIG.setProLevel(i, k, lv[k]);
+        });
       });
     }
   } catch (e) { /* unreadable storage: keep the defaults */ }
