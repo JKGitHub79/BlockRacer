@@ -660,14 +660,15 @@
   };
 
   /* ---- Forest 2: HOLLOW ------------------------------------------------
-   * A longer map, so the main straight runs twenty-one cells, and three lane
-   * changes rather than one: the S on the bottom, another climbing the
-   * right-hand side, a third along the top. Ten corners a lap.
+   * A longer map, so the main straight runs twenty-one cells, and two lane
+   * changes rather than one: the S on the bottom and another climbing the
+   * right-hand side. The top is a clear run home - it had a third change
+   * once, and was a step too far for the second track. Eight corners a lap.
    * -------------------------------------------------------------------- */
   var HOLLOW = {
     id: 'hollow',
     name: 'HOLLOW',
-    blurb: 'A long main straight, then three changes of lane on the way back.',
+    blurb: 'A long main straight, then two changes of lane on the way back.',
     grade: 'BEGINNER',
     cols: 46,
     rows: 28,
@@ -681,9 +682,7 @@
       { x0: 12, y0: 18, x1: 17, y1: 20, kind: 'jog' },   // the bottom S
       { x0: 26, y0: 24, x1: 31, y1: 26, kind: 'jog' },
       { x0: 36, y0: 14, x1: 38, y1: 17, kind: 'jog' },   // climbing the right
-      { x0: 42, y0: 3,  x1: 44, y1: 6,  kind: 'jog' },
-      { x0: 30, y0: 1,  x1: 35, y1: 3,  kind: 'jog' },   // along the top
-      { x0: 14, y0: 7,  x1: 19, y1: 9,  kind: 'jog' }
+      { x0: 42, y0: 3,  x1: 44, y1: 6,  kind: 'jog' }
     ]),
     route: [
       { x: 5.5,  y: 24   },   // 0  the main straight, low lane
@@ -693,9 +692,7 @@
       { x: 42,   y: 10.5 },   // 4
       { x: 39,   y: 10.5 },   // 5  lane change
       { x: 39,   y: 7    },   // 6  into the top road, low lane
-      { x: 25,   y: 7    },   // 7
-      { x: 25,   y: 4    },   // 8  lane change
-      { x: 5.5,  y: 4    }    // 9  along the top, then down the left to 0
+      { x: 5.5,  y: 7    }    // 7  along the top, then down the left to 0
     ],
     startLeg: 0,
     checkpoints: [
@@ -714,15 +711,16 @@
   };
 
   /* ---- Forest 3: CANOPY ------------------------------------------------
-   * Back to the compact map, so the straights are shorter, and stands on all
-   * four sides: every straight asks you to move. Twelve corners a lap with
-   * five of them running into the next. Still nine cells wide and still
-   * long runoffs - the forest never punishes, it only asks more often.
+   * Back to the compact map, so the straights are shorter, and stands on
+   * three sides - the bottom, the top and the left; the right-hand climb is
+   * clear, as a breather. Ten corners a lap, several running into the next.
+   * Still nine cells wide and still long runoffs - the forest never
+   * punishes, it only asks more often.
    * -------------------------------------------------------------------- */
   var CANOPY = {
     id: 'canopy',
     name: 'CANOPY',
-    blurb: 'Every straight asks you to move. Five corners run into the next.',
+    blurb: 'Three changes of lane on a tight map. The corners come quickly.',
     grade: 'BEGINNER',
     cols: 40,
     rows: 28,
@@ -735,8 +733,6 @@
       { x0: 10, y0: 10, x1: 29, y1: 17, kind: 'infield' },
       { x0: 11, y0: 18, x1: 16, y1: 20, kind: 'jog' },   // the bottom S
       { x0: 25, y0: 24, x1: 30, y1: 26, kind: 'jog' },
-      { x0: 30, y0: 14, x1: 32, y1: 17, kind: 'jog' },   // up the right
-      { x0: 36, y0: 3,  x1: 38, y1: 6,  kind: 'jog' },
       { x0: 23, y0: 1,  x1: 28, y1: 3,  kind: 'jog' },   // along the top
       { x0: 10, y0: 7,  x1: 15, y1: 9,  kind: 'jog' },
       { x0: 1,  y0: 2,  x1: 3,  y1: 5,  kind: 'jog' },   // down the left
@@ -747,14 +743,12 @@
       { x: 21,   y: 24   },   // 1
       { x: 21,   y: 21   },   // 2  lane change
       { x: 36,   y: 21   },   // 3  into the right road, outside lane
-      { x: 36,   y: 10.5 },   // 4
-      { x: 33,   y: 10.5 },   // 5  lane change
-      { x: 33,   y: 7    },   // 6  into the top road, low lane
-      { x: 19.5, y: 7    },   // 7
-      { x: 19.5, y: 4    },   // 8  lane change
-      { x: 7,    y: 4    },   // 9  into the left road, inside lane
-      { x: 7,    y: 9.5  },   // 10
-      { x: 4,    y: 9.5  }    // 11 lane change, then down the left to 0
+      { x: 36,   y: 7    },   // 4  up the right, into the top road, low lane
+      { x: 19.5, y: 7    },   // 5
+      { x: 19.5, y: 4    },   // 6  lane change
+      { x: 7,    y: 4    },   // 7  into the left road, inside lane
+      { x: 7,    y: 9.5  },   // 8
+      { x: 4,    y: 9.5  }    // 9  lane change, then down the left to 0
     ],
     startLeg: 0,
     checkpoints: [
@@ -856,13 +850,13 @@
   };
 
   /* ---- Desert 2: SALT FLATS --------------------------------------------
-   * Tall and square, and every side of it asks you to move: four changes of
-   * lane, twelve corners a lap.
+   * Tall and square: three changes of lane - the bottom, the right-hand
+   * climb and the left - and a clear run along the top. Ten corners a lap.
    * -------------------------------------------------------------------- */
   var SALTFLATS = {
     id: 'saltflats',
     name: 'SALT FLATS',
-    blurb: 'Four changes of lane, one on every side of the circuit.',
+    blurb: 'Tall and square. Three changes of lane, and a clear run along the top.',
     grade: 'EASY +',
     cols: 40,
     rows: 32,
@@ -877,8 +871,6 @@
       { x0: 24, y0: 28, x1: 29, y1: 30, kind: 'jog' },
       { x0: 30, y0: 17, x1: 32, y1: 21, kind: 'jog' },   // up the right
       { x0: 36, y0: 6,  x1: 38, y1: 10, kind: 'jog' },
-      { x0: 22, y0: 1,  x1: 27, y1: 3,  kind: 'jog' },   // along the top
-      { x0: 10, y0: 7,  x1: 15, y1: 9,  kind: 'jog' },
       { x0: 1,  y0: 8,  x1: 3,  y1: 12, kind: 'jog' },   // down the left
       { x0: 7,  y0: 19, x1: 9,  y1: 23, kind: 'jog' }
     ]),
@@ -890,17 +882,15 @@
       { x: 36, y: 14 },   // 4
       { x: 33, y: 14 },   // 5  lane change
       { x: 33, y: 7  },   // 6  into the top road, low lane
-      { x: 19, y: 7  },   // 7
-      { x: 19, y: 4  },   // 8  lane change
-      { x: 7,  y: 4  },   // 9  into the left road, inside lane
-      { x: 7,  y: 16 },   // 10
-      { x: 4,  y: 16 }    // 11 lane change, then down the left to 0
+      { x: 7,  y: 7  },   // 7  along the top, into the left road
+      { x: 7,  y: 16 },   // 8
+      { x: 4,  y: 16 }    // 9  lane change, then down the left to 0
     ],
     startLeg: 0,
     checkpoints: [
       { x0: 32, y0: 22, x1: 33, y1: 31 },   // out of the bottom change
       { x0: 30, y0: 10, x1: 36, y1: 11 },   // out of the right-hand change
-      { x0: 12, y0: 1,  x1: 13, y1: 7  },   // out of the top change
+      { x0: 12, y0: 1,  x1: 13, y1: 10 },   // along the top, the whole road
       { x0: 1,  y0: 19, x1: 7,  y1: 20 }    // down the left
     ],
     finish: { x0: 8.6, y0: 22, x1: 9.4, y1: 31, dir: { x: 1, y: 0 } },
@@ -914,13 +904,14 @@
 
   /* ---- Desert 3: CANYON RUN --------------------------------------------
    * The big one. A double-S on the main straight - out, back, out again
-   * before the first corner - then one change on each of the other three
-   * sides. Five changes and fourteen corners a lap.
+   * before the first corner - then a clear climb up the right and a change
+   * along the top and another down the left. Four changes and twelve
+   * corners a lap.
    * -------------------------------------------------------------------- */
   var CANYONRUN = {
     id: 'canyonrun',
     name: 'CANYON RUN',
-    blurb: 'A double-S down the main straight, then a change on every side.',
+    blurb: 'A double-S down the main straight, then two more changes of lane.',
     grade: 'EASY ++',
     cols: 46,
     rows: 30,
@@ -934,8 +925,6 @@
       { x0: 10, y0: 20, x1: 15, y1: 22, kind: 'jog' },   // the double-S
       { x0: 22, y0: 26, x1: 27, y1: 28, kind: 'jog' },
       { x0: 34, y0: 20, x1: 39, y1: 22, kind: 'jog' },
-      { x0: 36, y0: 15, x1: 38, y1: 19, kind: 'jog' },   // up the right
-      { x0: 42, y0: 4,  x1: 44, y1: 8,  kind: 'jog' },
       { x0: 27, y0: 1,  x1: 32, y1: 3,  kind: 'jog' },   // along the top
       { x0: 15, y0: 7,  x1: 20, y1: 9,  kind: 'jog' },
       { x0: 1,  y0: 7,  x1: 3,  y1: 11, kind: 'jog' },   // down the left
@@ -951,9 +940,7 @@
       { x: 31, y: 23 },   // 3
       { x: 31, y: 26 },   // 4  and back
       { x: 42, y: 26 },   // 5  into the right road, outside lane
-      { x: 42, y: 12 },   // 6
-      { x: 39, y: 12 },   // 7  lane change
-      { x: 39, y: 7  },   // 8  into the top road, low lane
+      { x: 42, y: 7  },   // 6  up the right, into the top road, low lane
       { x: 24, y: 7  },   // 9
       { x: 24, y: 4  },   // 10 lane change
       { x: 7,  y: 4  },   // 11 into the left road, inside lane
@@ -963,7 +950,7 @@
     startLeg: 0,
     checkpoints: [
       { x0: 32, y0: 20, x1: 33, y1: 29 },   // out of the double-S
-      { x0: 36, y0: 10, x1: 45, y1: 11 },   // out of the right-hand change
+      { x0: 36, y0: 10, x1: 45, y1: 11 },   // up the right
       { x0: 11, y0: 1,  x1: 12, y1: 10 },   // out of the top change
       { x0: 1,  y0: 17, x1: 10, y1: 18 }    // down the left
     ],
@@ -1147,9 +1134,10 @@
   /* ---- Snow 3: WHITEOUT ------------------------------------------------
    * An L-shaped circuit: the top right of the map is solid ground, so the
    * lap runs round an L rather than a rectangle and the elbow is a wide
-   * open sweep rather than a corner. A thirty-seven cell main straight with
-   * a double-S in it, then a change of lane on each of the other three
-   * sides. Five changes and sixteen corners a lap.
+   * open sweep rather than a corner - open all the way across now, with
+   * nothing to change lane round. A thirty-seven cell main straight with a
+   * double-S in it, a change along the top, and the island's foot to get
+   * past coming down the left. Four changes and fourteen corners a lap.
    * -------------------------------------------------------------------- */
   var WHITEOUT = {
     id: 'whiteout',
@@ -1171,11 +1159,8 @@
       { x0: 10, y0: 27, x1: 15, y1: 29, kind: 'jog' },       // the double-S
       { x0: 22, y0: 32, x1: 27, y1: 34, kind: 'jog' },
       { x0: 34, y0: 27, x1: 39, y1: 29, kind: 'jog' },
-      { x0: 35, y0: 15, x1: 39, y1: 17, kind: 'jog' },       // round the elbow
-      { x0: 23, y0: 20, x1: 28, y1: 22, kind: 'jog' },
       { x0: 15, y0: 6,  x1: 20, y1: 8,  kind: 'jog' },       // along the top
-      { x0: 3,  y0: 1,  x1: 8,  y1: 3,  kind: 'jog' },
-      { x0: 1,  y0: 9,  x1: 3,  y1: 13, kind: 'jog' }        // down the left
+      { x0: 3,  y0: 1,  x1: 8,  y1: 3,  kind: 'jog' }
     ]),
     route: [
       { x: 3.5,  y: 32.5 },   // 0  the main straight, eastbound
@@ -1185,15 +1170,13 @@
       { x: 31,   y: 32.5 },   // 4  and back
       { x: 42.5, y: 32.5 },   // 5  into the right-hand side
       { x: 42.5, y: 20.5 },   // 6  north into the elbow, westbound
-      { x: 32,   y: 20.5 },   // 7
-      { x: 32,   y: 17.5 },   // 8  lane change
-      { x: 24.5, y: 17.5 },   // 9  into the corridor beside the island
-      { x: 24.5, y: 3.5  },   // 10 north into the top road
-      { x: 12,   y: 3.5  },   // 11
-      { x: 12,   y: 6.5  },   // 12 lane change
-      { x: 6.5,  y: 6.5  },   // 13 into the left-hand side
-      { x: 6.5,  y: 17   },   // 14
-      { x: 3.5,  y: 17   }    // 15 lane change, then down the left to 0
+      { x: 24.5, y: 20.5 },   // 7  straight across it, into the corridor beside the island
+      { x: 24.5, y: 3.5  },   // 8  north into the top road
+      { x: 12,   y: 3.5  },   // 9
+      { x: 12,   y: 6.5  },   // 10 lane change
+      { x: 6.5,  y: 6.5  },   // 11 into the left-hand side
+      { x: 6.5,  y: 17   },   // 12
+      { x: 3.5,  y: 17   }    // 13 past the island's foot, then down the left to 0
     ],
     startLeg: 0,
     checkpoints: [

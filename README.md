@@ -95,8 +95,8 @@ own width are paid for, against Catalunya's 2.0 and Staircase's 0.4.
 | | Corners | Lane changes | Crashes |
 | --- | --- | --- | --- |
 | Pinefall | 6 | 1 | 58 |
-| Hollow | 10 | 3 | 88 |
-| Canopy | 12 | 4 | 125 |
+| Hollow | 8 | 2 | 77 |
+| Canopy | 10 | 3 | 107 |
 | *Snowdrift, the easiest before these* | *6* | *0* | *135* |
 
 They differ only in how often the road asks you to move and how much straight
@@ -136,12 +136,12 @@ and the runoff past a turn-in comes down from eight cells to six.
 | | Corners | Lane changes | Crashes | vs forest |
 | --- | --- | --- | --- | --- |
 | Duneline | 8 | 2 | 69 | Pinefall 58 |
-| Salt Flats | 12 | 4 | 144 | Hollow 88 |
-| Canyon Run | 14 | 5 | 190 | Canopy 124 |
+| Salt Flats | 10 | 3 | 124 | Hollow 77 |
+| Canyon Run | 12 | 4 | 163 | Canopy 107 |
 
 Three footprints rather than one, so they do not read as the forest
 recoloured: Duneline is long and low (48 x 26) with two twenty-cell straights,
-Salt Flats is tall and square (40 x 32) and asks for a change on every side,
+Salt Flats is tall and square (40 x 32) with a clear run along the top,
 Canyon Run is the big one (46 x 30) with a double-S down the main straight -
 out, back, out again - before the first corner.
 
@@ -172,7 +172,7 @@ swap rather than a theme, and it was rightly rejected.
 | --- | --- | --- | --- | --- |
 | Frostline | switchback | 12 | 3 | 294 |
 | Glacier | figure of eight | 12 | 3 | 318 |
-| Whiteout | L-shaped | 16 | 5 | 450 |
+| Whiteout | L-shaped | 14 | 4 | 378 |
 
 **Frostline has no island.** The middle of the map is a corridor walled on
 both sides with exactly one way in and one way out, so the lap is a
@@ -188,8 +188,39 @@ from two directions.
 
 **Whiteout is an L.** The top right of the map is solid ground, so the lap
 runs round a corner the circuit does not have, and the elbow is a wide open
-sweep instead of a corner. It carries the longest straight in the game with a
-double-S in it.
+sweep instead of a corner - open all the way across. It carries the longest
+straight in the game with a double-S in it.
+
+### A little easier: the middle and the top of three themes
+
+Hollow and Canopy were a little hard for the second and third forest tracks,
+Salt Flats and Canyon Run the same in the desert, and Whiteout too hard to end
+the snow. Each lost stands - never a road narrowed or widened, and never the
+first track of a theme touched - and the racing line was straightened where it
+had been going round them:
+
+| | Stands taken out | Lane changes | Crashes before | after |
+| --- | --- | --- | --- | --- |
+| Hollow | the pair along the top | 3 → 2 | 88 | 77 |
+| Canopy | the pair up the right | 4 → 3 | 125 | 107 |
+| Salt Flats | the pair along the top | 4 → 3 | 144 | 124 |
+| Canyon Run | the pair up the right (the double-S stays) | 5 → 4 | 190 | 163 |
+| Whiteout | the pair at the elbow, and the one down the left | 5 → 4 | 450 | 378 |
+
+Every theme is still in order - Pinefall 58, Hollow 77, Canopy 107; Duneline
+69, Salt Flats 124, Canyon Run 163; Frostline 294, Glacier 318, Whiteout 378 -
+and measured at SWEAT with six cars it holds too (Whiteout 659 to 598, still
+above Glacier's 519). Whiteout could have gone further: taking the double-S's
+last stand with the elbow pair brought it to 508 at SWEAT, level with Glacier,
+which would have made the third snow track no harder than the second. The
+left-hand stand on its own buys little, because the island's foot still asks
+for that change; with the elbow open it mostly gives a car more room.
+
+One checkpoint had to change with them: Salt Flats' along the top only
+spanned the lanes the stand left open, so it now spans the whole road - a car
+using the lane that stand used to block would otherwise miss it and not have
+its lap counted. `tools/validate-track.js` checks every checkpoint for exactly
+that, and passes all five.
 
 The roads are eight cells rather than the desert's nine, worth roughly double
 on its own, but the shapes are the point.
@@ -1680,19 +1711,19 @@ through.
 | --- | --- | --- |
 | Pinefall | 58 | 623 |
 | Duneline | 69 | 1067 |
-| Hollow | 88 | 1416 |
-| Canopy | 124 | 1927 |
+| Hollow | 77 | 1063 |
+| Canopy | 107 | 1818 |
+| Salt Flats | 124 | 1826 |
 | Snowdrift | 135 | 1673 |
-| Salt Flats | 144 | 2256 |
 | Crossover | 150 | 1576 |
-| Canyon Run | 190 | 2632 |
+| Canyon Run | 163 | 2216 |
 | Mesa | 196 | 1990 |
 | Frostline | 294 | 2048 |
 | Glacier | 318 | 2559 |
+| Whiteout | 378 | 3730 |
 | Catalunya | 407 | 2564 |
 | Wildwood | 417 | 1995 |
 | Caldera | 433 | 1547 |
-| Whiteout | 450 | 4340 |
 | Staircase | 2408 | 11962 |
 
 The nine themed tracks and the six that came before them interleave into one
