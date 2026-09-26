@@ -9,6 +9,11 @@
 
 const ALLOWED_ORIGIN = 'https://jkgithub79.github.io';
 
+// Which build this is. GET / says, so a deploy can be checked from a browser.
+// Bump it with every change to this Worker.
+const API_VERSION = '2026-09-26.1';
+const ENDPOINTS = ['POST /players', 'POST /times', 'GET /leaderboard/:track'];
+
 // Every racing track in js/tracks.js, and the least time (ms) accepted on it.
 // The tutorial's TRAINING track is not a leaderboard track.
 const MIN_TIME_MS = 1000;
@@ -336,6 +341,10 @@ export default {
     }
 
     try {
+      if (path === '/') {
+        if (request.method !== 'GET') return fail(request, 405, 'use GET');
+        return json(request, 200, { service: 'leaderboard-api', version: API_VERSION, endpoints: ENDPOINTS });
+      }
       if (path === '/players') {
         if (request.method !== 'POST') return fail(request, 405, 'use POST');
         return await registerPlayer(request, env);

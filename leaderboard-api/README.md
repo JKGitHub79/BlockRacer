@@ -13,6 +13,10 @@ Block Racer's leaderboard: a Cloudflare Worker over the D1 database
 
 ## Endpoints
 
+`GET /` - `{ service, version, endpoints }`. Open it in a browser to see which
+build is live: `version` is `API_VERSION` in `src/index.js`, bumped with every
+change. A Worker from before it answers `{"error":"not found"}`.
+
 `POST /players` with `{ "player_id", "username" }` claims a name. Names are
 unique ignoring case and each player holds one: `201` when it is yours (new,
 already yours, or changed to - your times move to the new name and the old one
