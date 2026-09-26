@@ -79,7 +79,7 @@
     if (C.speedLevel !== C.speedLevels.length - 1) return false;       // flat out or not at all
     var b = P.box();
     if (b.x0 < ENTRANCE.x0 || b.x1 > ENTRANCE.x1) return false;
-    if (b.y0 - P.speed * dt >= ENTRANCE.face) return false;            // not there this step
+    if (b.y0 - (P.speedNow ? P.speedNow() : P.speed) * dt >= ENTRANCE.face) return false;   // not there this step
     if (runFrom - P.y < RUNUP) return false;
     begin(game);
     return true;

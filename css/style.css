@@ -598,6 +598,16 @@ body.mode-trial .stat.trial-only { display: flex; }
  * still scroll. Tap mode is untouched. */
 html.swipe-control { overscroll-behavior: none; }
 html.swipe-control body.in-race { touch-action: none; }
+/* Pro controls hold a finger down on the race: the page stays still under it,
+   and a long press is a slide - not the browser's menu, magnifier or text
+   selection. */
+html.pro-control { overscroll-behavior: none; }
+html.pro-control body.in-race {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 .board, #backdrop { touch-action: none; }
 .screen { touch-action: pan-y; }
 
@@ -2300,3 +2310,9 @@ body.mode-trial #screen-play:not(.progress-page) .lb-corner { display: block; }
 @media (max-width: 460px) { .lb-cap { padding-right: 0; text-align: right; font-size: 9px; letter-spacing: 1px; } }
 /* NOT NOW and SAVE, one line each even on the narrowest phone. */
 #lb-name .row button { white-space: nowrap; padding-left: 8px; padding-right: 8px; }
+
+/* Pro controls' three settings, under the control buttons, only when PRO is
+   the one chosen. */
+.pro-opts { margin-top: 12px; padding-top: 6px; border-top: 1px solid var(--line); }
+.pro-opts[hidden] { display: none; }
+.pro-opts .lapline { margin: 10px 0 4px; }

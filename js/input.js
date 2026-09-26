@@ -14,8 +14,9 @@
   var RIGHT = ['ArrowRight', 'd', 'D', 'KeyD'];
 
   var Input = {
-    turns: [],          // pending -1 / +1, a swiped direction {x, y}, or {auto}
-    control: 'swipe',   // how a touchscreen steers: 'swipe', 'tap' or 'auto'
+    turns: [],          // pending -1 / +1, a swiped direction {x, y}, {auto}, or
+                        // a held press {turn | auto, hold: true} (Pro controls)
+    control: 'swipe',   // how a touchscreen steers: 'swipe', 'tap', 'auto' or 'pro'
     onCommand: null,    // (name) => void  for restart / pause / mute / start
     /* The next turn, given where the car points now. A swiped direction is
      * the one 90-degree turn that points it that way: the sign of the cross
@@ -34,6 +35,7 @@
      * where the car is and which way it points when the race takes it. */
     resolve: function (t, heading, car) {
       if (typeof t === 'number') return t;
+      if (t.turn) return t.turn;
       if (t.auto) return global.AutoTurn && car ? global.AutoTurn.choose(car) : 0;
       var s = heading ? heading.x * t.y - heading.y * t.x : 0;
       return s > 0 ? 1 : s < 0 ? -1 : 0;
@@ -48,10 +50,55 @@
         var coarse = global.matchMedia && global.matchMedia('(pointer: coarse)').matches;
         kind = coarse ? 'touch' : 'keys';
       }
-      return kind === 'touch' ? this.control : 'keys';
+      // Pro is Auto Turn with a hold on top: its prompts are Auto Turn's.
+      return kind === 'touch' ? (this.control === 'pro' ? 'auto' : this.control) : 'keys';
     },
-    clear: function () { this.turns.length = 0; swipes = {}; }
+    /* Pro controls: is a finger, the mouse or a turn key still down from a
+     * press that turned the car? The race lets a held slide go the moment
+     * nothing is. */
+    holding: function () {
+      for (var k in holds) if (holds[k]) return true;
+      return false;
+    },
+    clear: function () { this.turns.length = 0; swipes = {}; holds = {}; }
   };
+
+  var holds = {};       // Pro: presses still down, by pointer id or key code
+
+  /* A buzz, for a boost earned. Where the browser can vibrate (Android), it
+   * does. iOS Safari cannot, but since iOS 18 flicking a switch control
+   * gives a haptic tick - and a switch can be flicked from script as long
+   * as it happens inside the touch that asked for it, which a boost always
+   * is: it is earned on letting go. iPads have no vibration at all. */
+  function buzz() {
+    var nav = global.navigator;
+    try {
+      if (nav && typeof nav.vibrate === 'function' && nav.vibrate(40)) return;
+    } catch (e) { /* not allowed here */ }
+    try {
+      var label = document.createElement('label'), sw = document.createElement('input');
+      label.setAttribute('aria-hidden', 'true');
+      label.style.display = 'none';
+      sw.type = 'checkbox';
+      sw.setAttribute('switch', '');
+      label.appendChild(sw);
+      document.head.appendChild(label);
+      label.click();
+      document.head.removeChild(label);
+    } catch (e) { /* no haptics here */ }
+  }
+
+  // Letting go of a press. If it ends a slide long enough to boost, the
+  // buzz goes now, inside the gesture, rather than on the next frame.
+  function letGo(id) {
+    if (!holds[id]) return;
+    delete holds[id];
+    if (Input.holding() || Input.control !== 'pro') return;
+    var G = global.Game, P = G && G.player;
+    if (P && P.drift && !P.crashed && P.drift.t >= global.CONFIG.pro.boostAfter &&
+        global.CONFIG.pro.boostPct > 0) buzz();
+  }
+  Input._buzz = buzz;
 
   var lastKind = null;   // 'keys' | 'touch' | null, for Input.how
 
@@ -70,11 +117,14 @@
   global.addEventListener('keydown', function (e) {
     if (e.repeat || typing(e)) return;
     if (matches(LEFT, e) || matches(RIGHT, e)) lastKind = 'keys';
+    var pro = Input.control === 'pro';
     if (matches(LEFT, e)) {
-      Input.turns.push(-1);
+      Input.turns.push(pro ? { turn: -1, hold: true } : -1);
+      if (pro) holds['key:' + (e.code || e.key)] = true;
       e.preventDefault();
     } else if (matches(RIGHT, e)) {
-      Input.turns.push(1);
+      Input.turns.push(pro ? { turn: 1, hold: true } : 1);
+      if (pro) holds['key:' + (e.code || e.key)] = true;
       e.preventDefault();
     } else if (e.key === 'r' || e.key === 'R') {
       if (Input.onCommand) Input.onCommand('restart');
@@ -93,6 +143,12 @@
       e.preventDefault();
     }
   });
+
+  global.addEventListener('keyup', function (e) {
+    if (matches(LEFT, e) || matches(RIGHT, e)) letGo('key:' + (e.code || e.key));
+  });
+  // A window that loses focus never hears its keys come up.
+  global.addEventListener('blur', function () { holds = {}; });
 
   // Menus, screens and buttons are not the track.
   function onTrack(e) {
@@ -115,6 +171,14 @@
     lastKind = e.pointerType === 'mouse' ? 'keys' : 'touch';
     if (swiping(e)) {
       swipes[e.pointerId] = { x: e.clientX, y: e.clientY, done: false };
+      return;
+    }
+    // Pro: a press that is held. The way it turns is Auto Turn's for a
+    // finger and the side of the screen for a mouse, as below.
+    if (Input.control === 'pro') {
+      holds['ptr:' + e.pointerId] = true;
+      Input.turns.push(e.pointerType !== 'mouse' ? { auto: true, hold: true }
+        : { turn: e.clientX < global.innerWidth / 2 ? -1 : 1, hold: true });
       return;
     }
     // Auto Turn: anywhere is a turn, and AutoTurn picks which way when the
@@ -160,8 +224,13 @@
     if (!global.Screens || global.Screens.current === 'race') Input.turns.push(d);
   }
   global.addEventListener('pointermove', function (e) { track(e, false); });
-  global.addEventListener('pointerup', function (e) { track(e, true); });
-  global.addEventListener('pointercancel', function (e) { delete swipes[e.pointerId]; });
+  global.addEventListener('pointerup', function (e) { track(e, true); letGo('ptr:' + e.pointerId); });
+  global.addEventListener('pointercancel', function (e) { delete swipes[e.pointerId]; delete holds['ptr:' + e.pointerId]; });
+  // A long press on a phone is also the browser's own gesture - a menu, a
+  // magnifier. On the race, under Pro, it is a slide and nothing else.
+  global.addEventListener('contextmenu', function (e) {
+    if (Input.control === 'pro' && onTrack(e)) e.preventDefault();
+  });
 
   /* While swiping, a finger moving on the race must never move the page.
    * The stylesheet does most of it (touch-action: none on the race, no
@@ -169,7 +238,7 @@
    * whose rubber-band and edge behaviour only a cancelled touchmove stops.
    * Buttons and overlays are left alone - the results still scroll. */
   global.addEventListener('touchmove', function (e) {
-    if (Input.control !== 'swipe' || !onTrack(e)) return;
+    if ((Input.control !== 'swipe' && Input.control !== 'pro') || !onTrack(e)) return;
     if (e.cancelable) e.preventDefault();
   }, { passive: false });
 

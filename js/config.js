@@ -244,7 +244,33 @@
      * than the driving. Only laps set at this speed level are sent, and the
      * board says which it is. null sends every speed onto one board. */
     leaderboardUrl: 'https://leaderboard-api.jamiekhoshaba.workers.dev',
-    leaderboardSpeed: 3            // SWEAT
+    leaderboardSpeed: 3,           // SWEAT
+
+    /* ---- Pro controls ---------------------------------------------------
+     * The fourth control style (Options, CONTROL STYLE: PRO CONTROLS). A tap
+     * is an Auto Turn tap. HOLD, and the car swings round to face the way
+     * Auto Turn would turn it but keeps sliding the way it was going, at full
+     * speed; LET GO and it goes the way it faces. A slide held longer than
+     * `boostAfter` ends in a boost - `boostPct` percent over top speed for
+     * `boostTime` seconds. One held longer than `spinAfter` is too much: the
+     * car spins a full turn in `spinTime`, stops, and sets off again the way
+     * it faces `restartDelay` later. The first three are on the options
+     * screen and kept between sessions; the rest live here. Only the
+     * player's car ever slides like this. */
+    pro: {
+      boostAfter: 1.0,             // seconds of slide before letting go boosts
+      boostPct: 20,                // percent over top speed
+      boostTime: 0.5,              // seconds
+      spinAfter: 3.0,              // seconds of slide before it spins out
+      spinTime: 0.8,               // seconds for the full turn, slowing to a stop
+      restartDelay: 0.5,           // seconds stopped before it sets off again
+      rotateRate: 14               // rad/s the body swings round at
+    },
+    proLimits: {
+      boostAfter: { min: 0.3, max: 2.5, step: 0.1 },
+      boostPct: { min: 0, max: 50, step: 5 },
+      boostTime: { min: 0.1, max: 2.0, step: 0.1 }
+    }
   };
 
   // URL parameters win over the defaults.
@@ -453,12 +479,40 @@
   };
   try {
     var savedControl = global.localStorage && global.localStorage.getItem(CONTROL_KEY);
-    if (savedControl === 'tap' || savedControl === 'swipe' || savedControl === 'auto') {
+    if (savedControl === 'tap' || savedControl === 'swipe' || savedControl === 'auto' || savedControl === 'pro') {
       CONFIG.control = savedControl;
     }
   } catch (e) { /* unreadable storage: keep the default */ }
-  var controlParam = /[?&]control=(tap|swipe|auto)/.exec(search);
+  var controlParam = /[?&]control=(tap|swipe|auto|pro)/.exec(search);
   if (controlParam) CONFIG.control = controlParam[1];
+
+  /* The three Pro settings the options screen offers, kept together under
+   * their own key. Anything unreadable or out of range falls back to the
+   * value above rather than being trusted. */
+  var PRO_KEY = 'blockracer.pro.v1';
+  CONFIG.clampPro = function (name, v) {
+    var L = CONFIG.proLimits[name];
+    v = Math.round(Number(v) / L.step) * L.step;
+    if (!isFinite(v)) return CONFIG.pro[name];
+    return +Math.max(L.min, Math.min(L.max, v)).toFixed(2);
+  };
+  CONFIG.savePro = function () {
+    try {
+      if (global.localStorage) {
+        global.localStorage.setItem(PRO_KEY, JSON.stringify({
+          boostAfter: CONFIG.pro.boostAfter, boostPct: CONFIG.pro.boostPct, boostTime: CONFIG.pro.boostTime
+        }));
+      }
+    } catch (e) { /* storage blocked or full */ }
+  };
+  try {
+    var savedPro = global.localStorage && JSON.parse(global.localStorage.getItem(PRO_KEY) || 'null');
+    if (savedPro && typeof savedPro === 'object') {
+      Object.keys(CONFIG.proLimits).forEach(function (k) {
+        if (savedPro[k] !== undefined) CONFIG.pro[k] = CONFIG.clampPro(k, savedPro[k]);
+      });
+    }
+  } catch (e) { /* unreadable storage: keep the defaults */ }
 
   CONFIG.musicVolume = 60;
   CONFIG.sfxVolume = 80;

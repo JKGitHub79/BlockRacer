@@ -387,6 +387,21 @@
     }
   }
 
+  /* A boost, seen from behind: sparks thrown off the tail. The flame itself
+   * is drawn on the car (js/render.js); these are what it leaves behind. */
+  function exhaust(game, car) {
+    if (Math.random() > 0.55) return;
+    var a = car.bodyAngle(), back = -C.carLength * 0.55;
+    var bx = car.x + Math.cos(a) * back, by = car.y + Math.sin(a) * back;
+    var spread = (Math.random() - 0.5) * 0.9, sp = 2 + Math.random() * 3;
+    game.particles.push({
+      x: bx, y: by,
+      vx: -Math.cos(a + spread) * sp, vy: -Math.sin(a + spread) * sp,
+      life: 0.35 + Math.random() * 0.25,
+      color: Math.random() < 0.5 ? '#ffb347' : '#5ef2ff'
+    });
+  }
+
   function touchingAny(me, cars) {
     var a = me.box();
     for (var i = 0; i < cars.length; i++) {
@@ -504,13 +519,27 @@
    * the turn a tutorial corner was waiting for. Pulling away from a wall
    * revs; a corner thrown in at speed chirps the tyres - unless slide is off,
    * when the car just snaps round. */
-  Game.playerTurn = function (sign) {
+  Game.playerTurn = function (sign, hold) {
     var P = this.player;
-    if (P.finished) return;
+    if (P.finished || P.spin) return;          // a spin-out takes no orders
+    if (P.drift) this.playerRelease();          // a new press lets the last slide go
     var standing = P.crashed;
-    P.turn(sign);
+    P.turn(sign, hold);
+    // Pro controls: a held press is a slide, measured from here. From a
+    // standstill there is nothing to slide with, so it is just a turn.
+    if (hold && !standing) P.drift = { t: 0 };
     if (standing) Sound.play('rev');
-    else if (C.slide > 0) Sound.play('turn');
+    else if (C.slide > 0 || hold) Sound.play('turn');
+  };
+
+  /* Pro controls: the slide is let go - the car goes the way it faces, with
+   * a boost if it was held long enough. */
+  Game.playerRelease = function () {
+    var P = this.player;
+    if (!P || !P.drift) return;
+    var standing = P.crashed;
+    if (P.releaseDrift()) Sound.play('boost');
+    else if (standing) Sound.play('rev');
   };
 
   Game.updateStandings = function () {
@@ -558,8 +587,15 @@
 
     // Player controls: a turn is the only input, and it also restarts a car
     // that is sitting against a wall.
-    var turn;
-    while ((turn = Input.take(this.player.dir, this.player)) !== 0) this.playerTurn(turn);
+    // Every press waiting, in order. Under Pro controls a press is held, and
+    // the slide it starts lasts exactly as long as something is still down.
+    var P0 = this.player, pro = C.control === 'pro';
+    while (Input.turns.length) {
+      var entry = Input.turns.shift();
+      var turn = Input.resolve(entry, P0.dir, P0);
+      if (turn) this.playerTurn(turn, pro && !!(entry && entry.hold));
+    }
+    if (P0.drift && !Input.holding()) this.playerRelease();
     // Before anything moves: this step's move may not end at the wall it
     // is heading for (js/beyond.js). Almost always it does.
     if (global.Beyond && global.Beyond.gate(this, dt)) return;
@@ -569,7 +605,10 @@
     for (var j = 0; j < this.cars.length; j++) {
       var car = this.cars[j];
       if (!car.finished) car.lapTime += dt;
+      var wasSpinning = !!car.spin;
       var hit = car.step(dt);
+      if (car.isPlayer && car.spin && !wasSpinning) Sound.play('spin');
+      if (car.isPlayer && car.boostT > 0) exhaust(this, car);
       if (hit && hit.crashed) {
         spawnSparks(this, hit, car.color);
         if (car.isPlayer) Sound.play('crash');
@@ -650,6 +689,7 @@
     el.aiRange.max = C.maxAiLevel;
     el.glowButtons = document.getElementById('glow-buttons');
     el.controlButtons = document.getElementById('control-buttons');
+    el.proOpts = document.getElementById('pro-opts');
     el.contrastButtons = document.getElementById('contrast-buttons');
     el.steerRange = document.getElementById('oversteer-range');
     el.steerRange.min = C.minOversteer;   // one place decides how far it goes
@@ -985,17 +1025,36 @@
   /* Tap or swipe, for touchscreens. Input does the reading; the page needs
    * to know too, because swiping takes the race's touch gestures away from
    * the browser (css: html.swipe-control). */
-  var CONTROL_NAME = { swipe: 'SWIPE', tap: 'TAP', auto: 'AUTO TURN' };
+  var CONTROL_NAME = { swipe: 'SWIPE', tap: 'TAP', auto: 'AUTO TURN', pro: 'PRO CONTROLS' };
   Game.setControl = function (mode, keep) {
     C.control = CONTROL_NAME[mode] ? mode : 'swipe';
     if (keep) C.saveControl();   // a choice, not boot applying the default
     Input.control = C.control;
     Input.clear();
     document.documentElement.classList.toggle('swipe-control', C.control === 'swipe');
+    // Pro holds a finger down: the race keeps the page still under it, and
+    // a long press is not the browser's (no magnifier, menu or selection).
+    document.documentElement.classList.toggle('pro-control', C.control === 'pro');
+    if (el.proOpts) el.proOpts.hidden = C.control !== 'pro';
     Array.prototype.forEach.call(el.controlButtons.children, function (b) {
       b.classList.toggle('on', b.dataset.control === C.control);
     });
     document.getElementById('menu-control').textContent = CONTROL_NAME[C.control];
+  };
+
+  /* The three Pro settings on the options screen: slide needed for a boost,
+   * how much, how long. Kept between sessions (CONFIG.savePro). */
+  var PRO_FIELDS = {
+    boostAfter: { id: 'pro-after', label: 'pro-after-v', show: function (v) { return v.toFixed(1) + 's'; } },
+    boostPct: { id: 'pro-pct', label: 'pro-pct-v', show: function (v) { return '+' + v + '%'; } },
+    boostTime: { id: 'pro-time', label: 'pro-time-v', show: function (v) { return v.toFixed(1) + 's'; } }
+  };
+  Game.setPro = function (name, value, keep) {
+    C.pro[name] = C.clampPro(name, value);
+    if (keep) C.savePro();
+    var f = PRO_FIELDS[name], r = document.getElementById(f.id), l = document.getElementById(f.label);
+    if (r) r.value = C.pro[name];
+    if (l) l.textContent = f.show(C.pro[name]);
   };
 
   Game.setPlayerGlow = function (on) {
@@ -1230,6 +1289,16 @@
       b.addEventListener('click', function (e) {
         e.stopPropagation();
         Game.setControl(b.dataset.control, true);
+      });
+    });
+    Object.keys(PRO_FIELDS).forEach(function (name) {
+      var r = document.getElementById(PRO_FIELDS[name].id), L = C.proLimits[name];
+      if (!r) return;
+      r.min = L.min; r.max = L.max; r.step = L.step;
+      Game.setPro(name, C.pro[name]);
+      r.addEventListener('input', function (e) {
+        e.stopPropagation();
+        Game.setPro(name, parseFloat(r.value), true);
       });
     });
     Array.prototype.forEach.call(el.contrastButtons.children, function (b) {

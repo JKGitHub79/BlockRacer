@@ -1453,6 +1453,45 @@ stray taps thrown in - and compares the chosen turn with the other one by
 the real physics. HOME, pause and every other button are
 never a turn. A mouse still taps a side, as it does under Swipe.
 
+**Pro controls** (`PRO CONTROLS` in the same row; not the default - SWIPE
+still is) are Auto Turn with a slide on top. The press is the same: Auto Turn
+picks the way, you pick the moment. But the press is **held**:
+
+- **Hold** - the car points the new way at once and its body swings round,
+  in about a tenth of a second, to face the corner - square to the way it is
+  still going, because it keeps going that way, at full speed. The tyres
+  mark the road as it slides.
+- **Let go** - it goes the way it faces, swinging into line as any turn does.
+  Slid into a wall meanwhile, it drives straight off from the wall that way.
+- **Slide for more than `boostAfter` (1 s) and let go** - a boost: `boostPct`
+  (20%) over top speed for `boostTime` (0.5 s). A flame off the tail and
+  sparks behind it show it, it has its own sound, and the phone buzzes.
+- **Slide for more than `spinAfter` (3 s)** - too long: the car spins a full
+  turn in `spinTime` (0.8 s), slowing to a stop, and sets off again the way it
+  faces `restartDelay` (0.5 s) later. Nothing you press counts until it does.
+
+Only the time the car is actually sliding counts: holding from a standstill,
+or after a slide has run into a wall, earns nothing. A second press lets the
+first slide go. Keys and the mouse hold too under Pro (a mouse picks the side,
+as it does under Auto Turn); a window that loses focus lets go.
+
+All of it is `CONFIG.pro` in `js/config.js`. The three a player is likely to
+want - SLIDE FOR BOOST, BOOST and BOOST TIME - are sliders under the control
+buttons while PRO is chosen, kept between sessions (`blockracer.pro.v1`) and
+clamped to `CONFIG.proLimits`.
+
+**The buzz.** Android browsers vibrate (`navigator.vibrate`). iOS Safari has
+no vibration API at all; since iOS 18 it does tick the haptic engine when a
+switch control is flipped, and a switch can be flipped from script inside the
+touch that asked for it - which a boost always is, since it is earned by
+letting go. So an iPhone on iOS 18 or later gets a tick; older iPhones get
+nothing. **iPads have no vibration motor**, so nothing can buzz there.
+
+**The cost of holding.** Every Pro turn happens when the finger LIFTS, not
+when it lands - that is what makes holding possible. A quick tap is still a
+turn, but a tap lasting a tenth of a second at SWEAT puts the turn two cells
+later than Auto Turn would. Pro players press earlier.
+
 A finger has to travel 24 CSS pixels (about 4mm on a phone, where a tap
 wanders one or two) before it counts, so a tap never steers; it fires the
 moment it gets there rather than on lifting, and that finger is then spent

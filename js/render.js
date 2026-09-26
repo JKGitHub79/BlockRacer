@@ -1366,6 +1366,28 @@
   var STILL = !!(global.matchMedia &&
                  global.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
+  /* The boost's flame, in the car's own space (nose at +x): a flickering
+   * cone off the tail, hot blue inside orange - yellow and white in high
+   * contrast, where additive glow would vanish into the white ground. It
+   * shrinks away over the boost's last tenth of a second. */
+  function drawFlame(g, L, W, car, hc) {
+    var now = (global.performance ? performance.now() : Date.now()) / 1000;
+    var f = 0.78 + 0.22 * Math.sin(now * 53) * Math.sin(now * 29);
+    var fade = Math.min(1, car.boostT / 0.12);
+    var len = L * (0.6 + 0.35 * f) * fade, half = W * 0.34, tail = -L / 2 + 1;
+    g.save();
+    if (!hc) g.globalCompositeOperation = 'lighter';
+    g.fillStyle = hc ? '#ffd400' : 'rgba(255,140,40,0.85)';
+    g.beginPath();
+    g.moveTo(tail, -half); g.lineTo(-L / 2 - len, 0); g.lineTo(tail, half);
+    g.closePath(); g.fill();
+    g.fillStyle = hc ? '#ffffff' : 'rgba(130,235,255,0.95)';
+    g.beginPath();
+    g.moveTo(tail, -half * 0.5); g.lineTo(-L / 2 - len * 0.55, 0); g.lineTo(tail, half * 0.5);
+    g.closePath(); g.fill();
+    g.restore();
+  }
+
   function drawCar(g, car) {
     var L = C.carLength * S, W = C.carWidth * S;
     var a = car.bodyAngle();
@@ -1445,6 +1467,9 @@
       if (hc) { ring(7, HC_MARK); ring(3.5, '#000000'); }
       else ring(2, 'rgba(255,255,255,0.9)');
     }
+
+    // A boost (Pro controls): a flame off the tail, under the body.
+    if (car.boostT > 0) drawFlame(g, L, W, car, hc);
 
     if (car.isPlayer && Cos) {
       Cos.drawCar(g, L, W, Cos.equippedSkin(), Cos.equippedVehicle(),

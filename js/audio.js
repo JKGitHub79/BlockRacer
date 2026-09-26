@@ -700,6 +700,19 @@
       hz.start(t); hz.stop(end + 0.02); gate.start(t); gate.stop(end + 0.02);
       tidy(rum, nodes);
     } },
+    // Pro controls. A boost: a rush of air rising, and a bright upward chirp.
+    boost: { gap: 0.3, play: function (a, o, t) {
+      hiss(a, o, t, { filter: 'bandpass', f: 500, f2: 2600, dur: 0.45, gain: 0.16, q: 1.2, at: 0.02 });
+      blip(a, o, t, { type: 'sawtooth', f: 220, f2: 660, glide: 0.25, dur: 0.3, gain: 0.05 });
+      blip(a, o, t + 0.04, { type: 'square', f: 880, f2: 1320, glide: 0.12, dur: 0.14, gain: 0.03 });
+    } },
+    // A spin-out: tyres howling round a full turn, and dying away.
+    spin: { gap: 1, play: function (a, o, t) {
+      for (var i = 0; i < 4; i++) {
+        hiss(a, o, t + i * 0.18, { filter: 'bandpass', f: 1500 - i * 180, f2: 900 - i * 100, dur: 0.24, gain: 0.1 - i * 0.018, q: 6, at: 0.01 });
+      }
+      blip(a, o, t, { type: 'triangle', f: 330, f2: 140, glide: 0.8, dur: 0.8, gain: 0.05 });
+    } },
     // A broken moment: a crackle and a wrong little tone.
     glitch: { gap: 0.08, play: function (a, o, t) {
       hiss(a, o, t, { filter: 'highpass', f: 2500, dur: 0.06, gain: 0.07 });

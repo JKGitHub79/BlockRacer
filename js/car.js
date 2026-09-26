@@ -36,6 +36,13 @@
     this.crashed = false;     // stopped by a wall, waiting for a turn
     this.crashFlash = 0;
 
+    // Pro controls - the player's car only (see CONFIG.pro).
+    this.drift = null;        // a held slide: { t } seconds of it so far
+    this.boostT = 0;          // seconds of boost left
+    this.boostMul = 1;        // speed while it lasts
+    this.spin = null;         // a spin-out: { t, v0 }
+    this.spinAngle = 0;       // the body's extra turn while spinning
+
     this.lap = 0;
     this.nextCp = 0;          // index into TRACK.CHECKPOINTS
     this.finished = false;
@@ -57,6 +64,11 @@
     return a;
   }
 
+  /* How fast the car is going now: its speed, plus a boost while one lasts. */
+  Car.prototype.speedNow = function () {
+    return this.boostT > 0 ? this.speed * this.boostMul : this.speed;
+  };
+
   Car.prototype.headingAngle = function () {
     return Math.atan2(this.dir.y, this.dir.x);
   };
@@ -77,6 +89,13 @@
    * catching the slide rather than snapping straight. Cosmetic only - the lean
    * never feeds back into position, collision or the racing line. */
   Car.prototype.updatePose = function (dt) {
+    /* A held slide: the body swings round - quickly, not in one frame - until
+     * it faces the way the car points, square to the way it is still going. */
+    if (this.drift || this.spin) {
+      var want = this.slip(), rate = C.pro.rotateRate * dt, gap = want - this.lean;
+      this.lean += Math.abs(gap) <= rate ? gap : (gap > 0 ? rate : -rate);
+      return;
+    }
     var frac = C.oversteerFrac();
     var full = (Math.PI / 2) * frac;          // the lean a fresh corner throws
     var target = this.slip() * frac;
@@ -94,7 +113,7 @@
   };
 
   Car.prototype.bodyAngle = function () {
-    return this.velAngle + this.lean;
+    return this.velAngle + this.lean + this.spinAngle;
   };
 
   Car.prototype.halfX = function () {
@@ -111,10 +130,17 @@
   };
 
   /* Right turn is clockwise on screen: (x,y) -> (-y,x). */
-  Car.prototype.turn = function (sign) {
+  Car.prototype.turn = function (sign, hold) {
     var d = this.dir;
     var standing = this.crashed;
     this.dir = sign > 0 ? { x: -d.y, y: d.x } : { x: d.y, y: -d.x };
+    // A held turn (Pro controls): the car keeps going the way it was and the
+    // body swings round in updatePose - whatever the slide setting.
+    if (hold && !standing) {
+      this.unstick();
+      this.crashed = false;
+      return;
+    }
     // A car pulling away from a wall has no momentum to fight, so it just goes
     // the new way. A moving car keeps its velocity and slides into line, and
     // its body flicks straight to the full oversteer pose - CONFIG.oversteer
@@ -226,24 +252,35 @@
    * below, so the pack shoves instead of gridlocking. */
   Car.prototype.step = function (dt) {
     this.crashFlash = Math.max(0, this.crashFlash - dt * 4);
+    if (this.boostT > 0) this.boostT = Math.max(0, this.boostT - dt);
+    if (this.spin) return this.stepSpin(dt);
     this.updatePose(dt);
     if (this.crashed || this.finished) return null;
 
+    // A held slide goes on the way the car was going. Only time spent
+    // actually sliding counts towards the boost, and too much of it spins
+    // the car out.
+    if (this.drift) {
+      if (Math.abs(this.slip()) > 0.05) this.drift.t += dt;
+      if (this.drift.t >= C.pro.spinAfter) { this.spinOut(); return null; }
+    }
+
     // Swing the velocity round towards the heading. Constant speed at a
     // constant angular rate is a circular arc, and speed / radius is the rate
-    // that gives the radius asked for.
+    // that gives the radius asked for. Not while a slide is being held.
+    var speed = this.speedNow();
     var slip = this.slip();
-    if (slip !== 0) {
+    if (slip !== 0 && !this.drift) {
       if (C.slide <= 0) {
         this.velAngle = this.headingAngle();
       } else {
-        var swing = (this.speed / C.slide) * dt;
+        var swing = (speed / C.slide) * dt;
         this.velAngle = wrapPi(this.velAngle +
           (Math.abs(slip) <= swing ? slip : (slip > 0 ? swing : -swing)));
       }
     }
 
-    var dist = this.speed * dt;
+    var dist = speed * dt;
     var dx = Math.cos(this.velAngle) * dist;
     var dy = Math.sin(this.velAngle) * dist;
     // Trigonometric dust: a car going due north must not creep sideways.
@@ -274,7 +311,66 @@
     this.crashFlash = 1;
     this.velAngle = this.headingAngle();
     this.lean = 0;
+    this.boostT = 0;
     return { x: at.x, y: at.y, crashed: true };
+  };
+
+  /* ---- Pro controls: letting go, and holding on too long ---------------- */
+
+  /* The slide is let go: the car goes the way it faces - swinging into line
+   * as any turn does, or, stopped against a wall, straight off that way.
+   * True when it earned a boost. */
+  Car.prototype.releaseDrift = function () {
+    var d = this.drift;
+    if (!d) return false;
+    this.drift = null;
+    if (this.crashed) {
+      this.crashed = false;
+      this.velAngle = this.headingAngle();
+      this.lean = 0;
+      this.unstick();
+      return false;
+    }
+    if (d.t >= C.pro.boostAfter && C.pro.boostPct > 0 && C.pro.boostTime > 0) {
+      this.boostT = C.pro.boostTime;
+      this.boostMul = 1 + C.pro.boostPct / 100;
+      return true;
+    }
+    return false;
+  };
+
+  // Held too long: a full turn, slowing to a stop.
+  Car.prototype.spinOut = function () {
+    this.spin = { t: 0, v0: this.speedNow() };
+    this.drift = null;
+    this.boostT = 0;
+  };
+
+  Car.prototype.stepSpin = function (dt) {
+    var sp = this.spin, P = C.pro;
+    sp.t += dt;
+    var k = Math.min(1, sp.t / P.spinTime);
+    // round once, fast then slowing, as the speed bleeds away
+    this.spinAngle = Math.PI * 2 * (1 - (1 - k) * (1 - k));
+    this.updatePose(dt);
+    if (k < 1) {
+      var v = sp.v0 * (1 - k), dist = v * dt;
+      var dx = Math.cos(this.velAngle) * dist, dy = Math.sin(this.velAngle) * dist;
+      if (Math.abs(dx) < 1e-9) dx = 0;
+      if (Math.abs(dy) < 1e-9) dy = 0;
+      sweepAxis(this, true, dx);          // a wall stops it; nothing more
+      sweepAxis(this, false, dy);
+      return null;
+    }
+    this.spinAngle = 0;
+    if (sp.t >= P.spinTime + P.restartDelay) {
+      // off again, the way it faces
+      this.spin = null;
+      this.velAngle = this.headingAngle();
+      this.lean = 0;
+      this.unstick();
+    }
+    return null;
   };
 
   /* Move by `amount` on one axis, but only if it stays out of the walls. */

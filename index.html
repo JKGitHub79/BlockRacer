@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.63.0', built: '2026-09-25' };
+window.BR = { version: '0.64.0', built: '2026-09-26' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -288,14 +288,26 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           <button data-control="swipe">SWIPE</button>
           <button data-control="tap">TAP</button>
           <button data-control="auto">AUTO TURN</button>
+          <button data-control="pro">PRO CONTROLS</button>
         </div>
         <p class="hint">For touchscreens. SWIPE turns the car to face the way
           you swipe - up, down, left or right; a swipe the way you are already
           going, or straight back, does nothing, since a turn is always a
           quarter turn. TAP turns left or right with a tap on that half of the
           screen. AUTO TURN: tap anywhere and it turns whichever way the track
-          goes next - you still choose when. The car drives exactly the same
-          every way, and keys and the mouse are not affected.</p>
+          goes next - you still choose when. PRO CONTROLS is Auto Turn with a
+          slide: HOLD and the car swings round to face the corner while it keeps
+          sliding at full speed; LET GO and it goes that way. Slide long enough
+          and letting go boosts you; slide too long and you spin out. The keys
+          and the mouse hold too, under PRO; otherwise they are not affected.</p>
+        <div id="pro-opts" class="pro-opts" hidden>
+          <p class="lapline">SLIDE FOR BOOST &middot; <b id="pro-after-v">1.0s</b></p>
+          <input id="pro-after" class="slider" type="range" aria-label="Slide needed for a boost, seconds">
+          <p class="lapline">BOOST &middot; <b id="pro-pct-v">+20%</b></p>
+          <input id="pro-pct" class="slider" type="range" aria-label="Boost, percent over top speed">
+          <p class="lapline">BOOST TIME &middot; <b id="pro-time-v">0.5s</b></p>
+          <input id="pro-time" class="slider" type="range" aria-label="Boost length, seconds">
+        </div>
       </div>
 
       <div class="opt">
