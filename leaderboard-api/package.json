@@ -6,7 +6,10 @@
   "description": "Block Racer leaderboard: a Cloudflare Worker over D1.",
   "scripts": {
     "migrate": "wrangler d1 migrations apply leaderboard --remote",
-    "deploy": "wrangler d1 migrations apply leaderboard --remote && wrangler deploy"
+    "deploy": "wrangler d1 migrations apply leaderboard --remote && wrangler deploy",
+    "db:count": "wrangler d1 execute leaderboard --remote --file=scripts/count.sql",
+    "db:backup": "wrangler d1 export leaderboard --remote --output=backup.sql",
+    "db:reset": "wrangler d1 execute leaderboard --remote --file=scripts/reset.sql"
   },
   "devDependencies": {
     "wrangler": "^4.140.0"

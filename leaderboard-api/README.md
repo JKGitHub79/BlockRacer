@@ -56,3 +56,40 @@ Ids are only compared, never returned.
 
 CORS allows only `https://jkgithub79.github.io`. `tools/leaderboard-test.html`
 exercises all of it, and has to be opened from there.
+
+## Starting the leaderboard again
+
+`scripts/reset.sql` deletes every lap time and every claimed username. The
+tables stay, empty, and the Worker needs nothing: the next time submitted is
+first on its track. It cannot be undone from the script, so look before you
+leap - `scripts/count.sql` says what is there.
+
+**From the Cloudflare dashboard** (nothing to install): Storage & Databases >
+D1 > `leaderboard` > Console. Paste `scripts/count.sql` and run it to see
+what is there; paste all of `scripts/reset.sql` and run it; run
+`scripts/count.sql` again - every number should be 0.
+
+**From a computer**, in this folder, after `npm install` and a one-off
+`npx wrangler login`:
+
+    npm run db:count     # what is there now
+    npm run db:backup    # a copy of everything, to backup.sql (git ignores it)
+    npm run db:reset     # empty it
+    npm run db:count     # check: all 0
+
+**Undoing a reset.** D1 keeps its own history for 30 days (Time Travel):
+`npx wrangler d1 time-travel info leaderboard` shows the current point, and
+`npx wrangler d1 time-travel restore leaderboard --timestamp=<time before the
+reset>` puts the database back as it was then. A `backup.sql` from
+`db:backup` can also be replayed into an empty database with
+`npx wrangler d1 execute leaderboard --remote --file=backup.sql`.
+
+What a reset does not touch: players' browsers still hold their player id and
+name. The first time each of them submits afterwards claims that name again -
+so if someone else has taken it in the meantime, the game asks them for a new
+one ("Username already in use"). Lap records kept on each device are theirs
+and stay.
+
+To clear one track rather than everything, in the D1 Console:
+
+    DELETE FROM times WHERE track_id = 'pinefall';
