@@ -234,17 +234,31 @@
    * walls; with this they are simply not shown, and the next record makes a
    * new one. */
   var sigCache = {};
-  function signature(data) {
-    if (!data) return '';
-    if (sigCache[data.id]) return sigCache[data.id];
-    var s = JSON.stringify([data.cols, data.rows, data.walls, data.route,
+  function hashOf(data, walls) {
+    var s = JSON.stringify([data.cols, data.rows, walls, data.route,
                             data.finish, data.checkpoints, data.startGrid]);
     var h = 0x811c9dc5;
     for (var i = 0; i < s.length; i++) {
       h ^= s.charCodeAt(i);
       h = Math.imul(h, 0x01000193) >>> 0;
     }
-    return (sigCache[data.id] = h.toString(36) + ':' + s.length.toString(36));
+    return h.toString(36) + ':' + s.length.toString(36);
+  }
+  function signature(data) {
+    if (!data) return '';
+    if (sigCache[data.id]) return sigCache[data.id];
+    return (sigCache[data.id] = hashOf(data, data.walls));
+  }
+  /* The same track with its left and right border rectangles listed the
+   * other way round. The mirrored tracks were stored like that until the
+   * tracks became files (js/trackfile.js always puts the border back as top,
+   * bottom, left, right), and the order of two rectangles that do not touch
+   * changes nothing about where a car can go - so a ghost driven before then
+   * is still the right ghost. */
+  function formerSignature(data) {
+    var w = data.walls;
+    if (!w || w.length < 4) return '';
+    return hashOf(data, [w[0], w[1], w[3], w[2]].concat(w.slice(4)));
   }
 
   /* ---- keeping --------------------------------------------------------- */
@@ -294,7 +308,8 @@
     }
     try {
       if (!d) d = JSON.parse(raw);
-      if (!d || d.v !== VERSION || d.sig !== signature(data)) return null;
+      if (!d || d.v !== VERSION) return null;
+      if (d.sig !== signature(data) && d.sig !== formerSignature(data)) return null;
       if (!(Math.abs(d.time - record) < 1e-6)) return null;
       var n = d.t && d.t.length;
       if (!(n >= 2) || d.x.length !== n || d.y.length !== n ||

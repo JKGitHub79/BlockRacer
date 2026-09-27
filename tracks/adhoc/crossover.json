@@ -1,0 +1,62 @@
+{
+  "format": 1,
+  "id": "crossover",
+  "theme": "adhoc",
+  "name": "CROSSOVER",
+  "grade": "BEGINNER",
+  "blurb": "Figure of eight. Wide roads, six turns, one crossing.",
+  "order": 1,
+  "cols": 40,
+  "rows": 28,
+  "aiPace": 0.94,
+  "aiOffsetScale": 3,
+  "border": "edge",
+  "walls": [
+    { "x0": 1, "y0": 1, "x1": 16, "y1": 10, "kind": "edge" },
+    { "x0": 23, "y0": 17, "x1": 38, "y1": 26, "kind": "edge" },
+    { "x0": 23, "y0": 7, "x1": 32, "y1": 10, "kind": "infield" },
+    { "x0": 7, "y0": 17, "x1": 16, "y1": 20, "kind": "infield" }
+  ],
+  "route": [
+    { "x": 20, "y": 24 },
+    { "x": 20, "y": 4 },
+    { "x": 36, "y": 4 },
+    { "x": 36, "y": 14 },
+    { "x": 4, "y": 14 },
+    { "x": 4, "y": 24 }
+  ],
+  "startLeg": 5,
+  "checkpoints": [
+    { "x0": 17, "y0": 8, "x1": 23, "y1": 9.5 },
+    { "x0": 29, "y0": 1, "x1": 30.5, "y1": 7 },
+    { "x0": 9, "y0": 11, "x1": 10.5, "y1": 17 },
+    { "x0": 1, "y0": 19, "x1": 7, "y1": 20.5 }
+  ],
+  "finish": { "x0": 11.5, "y0": 21, "x1": 12.5, "y1": 27, "dir": { "x": 1, "y": 0 } },
+  "startGrid": [
+    { "x": 9.5, "y": 22.8, "wp": 0 },
+    { "x": 9.5, "y": 25.2, "wp": 0 },
+    { "x": 7.6, "y": 22.8, "wp": 0 },
+    { "x": 7.6, "y": 25.2, "wp": 0 }
+  ],
+  "notes": [
+    "1. CROSSOVER - beginner",
+    "",
+    "A figure of eight: an upper-right rectangle and a lower-left rectangle",
+    "that meet at a single corner in the middle of the map, so the racing",
+    "line runs straight through itself once a lap. Six-cell roads - half",
+    "again as wide as Staircase - no chicanes, and only six turns.",
+    "",
+    "           17  23        33  39",
+    "       0 +----+===========+===+     rows 1-6   top road",
+    "         |####|   top     |   |",
+    "       7 |####|===+---+===|   |     rows 7-10  upper-right infield",
+    "      11 +====+===========+===+     rows 11-16 middle road, full width",
+    "      17 |    |===+---+===|###|     rows 17-20 lower-left infield",
+    "      21 |    |   bottom  |###|     rows 21-26 bottom road",
+    "      27 +----+-----------+---+",
+    "",
+    "The vertical road (cols 17-22) and the middle road (rows 11-16) cross at",
+    "the centre. That crossing is the only hazard on the track."
+  ]
+}

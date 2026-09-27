@@ -16,7 +16,9 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.66.0', built: '2026-09-26' };
+window.BR = { version: '0.67.0', built: '2026-09-27',
+  // written by tools/build-tracks.js: which build of js/tracks.data.js this is
+  tracks: 'a3fa17b7' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
 </script>
 </head>
@@ -178,7 +180,7 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       <button id="btn-options" class="door">
         <span class="door-mark">&#9881;&#xFE0E;</span>
         <span class="door-name">OPTIONS</span>
-        <span class="door-sub">Settings &amp; legacy tracks</span>
+        <span class="door-sub">Settings, tracks &amp; level editor</span>
       </button>
       <button id="btn-play" class="door door-main">
         <span class="door-mark">&#9654;&#xFE0E;</span>
@@ -450,11 +452,19 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
       </div>
 
       <div class="opt opt-legacy">
-        <p class="lapline">LEGACY TRACKS</p>
-        <p class="hint">The seven circuits built before the themes. They are being
-          replaced, not removed - these are the originals, still raceable.</p>
-        <button id="legacy-open" class="secondary wide-btn">SHOW LEGACY TRACKS</button>
+        <p class="lapline">ADHOC TRACKS</p>
+        <p class="hint">Every track outside the themes: the seven circuits built
+          before them, and any track added with the level editor.</p>
+        <button id="legacy-open" class="secondary wide-btn">SHOW ADHOC TRACKS</button>
         <div id="legacy-list" class="legacy-list"></div>
+      </div>
+
+      <div class="opt opt-editor">
+        <p class="lapline">LEVEL EDITOR</p>
+        <p class="hint">Change any track, or make a new one, and save it as a
+          file. Nothing in the game changes until that file is uploaded to
+          the game on GitHub.</p>
+        <button id="btn-editor" class="secondary wide-btn">OPEN LEVEL EDITOR</button>
       </div>
     </div>
 
@@ -473,13 +483,177 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
   </div>
 </section>
 
+<!-- =========================== level editor ============================ -->
+<section id="screen-editor" class="screen editor">
+  <button id="ed-back" class="back" type="button">&larr; BACK</button>
+  <div class="screen-inner ed-inner">
+
+    <!-- every track, by theme, and what has been changed on this device -->
+    <div id="ed-library" class="ed-library">
+      <h2 class="screen-title">LEVEL EDITOR</h2>
+      <p class="ed-lead">Every track is a file. Change one here, or make a new one,
+        then save the file and upload it to the game on GitHub. <b>Nothing in the
+        game changes until the file is uploaded.</b> Your changes are kept on this
+        device until then.</p>
+      <div class="ed-lib-actions">
+        <button id="ed-new" class="primary" type="button">NEW TRACK</button>
+        <button id="ed-import" class="secondary" type="button">OPEN A FILE&hellip;</button>
+        <input id="ed-file" type="file" accept=".json,application/json,text/plain" hidden>
+      </div>
+      <div id="ed-new-form" class="ed-new" hidden>
+        <label>NAME <input id="ed-n-name" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="MY TRACK"></label>
+        <label>SIZE
+          <select id="ed-n-size">
+            <option value="40x28">SMALL &middot; 40 &times; 28</option>
+            <option value="46x32" selected>MEDIUM &middot; 46 &times; 32</option>
+            <option value="52x38">LARGE &middot; 52 &times; 38</option>
+            <option value="64x44">HUGE &middot; 64 &times; 44</option>
+          </select>
+        </label>
+        <label>COLOURS FROM <select id="ed-n-palette"></select></label>
+        <p class="hint">New tracks go in <b>adhoc</b>, raced from Options. You can
+          change every colour once it is made.</p>
+        <button id="ed-create" class="primary" type="button">CREATE</button>
+      </div>
+      <div id="ed-groups" class="ed-groups"></div>
+    </div>
+
+    <!-- one track -->
+    <div id="ed-work" class="ed-work" hidden>
+      <header class="ed-head">
+        <div class="ed-title">
+          <b id="ed-name">TRACK</b>
+          <code id="ed-path">tracks/</code>
+          <span id="ed-state" class="ed-state"></span>
+        </div>
+        <div class="ed-drive">
+          <button id="ed-test-drive" class="secondary" type="button" title="Drive it alone, nothing recorded">TEST DRIVE</button>
+          <button id="ed-test-race" class="secondary" type="button" title="Race it against the field, nothing recorded">TEST RACE</button>
+        </div>
+      </header>
+      <p id="ed-storage" class="ed-warn" hidden>This device is not letting the editor keep
+        your changes (storage is full or blocked). Save the file before you leave.</p>
+
+      <div id="ed-tools" class="ed-tools">
+        <button data-tool="wall" type="button">WALL</button>
+        <button data-tool="erase" type="button">ERASE</button>
+        <button data-tool="route" type="button">LINE</button>
+        <button data-tool="checkpoint" type="button">CHECKPOINT</button>
+        <button data-tool="finish" type="button">FINISH</button>
+        <span class="ed-gap"></span>
+        <button id="ed-undo" type="button" title="Undo (Ctrl+Z)">&#8630; UNDO</button>
+        <button id="ed-redo" type="button" title="Redo (Ctrl+Shift+Z)">&#8631; REDO</button>
+      </div>
+      <div id="ed-kinds" class="ed-sub">
+        <span>DRAW AS</span>
+        <button data-kind="infield" type="button">WALL</button>
+        <button data-kind="jog" type="button">ROAD BLOCK</button>
+        <button data-kind="edge" type="button">GROUND</button>
+        <button data-kind="lava" type="button">LAVA</button>
+        <button data-kind="void" type="button">VOID</button>
+      </div>
+      <div id="ed-route-row" class="ed-sub" hidden>
+        <button id="ed-redraw" type="button">REDRAW LINE</button>
+        <button id="ed-reverse" type="button">REVERSE DIRECTION</button>
+      </div>
+
+      <div class="ed-main">
+        <div id="ed-stage" class="ed-stage">
+          <canvas id="ed-canvas"></canvas>
+          <div class="ed-zoom">
+            <button id="ed-zoom-in" type="button" title="Zoom in">+</button>
+            <button id="ed-zoom-out" type="button" title="Zoom out">&minus;</button>
+            <button id="ed-zoom-fit" type="button" title="Fit">FIT</button>
+          </div>
+          <p class="ed-foot"><span id="ed-tip"></span> <span id="ed-coords"></span></p>
+        </div>
+
+        <aside class="ed-side">
+          <nav id="ed-tabs" class="ed-tabs">
+            <button data-tab="details" type="button">DETAILS</button>
+            <button data-tab="colours" type="button">COLOURS</button>
+            <button data-tab="check" type="button">CHECK</button>
+            <button data-tab="export" type="button">SAVE</button>
+          </nav>
+          <div id="ed-panes" class="ed-panes">
+            <div data-pane="details" class="ed-pane">
+              <label>NAME <input id="ed-f-name" type="text" maxlength="16" autocomplete="off" spellcheck="false"></label>
+              <label>GRADE <input id="ed-f-grade" type="text" maxlength="16" autocomplete="off" spellcheck="false"></label>
+              <label>DESCRIPTION <input id="ed-f-blurb" type="text" maxlength="90" autocomplete="off"></label>
+              <div class="ed-two">
+                <label>WIDTH <input id="ed-f-cols" type="number" min="16" max="80" inputmode="numeric"></label>
+                <label>HEIGHT <input id="ed-f-rows" type="number" min="12" max="60" inputmode="numeric"></label>
+              </div>
+              <label><span>OPPONENT PACE &middot; <b id="ed-f-pace-out">1.00</b></span>
+                <input id="ed-f-pace" type="range" min="0.8" max="1.2" step="0.01"></label>
+              <p id="ed-tutorial-note" class="ed-warn" hidden>The tutorial&rsquo;s lessons are written
+                around this track&rsquo;s corners. Change its shape and they may no longer line up.</p>
+              <button id="ed-revert" class="secondary wide-btn" type="button">DISCARD CHANGES</button>
+            </div>
+
+            <div data-pane="colours" class="ed-pane">
+              <p id="ed-themed-note" class="hint">This track is in the <b id="ed-themed-name">FOREST</b>
+                theme, so its landscape and road are the theme&rsquo;s colours.</p>
+              <div id="ed-adhoc-colours">
+                <label>START FROM <select id="ed-f-palette"></select></label>
+                <div class="ed-picks">
+                  <label><input id="ed-pick-landscape" type="color"> LANDSCAPE</label>
+                  <label><input id="ed-pick-track" type="color"> TRACK</label>
+                  <label><input id="ed-pick-walls" type="color"> WALLS</label>
+                  <label><input id="ed-pick-blocks" type="color"> ROAD BLOCKS</label>
+                </div>
+              </div>
+              <div id="ed-swatches" class="ed-swatches"></div>
+              <label>WEATHER <select id="ed-f-weather"></select></label>
+              <p id="ed-tint-note" class="hint" hidden>Your ROAD setting in Options
+                (<b id="ed-tint-name"></b>) paints over every track&rsquo;s road in the game.</p>
+            </div>
+
+            <div data-pane="check" class="ed-pane">
+              <p class="hint">Drives a car down every line the AI uses, through every
+                corner and over every checkpoint - the same check the game&rsquo;s
+                own tracks pass.</p>
+              <button id="ed-run-check" class="secondary wide-btn" type="button">CHECK AGAIN</button>
+              <div id="ed-results" class="ed-results"></div>
+            </div>
+
+            <div data-pane="export" class="ed-pane">
+              <p class="hint">This track is the file <code id="ed-x-path"></code>.</p>
+              <div class="ed-export">
+                <button id="ed-save" class="primary" type="button">SAVE FILE</button>
+                <button id="ed-share" class="secondary" type="button">SHARE / EMAIL</button>
+                <button id="ed-copy" class="secondary" type="button">COPY TEXT</button>
+              </div>
+              <p id="ed-said" class="ed-said" hidden></p>
+              <ol class="ed-steps">
+                <li>Save the file (on iPad it goes to Files, Downloads).</li>
+                <li><a id="ed-x-upload" target="_blank" rel="noopener">Open the <code id="ed-x-folder">tracks/</code>
+                  folder on GitHub&rsquo;s upload page</a>.</li>
+                <li>Choose <b id="ed-x-file">track.json</b><span id="ed-x-replace">, which replaces the
+                  one already there,</span> and press <b>Commit changes</b>.</li>
+                <li>A few minutes later the game has it. <a id="ed-x-actions" target="_blank" rel="noopener">Watch
+                  it being built</a>.</li>
+              </ol>
+              <p id="ed-x-edit-row" class="hint">Or <a id="ed-x-edit" target="_blank" rel="noopener">edit the file on
+                GitHub</a>, select everything, and paste what COPY TEXT copied.</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
 <script>
 /* Loaded through the version so the browser fetches fresh files after a
  * deploy. document.write keeps them strictly in order, which they need. */
-['viewport', 'tracks', 'themes', 'config', 'track', 'car', 'ai', 'autoturn', 'input', 'music', 'audio',
- 'progress', 'ghost', 'tutorial', 'secret', 'abduct', 'rift', 'beyond', 'cosmetics', 'unlocks', 'leaderboard', 'backdrop', 'render', 'screens', 'game']
+['viewport', 'trackfile', 'tracks.data', 'tracks', 'themes', 'config', 'track', 'car', 'trackcheck', 'ai', 'autoturn', 'input', 'music', 'audio',
+ 'progress', 'ghost', 'tutorial', 'secret', 'abduct', 'rift', 'beyond', 'cosmetics', 'unlocks', 'leaderboard', 'backdrop', 'render', 'screens', 'editor', 'game']
   .forEach(function (name) {
-    document.write('<script src="js/' + name + '.js?v=' + BR.version + '"><\/script>');
+    // The track bundle is rebuilt on GitHub whenever a track file is
+    // uploaded, without a new version: its own stamp keeps it fresh.
+    var v = BR.version + (name === 'tracks.data' ? '.' + BR.tracks : '');
+    document.write('<script src="js/' + name + '.js?v=' + v + '"><\/script>');
   });
 </script>
 </body>

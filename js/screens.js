@@ -28,7 +28,7 @@
 
   var el = {};
 
-  var SCENE_FOR = { main: 'night', options: 'night', mode: 'night', shop: 'garage' };
+  var SCENE_FOR = { main: 'night', options: 'night', mode: 'night', shop: 'garage', editor: 'night' };
 
   Screens.show = function (name) {
     // Every way out of a result - BACK, RACE AGAIN, NEXT TRACK, restart -
@@ -38,9 +38,11 @@
     if (global.Leaderboard) global.Leaderboard.hide();
     // Out of the tutorial, whichever way: put back what it displaced.
     if (name !== 'race' && global.Game && global.Game.mode === 'tutorial') global.Game.endTutorial();
+    // Out of a level-editor test drive: the draft comes off the track list.
+    if (name !== 'race' && global.Game && global.Game.sandbox) global.Game.endTest();
     this.current = name;
-    ['main', 'options', 'play', 'mode', 'shop'].forEach(function (s) {
-      el[s].classList.toggle('on', s === name);
+    ['main', 'options', 'play', 'mode', 'shop', 'editor'].forEach(function (s) {
+      if (el[s]) el[s].classList.toggle('on', s === name);
     });
     /* The board is sized to the space the stage has, and `in-race` is one of
      * the things that decides how much space that is - upright it takes the
@@ -58,6 +60,7 @@
     if (name === 'play') this.paintCards();
     if (name === 'options') this.buildLegacy();
     if (name === 'shop') this.paintShop();
+    if (name === 'editor' && global.Editor) global.Editor.shown();
     global.Input.clear();
     if (global.Abduct) global.Abduct.sync();
   };
@@ -238,8 +241,8 @@
         (medal ? '<span class="card-medal">' + medal + '<sup>' +
                  (medal === 1 ? 'st' : medal === 2 ? 'nd' : 'rd') + '</sup></span>' : '') +
         (lap ? '<span class="card-record">' + lapTime(lap) + '</span>' : '') +
-        '<span class="card-name">' + entry.name + '</span>' +
-        '<span class="card-grade">' + (found ? entry.grade : 'COMING SOON') + '</span>';
+        '<span class="card-name">' + (found ? found.data.name : entry.name) + '</span>' +
+        '<span class="card-grade">' + (found ? found.data.grade : 'COMING SOON') + '</span>';
       if (found) {
         global.Renderer.thumbnail(found.index, card.querySelector('.card-art'));
         card.addEventListener('click', function () { Screens.race(found.index, 'play'); });
@@ -525,10 +528,11 @@
     }
   };
 
-  /* ---- the legacy list -------------------------------------------------
-   * The seven tracks built before the themes. They live on the options
-   * screen rather than in the carousel: they are being replaced rather than
-   * offered, and the carousel is for what the game is becoming. */
+  /* ---- the adhoc list --------------------------------------------------
+   * Every track no theme has claimed: the seven built before the themes,
+   * and anything added through the level editor (tracks/adhoc/). They live
+   * on the options screen rather than in the carousel, which is the ladder
+   * the game is built around. */
   Screens.buildLegacy = function () {
     // Legacy is whatever no theme has claimed, worked out rather than listed,
     // so a track promoted into a theme leaves this list by itself.
@@ -559,6 +563,7 @@
     el.play = document.getElementById('screen-play');
     el.mode = document.getElementById('screen-mode');
     el.shop = document.getElementById('screen-shop');
+    el.editor = document.getElementById('screen-editor');
     el.shopGrid = document.getElementById('shop-grid');
     el.shopTabs = document.getElementById('shop-tabs');
     el.shopCount = document.getElementById('shop-count');
@@ -589,6 +594,8 @@
     document.getElementById('btn-options').addEventListener('click', function () {
       Screens.show('options');   // which rebuilds the legacy rows
     });
+    var editorBtn = document.getElementById('btn-editor');
+    if (editorBtn) editorBtn.addEventListener('click', function () { Screens.show('editor'); });
     document.getElementById('btn-shop').addEventListener('click', function () {
       Screens.show('shop');      // which repaints from the medals
     });

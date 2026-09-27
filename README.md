@@ -14,7 +14,7 @@ what you pushed.
 
 ## Screens
 
-Six of them, and the race is only one.
+Seven of them, and the race is only one.
 
 **Front door.** Three doors across: OPTIONS, PLAY, SHOP.
 
@@ -36,7 +36,11 @@ PLAY TUTORIAL, music, sound effects, high contrast and the glow under your own
 car. Then,
 under **DEVELOPER** - a heading, not a hidden button - the tuning and test
 settings: slide, oversteer, field size, AI level, game speed, race length,
-road colour and the legacy tracks. RESET DATA sits on its own at the bottom.
+road colour, the adhoc tracks and the **LEVEL EDITOR**. RESET DATA sits on its
+own at the bottom.
+
+**Level editor.** Every track is a file, and this is where they are changed
+and made. See **Track files and the level editor** below.
 
 **Shop.** Thirty skins and ten vehicles, every one of them won rather than
 bought. See **The shop** below.
@@ -79,9 +83,10 @@ Ten themes, ascending in difficulty, three tracks each:
 | Space | Orbital, Drift Field, Event Horizon | nightmare | **built** |
 | Alien | Landfall, Hive, Mothership | impossible | **built** |
 
-All thirty are built. A theme's track is matched to `js/tracks.js` by id,
-and a name with no track behind it renders as a placeholder rather than being
-hidden, so an eleventh theme can be sketched in `js/themes.js` and filled in later.
+All thirty are built. A theme's track is its file in `tracks/<theme>/`,
+matched to `js/themes.js` by id, and a name with no track behind it renders as
+a placeholder rather than being hidden, so an eleventh theme can be sketched in
+`js/themes.js` and filled in later.
 
 ### The forest three
 
@@ -638,8 +643,9 @@ built on it rather than on margin. That decision was right for the wrong
 reason and is still right.
 
 The seven circuits that came first - Crossover, Snowdrift, Mesa, Wildwood,
-Catalunya, Caldera, Staircase - are the **legacy tracks**, on the options
-screen. They are being replaced rather than removed, and they stay raceable.
+Catalunya, Caldera, Staircase - are the first of the **adhoc tracks**, on the
+options screen, with anything since added through the level editor. They are
+being replaced rather than removed, and they stay raceable.
 
 ### Direction
 
@@ -655,11 +661,10 @@ geometry seen in a mirror. Driving a track backwards is a different track: a
 stand that pushed you out of a corner now pushes you into one, and every
 number would have to be measured again.
 
-The flip lives at the bottom of `js/tracks.js` and is applied as the data
-leaves the file, so the layouts stay as they were drawn and the diagrams in
-their comments still describe them. Everything downstream - the game, the
-thumbnails, the validator, `tools/map.js` - sees only the turned-round
-version. A track opts in with `mirror: true`.
+The flip was applied once, when the tracks became files: each file holds its
+track as it is raced, anticlockwise, and there is no `mirror` flag any more. The
+diagrams in the notes of a mirrored track still show it the way it was drawn,
+and say so at the top.
 
 **Two tracks are not flipped and cannot be.** Crossover and Glacier are
 figures of eight: one way round one lobe and the other way round the other.
@@ -1389,8 +1394,8 @@ tutorial existed are not asked - a medal, a lap record, a ghost, a shop pick
 or a setting that older versions saved means you have played. `?welcome=1`
 shows the prompt anyway.
 
-It is two laps of **TRAINING**, a track of its own (last in `js/tracks.js`,
-flagged `tutorial`): a plain ring the shape of Pinefall, run anticlockwise
+It is two laps of **TRAINING**, a track of its own (`tracks/adhoc/training.json`,
+flagged `tutorial`, and always last in the list): a plain ring the shape of Pinefall, run anticlockwise
 like every track, with nothing in the road. The one thing it keeps from
 Pinefall is the lane change on the main straight - as a line to follow, not
 blocks to dodge - because that gives the lesson a left and then a right. It is
@@ -1872,7 +1877,7 @@ Game speed scales every car, player and AI alike:
 `js/config.js` also holds base car speed, car size, the countdown, the palette,
 and the per-driver AI settings (pace, how often they turn too late, how quickly
 they recover). Per-track overrides - grid size, how much the AI spreads across the
-road, how hard it tries - live with the track in `js/tracks.js`.
+road, how hard it tries - live in the track's own file.
 
 ## How many cars
 
@@ -2420,14 +2425,160 @@ against the road rather than the background, and yellow on white is the weakest
 of the twenty-four combinations - still legible thanks to the dark outline
 every car carries, but it is the one to look at first if the palette changes.
 
+## Track files and the level editor
+
+**Every track is a JSON file.** The thirty themed tracks are
+`tracks/<theme>/<id>.json` - `tracks/forest/pinefall.json`, and so on - and
+everything else is in `tracks/adhoc/`: the seven legacy circuits, the tutorial's
+TRAINING, and any track made in the editor. A themed track's file can be
+replaced but not moved: a theme has exactly the three slots `js/themes.js`
+names, and a file in a theme folder has to be one of them. Everything else is
+adhoc, and is raced from Options.
+
+**Nothing changes in the game until a file is uploaded to GitHub.** The game
+cannot list a folder - not from GitHub Pages, and not opened straight off the
+disk - so it loads its tracks from one generated file, `js/tracks.data.js`.
+`tools/build-tracks.js` builds it, and `.github/workflows/tracks.yml` runs that
+whenever anything under `tracks/` is pushed and commits the result. So:
+
+1. Change or make a track in the editor (Options, LEVEL EDITOR).
+2. SAVE FILE - on an iPad it goes to Files, Downloads - or SHARE / EMAIL it.
+3. On GitHub, upload it into the folder the SAVE tab names (it links straight
+   to the upload page) and commit. A file with the same name is replaced.
+4. The workflow checks it, rebuilds the bundle and publishes it; the game has
+   it a few minutes later. Deleting a file on GitHub removes the track the
+   same way.
+
+**Where a file lands is decided by what is in it, not by its name.** A browser
+saves a second copy of `pinefall.json` as `pinefall (1).json`; upload that and
+the build moves it to `tracks/forest/pinefall.json`, replacing what was there,
+because the file's own `"theme"` and `"id"` say that is where it belongs. A
+file dropped into `tracks/` itself is moved the same way.
+
+**A file the game could not load is refused, and the game is left alone.**
+Broken JSON, a diagonal leg, a wall outside the grid, a fourth track in a
+theme: the workflow run fails with the reason against the file, and nothing
+is committed. A track that loads but that a car cannot drive cleanly is only
+a warning there - that is a design problem, and one Staircase has always had -
+and the editor's CHECK shows exactly where.
+
+`index.html` loads the bundle as `tracks.data.js?v=<version>.<stamp>`, and the
+build writes the stamp - a hash of the bundle - into `window.BR`, so a browser
+that has the page fresh cannot keep serving the previous build.
+
+Because the workflow commits to the branch, **pull before you push** after
+uploading a track on GitHub.
+
+### The editor
+
+A list of every track by theme, with anything changed on this device marked;
+NEW TRACK; and OPEN A FILE for a track file from anywhere else - an email, a
+download, another device. Open a track and it fills the screen: the map, the
+tools above it, and a panel beside it (under it on an upright iPad).
+
+| Tool | What it does |
+| --- | --- |
+| WALL | Drag a block of cells. DRAW AS picks what it is: a wall, a road block (drawn as the theme's stand, egg cluster or pillar), ground, lava or void. |
+| ERASE | Drag across walls and those cells go back to road; the rest of each wall stays. |
+| LINE | Drag a corner or a straight of the racing line to move it - its neighbours follow, so every leg stays square. REDRAW LINE starts again: tap each corner in turn and tap the first to close it. REVERSE DIRECTION turns the lap round. |
+| CHECKPOINT | Tap the road and a checkpoint goes across it, wall to wall. Tap one to remove it. They number themselves in the order a lap meets them. |
+| FINISH | Tap the road to move the finish line there. The start grid forms up behind it by itself. |
+
+Two fingers pan and pinch; a mouse wheel zooms, and a right or middle drag
+pans. `Ctrl+Z` / `Ctrl+Shift+Z` undo and redo, and `W E L C F` pick the tools.
+
+The panel has four tabs. **DETAILS**: name, grade, description, size and how
+hard the opponents try. **COLOURS**: a themed track is drawn in its theme's
+palette and says so; an adhoc track starts from the game's default or any
+theme's palette and picks its own LANDSCAPE, TRACK, WALLS and ROAD BLOCKS -
+each picker sets the handful of related colours that go with it (the lit tops,
+the ground off the map, the tint the checkpoints need to show on a light
+road) - and any track picks its weather. **CHECK** runs exactly the check
+`tools/validate-track.js` runs, from the same code (`js/trackcheck.js`), and
+puts a red cross on the map wherever a car fails. **SAVE** is SAVE FILE, SHARE
+/ EMAIL (the share sheet where the browser can share files - Mail is on it on
+an iPad; otherwise the file is saved and an email opened to attach it to,
+because no browser can attach a file to an email by itself) and COPY TEXT, for
+pasting into the file's own editor on GitHub.
+
+**TEST DRIVE** and **TEST RACE** drive the track as it is in the editor, alone
+or against the field, and write nothing down: no medal, no lap record, no
+ghost, nothing sent to the leaderboard. Leaving goes back to the editor.
+
+Changes are kept on the device as drafts until they are uploaded - the list
+marks them CHANGED or NEW, and a draft the game has caught up with is dropped
+by itself. DISCARD CHANGES goes back to the version in the game.
+
+A new track starts as a plain ring the size you choose, with a finish, four
+checkpoints and a grid, and passes CHECK before anything is drawn on it - every
+edit after that is a change to a working track.
+
+Some things to know. A lap record and a medal belong to the track's id, so a
+record set on the old version of a track still stands after it is changed (the
+online leaderboard's times too); the ghost does not, because it is checked
+against the layout and one driven on another layout is not shown. The online
+leaderboard only accepts the tracks it knows, so a new adhoc track has none -
+adhoc tracks are raced, not trialled, in any case. And the tutorial's lessons
+are written around TRAINING's corners, which the editor says when you open it.
+
+### The file
+
+Plain JSON, one wall, waypoint or zone to a line, in the order below; the
+editor writes it and `tools/build-tracks.js` rewrites any hand-edited file into
+the same shape.
+
+```json
+{
+  "format": 1,
+  "id": "pinefall",
+  "theme": "forest",
+  "name": "PINEFALL",
+  "grade": "BEGINNER",
+  "blurb": "A wide ring through the pines, with one lane change on the straight.",
+  "cols": 40,
+  "rows": 28,
+  "weather": "leaves",
+  "aiPace": 0.95,
+  "border": "edge",
+  "walls": [
+    { "x0": 10, "y0": 10, "x1": 29, "y1": 17, "kind": "infield" }
+  ],
+  "route": [
+    { "x": 5.5, "y": 24 },
+    { "x": 21, "y": 24 }
+  ],
+  "startLeg": 0,
+  "checkpoints": [
+    { "x0": 28, "y0": 18, "x1": 29, "y1": 27 }
+  ],
+  "finish": { "x0": 9.6, "y0": 18, "x1": 10.4, "y1": 27, "dir": { "x": 1, "y": 0 } },
+  "startGrid": [
+    { "x": 8, "y": 22.8, "wp": 1 }
+  ],
+  "notes": ["..."]
+}
+```
+
+`id` is the file's name and the key records are kept under - lower case,
+digits and dashes. `theme` is the folder: a theme's id, or `adhoc`. `border`
+is the kind of the four edge rectangles every track has, which are not listed
+in `walls`. Walls are inclusive cell ranges; checkpoints and the finish are
+continuous spans, where cell `c` runs from `c` to `c + 1`. An adhoc track may
+add `palette` (a theme id to take colours from), `colors` (any of `bg`, `road`,
+`roadLine`, `wall`, `wallTop`, `outer`, `outerTop`, `jog`, `jogTop`,
+`racingLine`, `check`, `checkNext`, `startLine`, over the palette) and `order`
+(where it sits in the adhoc list). `notes` is free text the game ignores - the
+design notes that used to be comments in the source live there.
+`js/trackfile.js` is the reference: it is what the game, the editor and the
+build all use to read a file and to say what is wrong with one.
+
 ## Adding a track
 
-Add an entry to `TRACKS` in `js/tracks.js`: a grid size, the solid rectangles,
-a racing line whose consecutive waypoints are axis aligned, checkpoints, a
-finish line and a starting grid. Add a button for it in `index.html`. Then run
-`npm run check`, which will tell you whether a car can actually drive it.
+Use the editor, or write a file by hand into `tracks/adhoc/` and run
+`npm run tracks` (which is `node tools/build-tracks.js`) to bundle it; then
+`npm run check` says whether a car can actually drive it.
 
-Optional per-track settings: `theme` for the palette, `aiPace` for how hard the
+Optional per-track settings: `aiPace` for how hard the
 opposition tries, `aiOffsetScale` for how far they spread across the road, and
 `aiMistakeScale` for how often they turn in late - worth turning down on a track
 whose legs are short enough that a late turn means a wall rather than a wide
@@ -2440,7 +2591,7 @@ rather than into it. `kind: 'void'` says a solid is a hole in the deck rather
 than a spar, which on a `vacuum` theme - where every solid is open space
 already - is documentation of intent rather than a change of appearance. `weather`
 blows motes across the board - `'snow'`, `'dust'`, `'leaves'`, `'grit'`,
-`'rain'`, `'ash'`, `'motes'`, `'embers'` or `'drift'`: flakes that fall soft and
+`'rain'`, `'ash'`, `'motes'`, `'embers'`, `'drift'` or `'spores'`: flakes that fall soft and
 fat, grit that tears across almost flat and is smeared along its own direction
 of travel, embers that rise, or the vacuum's drift, which is the only one with
 no sway at all and as much chance of going up as down. They all wrap round the
@@ -2468,7 +2619,14 @@ midpoint is where the width probe starts.
 
 | File | What it holds |
 | --- | --- |
-| `js/tracks.js` | every track, as pure data |
+| `tracks/<theme>/<id>.json` | every track, one file each (`tracks/adhoc/` for the rest) |
+| `js/tracks.data.js` | the track files bundled - generated by `tools/build-tracks.js`, never edited |
+| `js/tracks.js` | the theme palettes, and the track list built from the bundle |
+| `js/trackfile.js` | the track file format: reading, checking and writing a file |
+| `js/trackcheck.js` | can a car drive this track - shared by the editor and the validator |
+| `js/editor.js` | the level editor |
+| `tools/build-tracks.js` | checks the track files and writes the bundle (`--check` changes nothing) |
+| `.github/workflows/tracks.yml` | runs that on GitHub whenever a track file is pushed |
 | `js/themes.js` | the themes, and which tracks belong to each |
 | `js/config.js` | every tunable number |
 | `js/track.js` | loads a track: wall grid, racing line, lap rule, start grid, positions |
@@ -2552,7 +2710,8 @@ the game assumes Safari 15 or later - flexbox `gap` needs 14.5 and
 The two tools under `tools/` run headless in Node and need no browser:
 
 ```sh
-npm run check                    # both of the below, on every track
+npm run check                    # the bundle is current, then both of the below
+npm run tracks                   # rebuild js/tracks.data.js from tracks/
 node tools/validate-track.js     # geometry: can a car actually drive the line?
 node tools/simulate.js 5 40      # 40 full races of real physics and real AI
 node tools/simulate.js 5 40 1    # ...on track 1 only
@@ -2603,5 +2762,5 @@ noticing. It then *drives* every corner with the real car physics at the
 configured slide radius, and fails if the arc clips anything or comes out off
 line. Pass a radius to try one out: `node tools/validate-track.js 0.6`. `simulate.js` runs complete races with the real car, AI and lap code
 and fails if any car does not finish; it is how the AI's deadlocks and dithering
-loops were found. Both are worth running after touching `config.js` or
-`tracks.js`.
+loops were found. Both are worth running after touching `config.js` or a
+track file.

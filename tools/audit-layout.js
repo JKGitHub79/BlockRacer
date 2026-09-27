@@ -52,6 +52,19 @@ const SCREENS = [
   { name: 'shop-v',  go: 'Screens.shopTab = "vehicles"; Screens.show("shop")',
     box: '#screen-shop',
     must: ['#shop-tabs button', '#shop-grid .shop-item canvas'] },
+  // The level editor: its library scrolls like the options screen does, but
+  // a track being edited is laid out to the screen and must fit it, with a
+  // map big enough to draw on.
+  { name: 'editor',  go: 'Editor.screen = "library"; Screens.show("editor")', box: '#screen-editor',
+    must: ['#ed-back', '#ed-new', '#ed-import', '.ed-track'] },
+  { name: 'editor-work',
+    go: 'Editor.screen = "library"; Screens.show("editor"); ' +
+        '[...document.querySelectorAll(".ed-track")].find((b) => /QUARRY/.test(b.textContent)).click()',
+    // made for a tablet or a computer: on those it fits; a phone scrolls it
+    fits: (c) => Math.min(c.w, c.visible) > 600,
+    box: '#screen-editor', minBox: { sel: '#ed-canvas', w: 240, h: 150 },
+    must: ['#ed-back', '#ed-canvas', '#ed-tools [data-tool]', '#ed-undo', '#ed-redo',
+           '#ed-tabs button', '#ed-test-drive', '#ed-test-race'] },
   { name: 'pause',   go: 'Game.setCars(8); Screens.race(11, "play"); Game.state = "racing"; Game.pauseRace()',
     must: ['#btn-pause-home', '#btn-pause-restart', '#btn-pause-go'] },
   { name: 'race',    go: 'Game.setCars(8); Screens.race(11, "play")', fits: true,
@@ -144,7 +157,7 @@ const SCREENS = [
     for (const sc of SCREENS) {
       await page.evaluate(sc.go);
       await page.waitForTimeout(60);
-      const r = await page.evaluate(({ must, box, visible, insets }) => {
+      const r = await page.evaluate(({ must, box, visible, insets, minBox }) => {
         // What the user can actually see, not what the window claims.
         const VH = visible;
         const SAFE = { t: insets[0], r: insets[1], b: insets[2], l: insets[3] };
@@ -211,8 +224,15 @@ const SCREENS = [
             }
           });
         });
+        if (minBox) {
+          const m = document.querySelector(minBox.sel);
+          const r = m ? m.getBoundingClientRect() : { width: 0, height: 0 };
+          if (r.width < minBox.w || r.height < minBox.h) {
+            out.cramped = minBox.sel + ' is ' + Math.round(r.width) + 'x' + Math.round(r.height);
+          }
+        }
         return out;
-      }, { must: sc.must, box: sc.box, visible: c.visible, insets: c.insets });
+      }, { must: sc.must, box: sc.box, visible: c.visible, insets: c.insets, minBox: sc.minBox || null });
       checks++;
 
       const bad = [];
@@ -221,13 +241,15 @@ const SCREENS = [
       if (r.tiny.length) bad.push('zero-sized ' + [...new Set(r.tiny)].join(','));
       if (r.offRight.length) bad.push('off the side: ' + [...new Set(r.offRight)].join(','));
       if (r.outPanel.length) bad.push('out of its panel: ' + [...new Set(r.outPanel)].join(','));
-      if (sc.fits && r.vScroll > 1) bad.push('needs ' + r.vScroll + 'px of scroll');
-      if (sc.fits && r.offBottom.length) {
+      const fits = typeof sc.fits === 'function' ? sc.fits(c) : sc.fits;
+      if (fits && r.vScroll > 1) bad.push('needs ' + r.vScroll + 'px of scroll');
+      if (fits && r.offBottom.length) {
         bad.push('under the browser chrome or the notch: ' +
                  [...new Set(r.offBottom)].join(','));
       }
       if (sc.name === 'play' && r.stacked) bad.push('cards stacked instead of side by side');
       if (sc.name === 'race' && r.board.w < 120) bad.push('board only ' + r.board.w + 'x' + r.board.h);
+      if (r.cramped) bad.push('too small to work in: ' + r.cramped);
       if (r.small.length) bad.push('too small to press: ' + [...new Set(r.small)].join(', '));
       if (sc.name === 'race') boards.push({ label: c.label, w: c.w, h: c.h, b: r.board });
       if (bad.length) problems.push(`${c.label} (${c.w}x${c.h}) / ${sc.name}: ${bad.join('; ')}`);

@@ -1,0 +1,51 @@
+{
+  "format": 1,
+  "id": "duneline",
+  "theme": "desert",
+  "name": "DUNELINE",
+  "grade": "EASY",
+  "blurb": "Two long straights across the sand, one change of lane on each.",
+  "cols": 48,
+  "rows": 26,
+  "weather": "dust",
+  "aiPace": 0.95,
+  "aiOffsetScale": 2,
+  "aiMistakeScale": 1,
+  "border": "edge",
+  "walls": [
+    { "x0": 10, "y0": 10, "x1": 37, "y1": 15, "kind": "infield" },
+    { "x0": 12, "y0": 16, "x1": 17, "y1": 18, "kind": "jog" },
+    { "x0": 24, "y0": 22, "x1": 29, "y1": 24, "kind": "jog" },
+    { "x0": 30, "y0": 1, "x1": 35, "y1": 3, "kind": "jog" },
+    { "x0": 17, "y0": 7, "x1": 22, "y1": 9, "kind": "jog" }
+  ],
+  "route": [
+    { "x": 5.5, "y": 22 },
+    { "x": 21, "y": 22 },
+    { "x": 21, "y": 19 },
+    { "x": 42.5, "y": 19 },
+    { "x": 42.5, "y": 7 },
+    { "x": 26.5, "y": 7 },
+    { "x": 26.5, "y": 4 },
+    { "x": 5.5, "y": 4 }
+  ],
+  "startLeg": 0,
+  "checkpoints": [
+    { "x0": 35, "y0": 16, "x1": 36, "y1": 25 },
+    { "x0": 38, "y0": 12, "x1": 47, "y1": 13 },
+    { "x0": 11, "y0": 1, "x1": 12, "y1": 10 },
+    { "x0": 1, "y0": 13, "x1": 10, "y1": 14 }
+  ],
+  "finish": { "x0": 9.6, "y0": 16, "x1": 10.4, "y1": 25, "dir": { "x": 1, "y": 0 } },
+  "startGrid": [
+    { "x": 8, "y": 20.8, "wp": 1 },
+    { "x": 8, "y": 23.2, "wp": 1 },
+    { "x": 6.1, "y": 20.8, "wp": 1 },
+    { "x": 6.1, "y": 23.2, "wp": 1 }
+  ],
+  "notes": [
+    "Desert 1: DUNELINE",
+    "Long and low: a 48 x 26 ring with two twenty-cell straights and one",
+    "change of lane on each. Eight corners a lap."
+  ]
+}

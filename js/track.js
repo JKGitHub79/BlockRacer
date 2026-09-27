@@ -139,8 +139,10 @@
     return arc;
   }
 
+  /* An index into TRACKS, or a track object that is not in it - the level
+   * editor's draft, loaded to be checked or driven. */
   T.load = function (index) {
-    var data = global.TRACKS[index];
+    var data = typeof index === 'object' ? index : global.TRACKS[index];
     if (!data) throw new Error('no track ' + index);
 
     cols = data.cols;
@@ -179,7 +181,7 @@
     START_LEG = data.startLeg;
     FINISH_ARC = findFinishArc();
 
-    T.index = index;
+    T.index = typeof index === 'object' ? -1 : index;
     T.data = data;
     T.theme = data.theme || null;
     T.weather = data.weather || null;

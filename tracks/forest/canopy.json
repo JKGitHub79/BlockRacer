@@ -1,0 +1,58 @@
+{
+  "format": 1,
+  "id": "canopy",
+  "theme": "forest",
+  "name": "CANOPY",
+  "grade": "BEGINNER ++",
+  "blurb": "Three changes of lane on a tight map. The corners come quickly.",
+  "cols": 40,
+  "rows": 28,
+  "weather": "leaves",
+  "aiPace": 0.95,
+  "aiOffsetScale": 2,
+  "aiMistakeScale": 1,
+  "border": "edge",
+  "walls": [
+    { "x0": 10, "y0": 10, "x1": 29, "y1": 17, "kind": "infield" },
+    { "x0": 11, "y0": 18, "x1": 16, "y1": 20, "kind": "jog" },
+    { "x0": 25, "y0": 24, "x1": 30, "y1": 26, "kind": "jog" },
+    { "x0": 23, "y0": 1, "x1": 28, "y1": 3, "kind": "jog" },
+    { "x0": 10, "y0": 7, "x1": 15, "y1": 9, "kind": "jog" },
+    { "x0": 1, "y0": 2, "x1": 3, "y1": 5, "kind": "jog" },
+    { "x0": 7, "y0": 13, "x1": 9, "y1": 17, "kind": "jog" }
+  ],
+  "route": [
+    { "x": 4, "y": 24 },
+    { "x": 21, "y": 24 },
+    { "x": 21, "y": 21 },
+    { "x": 36, "y": 21 },
+    { "x": 36, "y": 7 },
+    { "x": 19.5, "y": 7 },
+    { "x": 19.5, "y": 4 },
+    { "x": 7, "y": 4 },
+    { "x": 7, "y": 9.5 },
+    { "x": 4, "y": 9.5 }
+  ],
+  "startLeg": 0,
+  "checkpoints": [
+    { "x0": 28, "y0": 18, "x1": 29, "y1": 27 },
+    { "x0": 30, "y0": 16, "x1": 39, "y1": 17 },
+    { "x0": 11, "y0": 1, "x1": 12, "y1": 10 },
+    { "x0": 1, "y0": 20, "x1": 11, "y1": 21 }
+  ],
+  "finish": { "x0": 8.6, "y0": 18, "x1": 9.4, "y1": 27, "dir": { "x": 1, "y": 0 } },
+  "startGrid": [
+    { "x": 7.4, "y": 22.8, "wp": 1 },
+    { "x": 7.4, "y": 25.2, "wp": 1 },
+    { "x": 5.5, "y": 22.8, "wp": 1 },
+    { "x": 5.5, "y": 25.2, "wp": 1 }
+  ],
+  "notes": [
+    "Forest 3: CANOPY",
+    "Back to the compact map, so the straights are shorter, and stands on",
+    "three sides - the bottom, the top and the left; the right-hand climb is",
+    "clear, as a breather. Ten corners a lap, several running into the next.",
+    "Still nine cells wide and still long runoffs - the forest never",
+    "punishes, it only asks more often."
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "format": 1,
+  "id": "hollow",
+  "theme": "forest",
+  "name": "HOLLOW",
+  "grade": "BEGINNER +",
+  "blurb": "A long main straight, then two changes of lane on the way back.",
+  "cols": 46,
+  "rows": 28,
+  "weather": "leaves",
+  "aiPace": 0.95,
+  "aiOffsetScale": 2,
+  "aiMistakeScale": 1,
+  "border": "edge",
+  "walls": [
+    { "x0": 10, "y0": 10, "x1": 35, "y1": 17, "kind": "infield" },
+    { "x0": 12, "y0": 18, "x1": 17, "y1": 20, "kind": "jog" },
+    { "x0": 26, "y0": 24, "x1": 31, "y1": 26, "kind": "jog" },
+    { "x0": 36, "y0": 14, "x1": 38, "y1": 17, "kind": "jog" },
+    { "x0": 42, "y0": 3, "x1": 44, "y1": 6, "kind": "jog" }
+  ],
+  "route": [
+    { "x": 5.5, "y": 24 },
+    { "x": 22, "y": 24 },
+    { "x": 22, "y": 21 },
+    { "x": 42, "y": 21 },
+    { "x": 42, "y": 10.5 },
+    { "x": 39, "y": 10.5 },
+    { "x": 39, "y": 7 },
+    { "x": 5.5, "y": 7 }
+  ],
+  "startLeg": 0,
+  "checkpoints": [
+    { "x0": 34, "y0": 18, "x1": 35, "y1": 27 },
+    { "x0": 36, "y0": 15, "x1": 45, "y1": 16 },
+    { "x0": 12, "y0": 1, "x1": 13, "y1": 10 },
+    { "x0": 1, "y0": 16, "x1": 10, "y1": 17 }
+  ],
+  "finish": { "x0": 9.6, "y0": 18, "x1": 10.4, "y1": 27, "dir": { "x": 1, "y": 0 } },
+  "startGrid": [
+    { "x": 8, "y": 22.8, "wp": 1 },
+    { "x": 8, "y": 25.2, "wp": 1 },
+    { "x": 6.1, "y": 22.8, "wp": 1 },
+    { "x": 6.1, "y": 25.2, "wp": 1 }
+  ],
+  "notes": [
+    "Forest 2: HOLLOW",
+    "A longer map, so the main straight runs twenty-one cells, and two lane",
+    "changes rather than one: the S on the bottom and another climbing the",
+    "right-hand side. The top is a clear run home - it had a third change",
+    "once, and was a step too far for the second track. Eight corners a lap."
+  ]
+}

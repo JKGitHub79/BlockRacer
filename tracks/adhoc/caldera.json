@@ -1,0 +1,83 @@
+{
+  "format": 1,
+  "id": "caldera",
+  "theme": "adhoc",
+  "name": "CALDERA",
+  "grade": "MODERATE",
+  "blurb": "Ring road round a lava lake. Two flows to thread.",
+  "order": 6,
+  "cols": 40,
+  "rows": 28,
+  "colors": {
+    "bg": "#0a0705",
+    "road": "#17120f",
+    "roadLine": "#241b16",
+    "wall": "#2c1410",
+    "wallTop": "#8a3a18",
+    "outer": "#210f0b",
+    "outerTop": "#632611",
+    "racingLine": "rgba(255,196,130,0.22)",
+    "check": "rgba(255,170,80,0.07)",
+    "checkNext": "rgba(255,170,80,0.26)",
+    "startLine": "#ffeada"
+  },
+  "aiPace": 0.97,
+  "aiOffsetScale": 1.5,
+  "aiMistakeScale": 0.5,
+  "border": "lava",
+  "walls": [
+    { "x0": 7, "y0": 7, "x1": 32, "y1": 20, "kind": "lava" },
+    { "x0": 20, "y0": 1, "x1": 26, "y1": 3, "kind": "lava" },
+    { "x0": 9, "y0": 4, "x1": 15, "y1": 6, "kind": "lava" },
+    { "x0": 13, "y0": 21, "x1": 19, "y1": 23, "kind": "lava" },
+    { "x0": 23, "y0": 24, "x1": 29, "y1": 26, "kind": "lava" }
+  ],
+  "route": [
+    { "x": 36, "y": 5.5 },
+    { "x": 18.5, "y": 5.5 },
+    { "x": 18.5, "y": 2.5 },
+    { "x": 4, "y": 2.5 },
+    { "x": 4, "y": 25.5 },
+    { "x": 21.5, "y": 25.5 },
+    { "x": 21.5, "y": 22.5 },
+    { "x": 36, "y": 22.5 }
+  ],
+  "startLeg": 0,
+  "checkpoints": [
+    { "x0": 7.5, "y0": 1, "x1": 8.5, "y1": 7 },
+    { "x0": 1, "y0": 13, "x1": 7, "y1": 14 },
+    { "x0": 31, "y0": 21, "x1": 32, "y1": 27 },
+    { "x0": 33, "y0": 12, "x1": 39, "y1": 13 }
+  ],
+  "finish": { "x0": 30.6, "y0": 1, "x1": 31.4, "y1": 7, "dir": { "x": -1, "y": 0 } },
+  "startGrid": [
+    { "x": 33.1, "y": 4.8, "wp": 1 },
+    { "x": 33.1, "y": 6.2, "wp": 1 },
+    { "x": 35, "y": 4.8, "wp": 1 },
+    { "x": 35, "y": 6.2, "wp": 1 }
+  ],
+  "notes": [
+    "(Mirrored left to right when this track became a file: the drawing below",
+    "shows it the other way round from how it is raced.)",
+    "",
+    "6. CALDERA - moderate",
+    "",
+    "A ring road around a lava lake, six cells wide like Crossover, with one",
+    "lava flow across each of the long straights. Eight turns a lap against",
+    "Crossover's six, and the flows leave a three-cell gap rather than",
+    "Staircase's two - half again the room, and two of them instead of eight.",
+    "",
+    "         1   7          13      20   24    31   33  39",
+    "     0 +---+------------+=======+----+=====+-----+---+",
+    "     1 |   |            | flow  |    |     |     |   |  rows 1-6   top road",
+    "     4 |   |            +-------+    +=====+     |   |  (flow blocks a half)",
+    "     7 |   +-------------------------------------+   |",
+    "       |   |           lava lake                 |   |  rows 7-20 infield",
+    "    21 |   +-------------------------------------+   |",
+    "    24 |   |    +=====+       +=======+          |   |  rows 21-26 bottom",
+    "    27 +---+----+-----+-------+-------+----------+---+",
+    "",
+    "Every solid on this track is molten, so a mistake is always the same",
+    "mistake. cols 1-6 and 33-38 are the side roads."
+  ]
+}

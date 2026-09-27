@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "id": "saltflats",
+  "theme": "desert",
+  "name": "SALT FLATS",
+  "grade": "EASY +",
+  "blurb": "Tall and square. Three changes of lane, and a clear run along the top.",
+  "cols": 40,
+  "rows": 32,
+  "weather": "dust",
+  "aiPace": 0.95,
+  "aiOffsetScale": 2,
+  "aiMistakeScale": 1,
+  "border": "edge",
+  "walls": [
+    { "x0": 10, "y0": 10, "x1": 29, "y1": 21, "kind": "infield" },
+    { "x0": 12, "y0": 22, "x1": 17, "y1": 24, "kind": "jog" },
+    { "x0": 24, "y0": 28, "x1": 29, "y1": 30, "kind": "jog" },
+    { "x0": 30, "y0": 17, "x1": 32, "y1": 21, "kind": "jog" },
+    { "x0": 36, "y0": 6, "x1": 38, "y1": 10, "kind": "jog" },
+    { "x0": 1, "y0": 8, "x1": 3, "y1": 12, "kind": "jog" },
+    { "x0": 7, "y0": 19, "x1": 9, "y1": 23, "kind": "jog" }
+  ],
+  "route": [
+    { "x": 4, "y": 28 },
+    { "x": 21, "y": 28 },
+    { "x": 21, "y": 25 },
+    { "x": 36, "y": 25 },
+    { "x": 36, "y": 14 },
+    { "x": 33, "y": 14 },
+    { "x": 33, "y": 7 },
+    { "x": 7, "y": 7 },
+    { "x": 7, "y": 16 },
+    { "x": 4, "y": 16 }
+  ],
+  "startLeg": 0,
+  "checkpoints": [
+    { "x0": 32, "y0": 22, "x1": 33, "y1": 31 },
+    { "x0": 30, "y0": 10, "x1": 36, "y1": 11 },
+    { "x0": 12, "y0": 1, "x1": 13, "y1": 10 },
+    { "x0": 1, "y0": 19, "x1": 7, "y1": 20 }
+  ],
+  "finish": { "x0": 8.6, "y0": 22, "x1": 9.4, "y1": 31, "dir": { "x": 1, "y": 0 } },
+  "startGrid": [
+    { "x": 7.4, "y": 26.8, "wp": 1 },
+    { "x": 7.4, "y": 29.2, "wp": 1 },
+    { "x": 5.5, "y": 26.8, "wp": 1 },
+    { "x": 5.5, "y": 29.2, "wp": 1 }
+  ],
+  "notes": [
+    "Desert 2: SALT FLATS",
+    "Tall and square: three changes of lane - the bottom, the right-hand",
+    "climb and the left - and a clear run along the top. Ten corners a lap."
+  ]
+}

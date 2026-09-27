@@ -1,0 +1,81 @@
+# Uploading a track file is enough to change the game.
+#
+# The game loads its tracks from one generated file, js/tracks.data.js,
+# because a web page cannot list a folder. Whenever anything under tracks/
+# is pushed - an upload on github.com included - this checks every track
+# file, moves any that landed in the wrong place to tracks/<theme>/<id>.json
+# (replacing the one there), rebuilds the bundle and commits it. A file the
+# game could not load fails the run instead, and the game is left exactly as
+# it was: the error is on the run's page, against the file.
+#
+# tools/build-tracks.js does all of it; this only runs it and commits.
+name: Build tracks
+
+on:
+  push:
+    branches: [claude/block-racer-game-619ke9]
+    paths:
+      - 'tracks/**'
+      - 'tools/build-tracks.js'
+      - 'js/trackfile.js'
+      - 'js/tracks.js'
+      - 'js/themes.js'
+  workflow_dispatch:
+
+permissions:
+  contents: write      # to commit the rebuilt bundle
+  pages: write         # to ask Pages to publish it
+
+# One at a time: two uploads close together build one after the other.
+concurrency:
+  group: build-tracks
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Rebuild and commit
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Built on the branch as it is NOW, and tried again if something
+          # else lands first, so a push never has to be forced.
+          for attempt in 1 2 3; do
+            git fetch origin "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+            node tools/build-tracks.js
+            git add -A tracks js/tracks.data.js index.html
+            if git diff --cached --quiet; then
+              echo "The bundle already matches tracks/ - nothing to commit."
+              exit 0
+            fi
+            git commit -m "Rebuild the track bundle from tracks/"
+            if git push origin "HEAD:$BRANCH"; then
+              echo "PUSHED=1" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            sleep $((attempt * 5))
+          done
+          echo "Could not push the rebuilt bundle." >&2
+          exit 1
+
+      # A commit made by this workflow's own token may not start a Pages
+      # build by itself, so ask for one. If Pages is published some other
+      # way this fails harmlessly.
+      - name: Ask GitHub Pages to publish
+        if: env.PUSHED == '1'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds"

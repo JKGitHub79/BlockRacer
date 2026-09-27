@@ -246,6 +246,16 @@
     leaderboardUrl: 'https://leaderboard-api.jamiekhoshaba.workers.dev',
     leaderboardSpeed: 3,           // SWEAT
 
+    /* ---- Level editor ---------------------------------------------------
+     * Where a track file goes to become part of the game (js/editor.js).
+     * The editor only ever writes files; uploading one to tracks/ on this
+     * branch is what changes the game - .github/workflows/tracks.yml
+     * rebuilds js/tracks.data.js from it, and GitHub Pages publishes that. */
+    editor: {
+      repo: 'JKGitHub79/BlockRacer',
+      branch: 'claude/block-racer-game-619ke9'
+    },
+
     /* ---- Pro controls ---------------------------------------------------
      * The fourth control style (Options, CONTROL STYLE: PRO CONTROLS). A tap
      * is an Auto Turn tap. HOLD, and the car swings round to face the way

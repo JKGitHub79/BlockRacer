@@ -1,0 +1,64 @@
+{
+  "format": 1,
+  "id": "glacier",
+  "theme": "snow",
+  "name": "GLACIER",
+  "grade": "MODERATE +",
+  "blurb": "A figure of eight. You cross your own line twice a lap.",
+  "cols": 48,
+  "rows": 39,
+  "weather": "snow",
+  "aiPace": 0.95,
+  "aiOffsetScale": 2,
+  "aiMistakeScale": 1,
+  "border": "edge",
+  "walls": [
+    { "x0": 1, "y0": 1, "x1": 19, "y1": 15, "kind": "infield" },
+    { "x0": 28, "y0": 24, "x1": 46, "y1": 37, "kind": "infield" },
+    { "x0": 9, "y0": 24, "x1": 19, "y1": 29, "kind": "infield" },
+    { "x0": 28, "y0": 9, "x1": 38, "y1": 15, "kind": "infield" },
+    { "x0": 13, "y0": 30, "x1": 18, "y1": 32, "kind": "jog" },
+    { "x0": 25, "y0": 35, "x1": 27, "y1": 37, "kind": "jog" },
+    { "x0": 26, "y0": 6, "x1": 31, "y1": 8, "kind": "jog" },
+    { "x0": 38, "y0": 1, "x1": 42, "y1": 3, "kind": "jog" },
+    { "x0": 30, "y0": 16, "x1": 35, "y1": 18, "kind": "jog" },
+    { "x0": 8, "y0": 21, "x1": 13, "y1": 23, "kind": "jog" }
+  ],
+  "route": [
+    { "x": 5, "y": 35.5 },
+    { "x": 22, "y": 35.5 },
+    { "x": 22, "y": 32.5 },
+    { "x": 24, "y": 32.5 },
+    { "x": 24, "y": 3.5 },
+    { "x": 35, "y": 3.5 },
+    { "x": 35, "y": 6.5 },
+    { "x": 43, "y": 6.5 },
+    { "x": 43, "y": 21.5 },
+    { "x": 18, "y": 21.5 },
+    { "x": 18, "y": 18.5 },
+    { "x": 5, "y": 18.5 }
+  ],
+  "startLeg": 0,
+  "checkpoints": [
+    { "x0": 20, "y0": 27, "x1": 28, "y1": 28 },
+    { "x0": 35, "y0": 1, "x1": 36, "y1": 9 },
+    { "x0": 28, "y0": 16, "x1": 29, "y1": 24 },
+    { "x0": 1, "y0": 26, "x1": 9, "y1": 27 }
+  ],
+  "finish": { "x0": 10.1, "y0": 30, "x1": 10.9, "y1": 38, "dir": { "x": 1, "y": 0 } },
+  "startGrid": [
+    { "x": 8.9, "y": 34.3, "wp": 1 },
+    { "x": 8.9, "y": 36.7, "wp": 1 },
+    { "x": 7, "y": 34.3, "wp": 1 },
+    { "x": 7, "y": 36.7, "wp": 1 }
+  ],
+  "notes": [
+    "Snow 2: GLACIER",
+    "The racing line crosses itself. Two lobes meet at an eight-by-eight",
+    "junction in the middle of the map, and you go through it twice a lap -",
+    "once heading north out of the main straight, once heading west along the",
+    "middle. Nothing else in the themed set has a crossing, and it changes",
+    "the racing rather than the geometry: the field arrives at that square",
+    "from two directions at once."
+  ]
+}

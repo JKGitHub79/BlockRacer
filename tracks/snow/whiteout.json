@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "id": "whiteout",
+  "theme": "snow",
+  "name": "WHITEOUT",
+  "grade": "MODERATE ++",
+  "blurb": "An L, not a rectangle. Longest straight in the game, with a double-S.",
+  "cols": 48,
+  "rows": 36,
+  "weather": "snow",
+  "aiPace": 0.95,
+  "aiOffsetScale": 2,
+  "aiMistakeScale": 1,
+  "border": "edge",
+  "walls": [
+    { "x0": 29, "y0": 1, "x1": 46, "y1": 14, "kind": "infield" },
+    { "x0": 9, "y0": 9, "x1": 20, "y1": 26, "kind": "infield" },
+    { "x0": 21, "y0": 23, "x1": 38, "y1": 26, "kind": "infield" },
+    { "x0": 6, "y0": 20, "x1": 8, "y1": 26, "kind": "infield" },
+    { "x0": 10, "y0": 27, "x1": 15, "y1": 29, "kind": "jog" },
+    { "x0": 22, "y0": 32, "x1": 27, "y1": 34, "kind": "jog" },
+    { "x0": 34, "y0": 27, "x1": 39, "y1": 29, "kind": "jog" },
+    { "x0": 15, "y0": 6, "x1": 20, "y1": 8, "kind": "jog" },
+    { "x0": 3, "y0": 1, "x1": 8, "y1": 3, "kind": "jog" }
+  ],
+  "route": [
+    { "x": 3.5, "y": 32.5 },
+    { "x": 19, "y": 32.5 },
+    { "x": 19, "y": 29.5 },
+    { "x": 31, "y": 29.5 },
+    { "x": 31, "y": 32.5 },
+    { "x": 42.5, "y": 32.5 },
+    { "x": 42.5, "y": 20.5 },
+    { "x": 24.5, "y": 20.5 },
+    { "x": 24.5, "y": 3.5 },
+    { "x": 12, "y": 3.5 },
+    { "x": 12, "y": 6.5 },
+    { "x": 6.5, "y": 6.5 },
+    { "x": 6.5, "y": 17 },
+    { "x": 3.5, "y": 17 }
+  ],
+  "startLeg": 0,
+  "checkpoints": [
+    { "x0": 32, "y0": 27, "x1": 33, "y1": 35 },
+    { "x0": 29, "y0": 15, "x1": 30, "y1": 23 },
+    { "x0": 12, "y0": 1, "x1": 13, "y1": 9 },
+    { "x0": 1, "y0": 15, "x1": 9, "y1": 16 }
+  ],
+  "finish": { "x0": 7.6, "y0": 27, "x1": 8.4, "y1": 35, "dir": { "x": 1, "y": 0 } },
+  "startGrid": [
+    { "x": 6.4, "y": 31.3, "wp": 1 },
+    { "x": 6.4, "y": 33.7, "wp": 1 },
+    { "x": 4.5, "y": 31.3, "wp": 1 },
+    { "x": 4.5, "y": 33.7, "wp": 1 }
+  ],
+  "notes": [
+    "Snow 3: WHITEOUT",
+    "An L-shaped circuit: the top right of the map is solid ground, so the",
+    "lap runs round an L rather than a rectangle and the elbow is a wide",
+    "open sweep rather than a corner - open all the way across now, with",
+    "nothing to change lane round. A thirty-seven cell main straight with a",
+    "double-S in it, a change along the top, and the island's foot to get",
+    "past coming down the left. Four changes and fourteen corners a lap."
+  ]
+}

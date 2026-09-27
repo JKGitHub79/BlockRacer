@@ -269,7 +269,11 @@
     countdown: 0,
     laps: C.laps,
     trackIndex: C.track,
-    results: []
+    results: [],
+    /* A test drive from the level editor: a track that is not in the game,
+     * raced or trialled like any other, that writes nothing down - no medal,
+     * no lap record, no ghost, nothing sent to the leaderboard. */
+    sandbox: false
   };
 
   var el = {};
@@ -312,7 +316,7 @@
     // trial ignores the number entirely and takes the front slot.
     var trial = this.mode === 'trial';
     var tutorial = this.mode === 'tutorial';   // one car too, and no records
-    this.lapRecord = trial ? global.Progress.lapRecord(T.data.id, C.speedLevel) : 0;
+    this.lapRecord = trial && !this.sandbox ? global.Progress.lapRecord(T.data.id, C.speedLevel) : 0;
     this.newRecord = false;
     var grid = T.gridFor(trial || tutorial ? 1 : C.cars);
     var field = fieldFor(trial || tutorial ? 1 : grid.length);
@@ -366,7 +370,7 @@
     this.delta = null;
     this.pbFlash = null;
     this.beaten = 0;
-    if (trial && global.Ghost) {
+    if (trial && global.Ghost && !this.sandbox) {
       this.ghost = global.Ghost.load(T.data, C.speedLevel, this.lapRecord);
       this.ghostRec = new global.Ghost.Recorder();
       this.ghostRec.start(this.player);
@@ -474,7 +478,7 @@
       // A trial banks a record the moment it is set, rather than at the end:
       // quitting a trial half way through should not throw away the fastest
       // lap you have ever driven on the track.
-      if (game.mode === 'trial' && car.isPlayer) {
+      if (game.mode === 'trial' && car.isPlayer && !game.sandbox) {
         var was = game.lapRecord;
         if (global.Progress.recordLap(T.data.id, C.speedLevel, car.lastLap)) {
           game.lapRecord = car.lastLap;
@@ -824,7 +828,7 @@
     // A tutorial has no result: nothing is recorded, nothing is won.
     if (this.mode === 'tutorial') return global.Tutorial.complete();
     if (this.mode === 'trial') return this.showTrialResults();
-    this.setResultsPrimary(false);
+    this.setResultsPrimary(this.sandbox);   // a test race has no next track
 
     el.resultsHead.innerHTML =
       '<tr><th>#</th><th>Driver</th><th>Time</th><th>Best lap</th></tr>';
@@ -839,12 +843,12 @@
     //
     // What the shop had unlocked is read either side of it: the difference is
     // what THIS race unlocked, and nothing else can produce one.
-    var Cos = global.Cosmetics;
+    var Cos = this.sandbox ? null : global.Cosmetics;
     var before = Cos ? Cos.snapshot() : null;
     var theme = global.THEMES[global.Screens.themeOfTrack(T.data.id)];
     var ids = theme ? theme.tracks.map(function (e) { return e.id; }) : null;
     var starWas = ids ? global.Progress.star(ids) : 0;
-    var won = global.Progress.record(T.data.id, placeOfPlayer);
+    var won = this.sandbox ? false : global.Progress.record(T.data.id, placeOfPlayer);
     var unlocked = before ? Cos.unlockedSince(before) : [];
     var starIs = ids ? global.Progress.star(ids) : 0;
     // One reward sound after the fanfare, the biggest thing the race earned:
@@ -860,7 +864,7 @@
     el.resultsNote.textContent = won
       ? (placeOfPlayer === 1 ? 'GOLD' : placeOfPlayer === 2 ? 'SILVER' : 'BRONZE') +
         ' \u2013 a new best on ' + T.name
-      : '';
+      : this.sandbox ? 'TEST RACE \u2013 nothing is recorded' : '';
 
     var rows = '';
     all.forEach(function (car, i) {
@@ -906,6 +910,10 @@
         : 'No lap completed';
     }
 
+    if (this.sandbox) el.resultsNote.textContent = p.bestLap
+      ? 'BEST ' + fmt(p.bestLap) + '  \u00b7  TEST DRIVE \u2013 nothing is recorded'
+      : 'TEST DRIVE \u2013 nothing is recorded';
+
     el.resultsHead.innerHTML = '<tr><th>Lap</th><th>Time</th><th></th></tr>';
 
     // Only the FIRST lap at the best time is marked, or two identical laps
@@ -931,7 +939,8 @@
 
     // The online board, on top of the record above: the run's best lap, sent
     // (or a name asked for first) and never waited on.
-    var LB = global.Leaderboard;
+    var LB = this.sandbox ? null : global.Leaderboard;
+    if (el.lbStatus) el.lbStatus.textContent = '';
     if (LB) {
       el.lbStatus.textContent = p.bestLap && !LB.counts(C.speedLevel)
         ? 'The leaderboard is ' + C.speedLevels[C.leaderboardSpeed].name + ' laps only' : '';
@@ -951,7 +960,7 @@
   };
 
   Game.showNextButton = function () {
-    var next = global.Screens.nextTrack();
+    var next = this.sandbox ? null : global.Screens.nextTrack();
     el.btnNext.style.display = next === null ? 'none' : '';
     if (next !== null) el.btnNext.textContent = global.TRACKS[next].name + ' \u2192';
   };
@@ -1204,6 +1213,44 @@
     this.state = 'menu';
   };
 
+  /* The level editor's TEST DRIVE (solo) and TEST RACE (with the field).
+   * The draft goes on the end of TRACKS for as long as it is being driven -
+   * everything that draws or races a track finds it by index - and comes off
+   * again, with the mode, track and laps it displaced put back, whichever way
+   * the drive is left: Screens.show calls endTest on the way to any screen. */
+  Game.startTest = function (track, race) {
+    if (!this.sandbox) {
+      this.before = { mode: this.mode, track: this.trackIndex, laps: this.laps };
+    }
+    this.endTestTrack();
+    this.sandbox = true;
+    document.body.classList.add('mode-sandbox');
+    global.TRACKS.push(track);
+    this.setMode(race ? 'race' : 'trial');
+    this.setTrack(global.TRACKS.length - 1);
+    global.Screens.from = 'editor';
+    this.startRace();
+  };
+
+  Game.endTestTrack = function () {
+    for (var i = global.TRACKS.length - 1; i >= 0; i--) {
+      if (global.Editor && global.TRACKS[i].id === global.Editor.TEST_ID) global.TRACKS.splice(i, 1);
+    }
+  };
+
+  Game.endTest = function () {
+    if (!this.sandbox) return;
+    var b = this.before || { mode: 'race', track: C.track, laps: C.laps };
+    this.before = null;
+    this.sandbox = false;
+    document.body.classList.remove('mode-sandbox');
+    this.endTestTrack();
+    this.setLaps(b.laps);
+    this.setMode(b.mode);
+    this.setTrack(Math.min(b.track, global.TRACKS.length - 1));
+    this.state = 'menu';
+  };
+
   Game.pauseRace = function () {
     if (this.state !== 'racing') return;
     this.state = 'paused';
@@ -1286,6 +1333,7 @@
     this.setMode('race');
     this.setTrack(C.track);   // also sets the field, which depends on the track
     if (global.Tutorial) global.Tutorial.init();
+    if (global.Editor) global.Editor.init();
     if (C.deepLink) {
       global.Screens.from = global.Screens.homeFor(C.track);
       this.startRace();
@@ -1424,7 +1472,7 @@
       el.pause.classList.remove('show');
       Game.reset();
       Game.state = 'menu';
-      global.Screens.show('main');
+      global.Screens.show(Game.sandbox ? 'editor' : 'main');
     });
 
     var acc = 0, last = performance.now(), clock = 0;

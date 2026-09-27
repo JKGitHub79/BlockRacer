@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "id": "canyonrun",
+  "theme": "desert",
+  "name": "CANYON RUN",
+  "grade": "EASY ++",
+  "blurb": "A double-S down the main straight, then two more changes of lane.",
+  "cols": 46,
+  "rows": 30,
+  "weather": "dust",
+  "aiPace": 0.95,
+  "aiOffsetScale": 2,
+  "aiMistakeScale": 1,
+  "border": "edge",
+  "walls": [
+    { "x0": 10, "y0": 10, "x1": 35, "y1": 19, "kind": "infield" },
+    { "x0": 10, "y0": 20, "x1": 15, "y1": 22, "kind": "jog" },
+    { "x0": 22, "y0": 26, "x1": 27, "y1": 28, "kind": "jog" },
+    { "x0": 34, "y0": 20, "x1": 39, "y1": 22, "kind": "jog" },
+    { "x0": 27, "y0": 1, "x1": 32, "y1": 3, "kind": "jog" },
+    { "x0": 15, "y0": 7, "x1": 20, "y1": 9, "kind": "jog" },
+    { "x0": 1, "y0": 7, "x1": 3, "y1": 11, "kind": "jog" },
+    { "x0": 7, "y0": 18, "x1": 9, "y1": 20, "kind": "jog" }
+  ],
+  "route": [
+    { "x": 4, "y": 26 },
+    { "x": 19, "y": 26 },
+    { "x": 19, "y": 23 },
+    { "x": 31, "y": 23 },
+    { "x": 31, "y": 26 },
+    { "x": 42, "y": 26 },
+    { "x": 42, "y": 7 },
+    { "x": 24, "y": 7 },
+    { "x": 24, "y": 4 },
+    { "x": 7, "y": 4 },
+    { "x": 7, "y": 15 },
+    { "x": 4, "y": 15 }
+  ],
+  "startLeg": 0,
+  "checkpoints": [
+    { "x0": 32, "y0": 20, "x1": 33, "y1": 29 },
+    { "x0": 36, "y0": 10, "x1": 45, "y1": 11 },
+    { "x0": 11, "y0": 1, "x1": 12, "y1": 10 },
+    { "x0": 1, "y0": 17, "x1": 10, "y1": 18 }
+  ],
+  "finish": { "x0": 7.6, "y0": 20, "x1": 8.4, "y1": 29, "dir": { "x": 1, "y": 0 } },
+  "startGrid": [
+    { "x": 6.4, "y": 24.8, "wp": 1 },
+    { "x": 6.4, "y": 27.2, "wp": 1 },
+    { "x": 4.5, "y": 24.8, "wp": 1 },
+    { "x": 4.5, "y": 27.2, "wp": 1 }
+  ],
+  "notes": [
+    "Desert 3: CANYON RUN",
+    "The big one. A double-S on the main straight - out, back, out again",
+    "before the first corner - then a clear climb up the right and a change",
+    "along the top and another down the left. Four changes and twelve",
+    "corners a lap."
+  ]
+}

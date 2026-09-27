@@ -1024,7 +1024,8 @@ body.in-race #backdrop { display: none; }
   .screen-foot { margin-top: 10px; }
   .screen-title { margin-bottom: 12px; }
   .opt { padding: 10px; }
-  .back { top: 8px; left: 8px; padding: 6px 12px; }
+  /* still clear of a notch: a phone on its side has one on the left */
+  .back { top: calc(8px + var(--sa-t)); left: calc(8px + var(--sa-l)); padding: 6px 12px; }
 }
 
 /* ======================================================================
@@ -2323,3 +2324,290 @@ body.mode-trial #screen-play:not(.progress-page) .lb-corner { display: block; }
 .pro-sw { display: inline-block; width: 14px; height: 8px; border-radius: 4px; flex: 0 0 auto; }
 .pro-sw-long { width: 24px; }
 .pro-summary { margin: 10px 0 8px; font-size: 10px; line-height: 1.6; }
+
+/* ======================================================================
+ * LEVEL EDITOR (js/editor.js)
+ *
+ * Two views on one screen. The library is an ordinary scrolling menu. A
+ * track being edited takes the whole screen instead: the map fills what is
+ * left after the tools, with the panel beside it on a wide screen and under
+ * it on a tall one - an iPad either way up, and a desktop window.
+ * ==================================================================== */
+.ed-inner { max-width: 1100px; }
+.ed-lead { max-width: 640px; margin: -8px auto 16px; font-size: 12px; line-height: 1.6; color: var(--dim); }
+.ed-lead b { color: var(--text); font-weight: normal; }
+.ed-lib-actions { display: flex; gap: 10px; max-width: 520px; margin: 0 auto 14px; }
+.ed-lib-actions button { flex: 1; }
+.ed-new {
+  display: grid;
+  gap: 10px;
+  max-width: 520px;
+  margin: 0 auto 18px;
+  padding: 14px;
+  text-align: left;
+  background: rgba(14, 21, 36, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.ed-new[hidden] { display: none; }
+.ed-new .hint { margin: 0; }
+.editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--dim);
+  text-align: left;
+}
+.editor label b { color: var(--accent); font-weight: normal; }
+.editor input[type=text], .editor input[type=number], .editor select {
+  width: 100%;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 16px;               /* 16px or iOS zooms the page on focus */
+  letter-spacing: 1px;
+  color: var(--text);
+  background: #0f1522;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.editor input:focus, .editor select:focus { outline: none; border-color: var(--accent); }
+.editor input[type=range] { width: 100%; }
+
+.ed-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+  text-align: left;
+}
+.ed-group {
+  padding: 12px;
+  background: rgba(14, 21, 36, 0.82);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.ed-group h3 { margin: 0 0 8px; font-size: 12px; font-weight: normal; letter-spacing: 3px; }
+.ed-group h3 small { margin-left: 6px; font-size: 10px; letter-spacing: 1px; color: var(--dim); }
+.ed-list { display: grid; gap: 6px; }
+.ed-track {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px 8px;
+  padding: 9px 10px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: #1b2438;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+@media (hover: hover) { .ed-track:hover { border-color: var(--accent); } }
+.ed-track b { font-size: 12px; letter-spacing: 2px; font-weight: normal; }
+.ed-track span { grid-column: 1; font-size: 10px; letter-spacing: 1px; color: var(--dim); }
+.ed-track em {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 3px 6px;
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 1px;
+  color: #06121a;
+  background: #ffd84a;
+  border-radius: 4px;
+}
+.ed-track.new em { background: var(--accent); }
+.ed-track.new:not(.drafted) { opacity: 0.6; }
+.ed-track.new:not(.drafted) em { background: var(--line); color: var(--text); }
+
+/* ---- one track: the whole screen ---- */
+.editor.working { align-items: stretch; }
+.editor.working .screen-inner {
+  max-width: none;
+  margin: 0;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.ed-work { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+.ed-work[hidden], .ed-library[hidden] { display: none; }
+.ed-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 104px;           /* clear of BACK */
+  min-height: 38px;
+}
+.ed-title { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.ed-title b { font-size: 16px; letter-spacing: 3px; font-weight: normal; }
+.ed-title code { font-size: 11px; color: var(--dim); }
+.ed-state { font-size: 10px; letter-spacing: 1px; color: var(--dim); }
+.ed-state.changed { color: #ffd84a; }
+.ed-drive { display: flex; gap: 6px; }
+.ed-drive button { padding: 9px 12px; font-size: 11px; white-space: nowrap; }
+.ed-warn { margin: 0; padding: 8px 10px; font-size: 11px; line-height: 1.5; color: #ffd0a0;
+           background: rgba(120, 60, 10, 0.35); border: 1px solid #7a4a1a; border-radius: 6px; }
+.ed-warn[hidden] { display: none; }
+
+.ed-tools, .ed-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ed-tools button, .ed-sub button {
+  padding: 9px 12px;
+  min-height: 40px;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--text);
+  background: #1b2438;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ed-sub button { min-height: 34px; padding: 6px 10px; font-size: 10px; }
+@media (hover: hover) { .ed-tools button:hover, .ed-sub button:hover { border-color: var(--accent); } }
+.ed-tools button.on, .ed-sub button.on { background: var(--accent); color: #06121a; border-color: var(--accent); }
+.ed-tools button:disabled { opacity: 0.4; cursor: default; }
+.ed-sub span { font-size: 10px; letter-spacing: 2px; color: var(--dim); }
+.ed-sub[hidden] { display: none; }
+.ed-gap { flex: 1; }
+
+.ed-main { flex: 1; min-height: 0; display: flex; gap: 10px; }
+.ed-stage {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #04060b;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.ed-stage canvas { display: block; touch-action: none; cursor: crosshair; }
+.ed-zoom { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; }
+.ed-zoom button {
+  min-width: 36px;
+  height: 36px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: rgba(10, 16, 28, 0.8);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ed-zoom button:last-child { font-size: 10px; letter-spacing: 1px; }
+.ed-foot {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 6px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text);
+  text-shadow: 0 1px 2px #000, 0 0 6px #000;
+  pointer-events: none;
+}
+#ed-coords { float: right; color: var(--dim); }
+
+.ed-side {
+  width: 320px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: rgba(14, 21, 36, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.ed-tabs { display: flex; border-bottom: 1px solid var(--line); }
+.ed-tabs button {
+  flex: 1;
+  padding: 11px 2px;
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--dim);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.ed-tabs button.on { color: var(--accent); border-bottom-color: var(--accent); }
+.ed-panes { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.ed-pane { display: grid; gap: 12px; padding: 12px; }
+.ed-pane[hidden] { display: none; }
+.ed-pane .hint { margin: 0; line-height: 1.5; }
+.ed-pane .wide-btn { margin-top: 0; }
+.ed-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ed-picks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.ed-picks label { flex-direction: row; align-items: center; gap: 8px; font-size: 10px; }
+.ed-picks input[type=color] {
+  width: 44px;
+  height: 34px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+#ed-adhoc-colours[hidden], #ed-themed-note[hidden], .hint[hidden] { display: none; }
+.ed-swatches { display: flex; gap: 4px; }
+.ed-swatches span { flex: 1; height: 18px; border: 1px solid var(--line); border-radius: 4px; }
+
+.ed-results { font-size: 11px; line-height: 1.5; }
+.ed-results p { margin: 0 0 8px; }
+.ed-results ul { margin: 4px 0 6px; padding-left: 18px; color: var(--dim); }
+.ed-results .good { color: #6ee7a0; }
+.ed-results .bad { color: #ff7d8a; }
+.ed-results b { font-weight: normal; }
+.ed-sec { margin: 4px 0; }
+
+.ed-export { display: grid; gap: 8px; }
+.ed-export button { width: 100%; }
+.ed-said { margin: 0; font-size: 11px; line-height: 1.5; color: #6ee7a0; }
+.ed-said[hidden] { display: none; }
+.ed-steps { margin: 0; padding-left: 18px; font-size: 11px; line-height: 1.6; color: var(--dim); }
+.ed-steps li { margin-bottom: 6px; }
+.ed-steps b { color: var(--text); font-weight: normal; }
+.editor a { color: var(--accent); }
+.editor code { font-family: inherit; color: var(--text); word-break: break-all; }
+
+/* Tall: the panel goes under the map, and gets the room it needs to be used
+   without scrolling for the common things. */
+@media (max-aspect-ratio: 1/1), (max-width: 760px) {
+  .ed-main { flex-direction: column; }
+  .ed-stage { min-height: 280px; }
+  .ed-side { width: auto; max-height: 42%; }
+}
+/* Narrow: the header wraps under BACK rather than beside it. */
+@media (max-width: 640px) {
+  .ed-head { flex-wrap: wrap; padding-left: 0; padding-top: 44px; }
+  .ed-drive { width: 100%; }
+  .ed-drive button { flex: 1; }
+  .ed-tools button { padding: 8px 9px; font-size: 10px; }
+}
+
+/* A level-editor test drive: no leaderboard, no next track. */
+body.mode-sandbox #btn-board, body.mode-sandbox #btn-next { display: none !important; }
+/* Everything in the editor you press is a finger's size, on any screen. */
+.ed-drive button, .ed-tabs button, .ed-sub button { min-height: 40px; }
+
+/* A phone: too short to hold the map, the tools and the panel on one screen,
+   so the editor scrolls instead - the map keeps a size you can draw on and
+   the panel sits below it. Made for an iPad or a computer; usable here. */
+@media (max-height: 600px), (max-width: 600px) {
+  .editor.working .screen-inner { height: auto; }
+  .ed-work, .ed-main { flex: none; }
+  .ed-stage { flex: none; height: max(240px, calc(var(--app-h) - 170px)); }
+  .ed-side { max-height: none; }
+  .ed-panes { overflow: visible; }
+}
+@media (max-height: 600px) and (min-width: 601px) {
+  .ed-main { flex-direction: row; }
+  .ed-side { width: 280px; max-height: max(240px, calc(var(--app-h) - 170px)); }
+  .ed-panes { overflow-y: auto; }
+}

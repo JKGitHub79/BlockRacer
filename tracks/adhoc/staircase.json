@@ -1,0 +1,72 @@
+{
+  "format": 1,
+  "id": "staircase",
+  "theme": "adhoc",
+  "name": "STAIRCASE",
+  "grade": "HARD",
+  "blurb": "Eight chicanes. No straight can be driven in one lane.",
+  "order": 7,
+  "cols": 40,
+  "rows": 25,
+  "aiPace": 1,
+  "aiOffsetScale": 1,
+  "border": "edge",
+  "walls": [
+    { "x0": 5, "y0": 5, "x1": 34, "y1": 19, "kind": "infield" },
+    { "x0": 19, "y0": 1, "x1": 25, "y1": 2, "kind": "jog" },
+    { "x0": 9, "y0": 3, "x1": 15, "y1": 4, "kind": "jog" },
+    { "x0": 1, "y0": 8, "x1": 2, "y1": 12, "kind": "jog" },
+    { "x0": 3, "y0": 15, "x1": 4, "y1": 18, "kind": "jog" },
+    { "x0": 11, "y0": 22, "x1": 17, "y1": 23, "kind": "jog" },
+    { "x0": 22, "y0": 20, "x1": 27, "y1": 21, "kind": "jog" },
+    { "x0": 37, "y0": 14, "x1": 38, "y1": 18, "kind": "jog" },
+    { "x0": 35, "y0": 7, "x1": 36, "y1": 10, "kind": "jog" }
+  ],
+  "route": [
+    { "x": 38, "y": 2 },
+    { "x": 32, "y": 2 },
+    { "x": 32, "y": 4 },
+    { "x": 18, "y": 4 },
+    { "x": 18, "y": 2 },
+    { "x": 4, "y": 2 },
+    { "x": 4, "y": 14 },
+    { "x": 2, "y": 14 },
+    { "x": 2, "y": 21 },
+    { "x": 20, "y": 21 },
+    { "x": 20, "y": 23 },
+    { "x": 36, "y": 23 },
+    { "x": 36, "y": 12 },
+    { "x": 38, "y": 12 }
+  ],
+  "startLeg": 0,
+  "checkpoints": [
+    { "x0": 6.5, "y0": 1, "x1": 7.5, "y1": 5 },
+    { "x0": 1, "y0": 16.5, "x1": 5, "y1": 17.5 },
+    { "x0": 31.5, "y0": 20, "x1": 32.5, "y1": 24 },
+    { "x0": 35, "y0": 7.5, "x1": 39, "y1": 8.5 }
+  ],
+  "finish": { "x0": 33.6, "y0": 1, "x1": 34.4, "y1": 5, "dir": { "x": -1, "y": 0 } },
+  "startGrid": [
+    { "x": 35.1, "y": 2, "wp": 1 },
+    { "x": 35.1, "y": 4, "wp": 2 },
+    { "x": 37, "y": 2, "wp": 1 },
+    { "x": 37, "y": 4, "wp": 2 }
+  ],
+  "notes": [
+    "(Mirrored left to right when this track became a file: the drawing below",
+    "shows it the other way round from how it is raced.)",
+    "",
+    "7. STAIRCASE",
+    "",
+    "A four-cell corridor around a solid infield. Every straight carries two",
+    "blocks on alternating halves of the road, so no straight can be taken in",
+    "one lane: you have to staircase the whole way round.",
+    "",
+    "  top road    rows 1-4     outer = rows 1-2    inner = rows 3-4",
+    "  bottom road rows 20-23   inner = rows 20-21  outer = rows 22-23",
+    "  left road   cols 1-4     outer = cols 1-2    inner = cols 3-4",
+    "  right road  cols 35-38   inner = cols 35-36  outer = cols 37-38",
+    "",
+    "Raced clockwise: top, right, bottom, left."
+  ]
+}

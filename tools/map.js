@@ -13,7 +13,7 @@ const path = require('path');
 const sandbox = { window: {}, location: { search: '' }, console };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
-for (const f of ['js/tracks.js', 'js/config.js', 'js/track.js', 'js/car.js']) {
+for (const f of ['js/trackfile.js', 'js/tracks.data.js', 'js/tracks.js', 'js/config.js', 'js/track.js', 'js/car.js']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), sandbox, { filename: f });
 }
 const { TRACKS, TRACK } = sandbox;

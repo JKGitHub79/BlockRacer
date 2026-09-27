@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "id": "colonnade",
+  "theme": "ruins",
+  "name": "COLONNADE",
+  "grade": "EXPERT +",
+  "blurb": "Three stone columns into the middle, and the lap threads between.",
+  "cols": 51,
+  "rows": 40,
+  "weather": "motes",
+  "aiPace": 0.95,
+  "aiOffsetScale": 1.5,
+  "aiMistakeScale": 1,
+  "border": "edge",
+  "walls": [
+    { "x0": 17, "y0": 1, "x1": 22, "y1": 22, "kind": "edge" },
+    { "x0": 39, "y0": 1, "x1": 49, "y1": 22, "kind": "edge" },
+    { "x0": 6, "y0": 6, "x1": 11, "y1": 33, "kind": "infield" },
+    { "x0": 28, "y0": 6, "x1": 33, "y1": 33, "kind": "infield" },
+    { "x0": 12, "y0": 28, "x1": 27, "y1": 33, "kind": "infield" },
+    { "x0": 34, "y0": 28, "x1": 44, "y1": 33, "kind": "infield" },
+    { "x0": 8, "y0": 34, "x1": 24, "y1": 34, "kind": "jog" },
+    { "x0": 49, "y0": 27, "x1": 49, "y1": 35, "kind": "jog" },
+    { "x0": 38, "y0": 23, "x1": 46, "y1": 23, "kind": "jog" },
+    { "x0": 34, "y0": 8, "x1": 34, "y1": 21, "kind": "jog" },
+    { "x0": 27, "y0": 1, "x1": 35, "y1": 1, "kind": "jog" },
+    { "x0": 27, "y0": 8, "x1": 27, "y1": 21, "kind": "jog" },
+    { "x0": 16, "y0": 27, "x1": 24, "y1": 27, "kind": "jog" },
+    { "x0": 12, "y0": 8, "x1": 12, "y1": 21, "kind": "jog" },
+    { "x0": 5, "y0": 5, "x1": 13, "y1": 5, "kind": "jog" },
+    { "x0": 1, "y0": 10, "x1": 1, "y1": 28, "kind": "jog" }
+  ],
+  "route": [
+    { "x": 4, "y": 37 },
+    { "x": 47, "y": 37 },
+    { "x": 47, "y": 26 },
+    { "x": 37, "y": 26 },
+    { "x": 37, "y": 4 },
+    { "x": 25, "y": 4 },
+    { "x": 25, "y": 25 },
+    { "x": 15, "y": 25 },
+    { "x": 15, "y": 3 },
+    { "x": 4, "y": 3 }
+  ],
+  "startLeg": 0,
+  "checkpoints": [
+    { "x0": 42, "y0": 24, "x1": 43, "y1": 28 },
+    { "x0": 23, "y0": 12, "x1": 27, "y1": 13 },
+    { "x0": 13, "y0": 12, "x1": 17, "y1": 13 },
+    { "x0": 2, "y0": 21, "x1": 6, "y1": 22 }
+  ],
+  "finish": { "x0": 27.6, "y0": 34, "x1": 28.4, "y1": 39, "dir": { "x": 1, "y": 0 } },
+  "startGrid": [
+    { "x": 26.5, "y": 36, "wp": 1 },
+    { "x": 26.5, "y": 38, "wp": 1 },
+    { "x": 24.6, "y": 36, "wp": 1 },
+    { "x": 24.6, "y": 38, "wp": 1 }
+  ],
+  "notes": [
+    "Ruins 2: COLONNADE",
+    "Three columns of stone hanging into the middle of the map from the",
+    "top, and the lap threads between them: up one side, down the next, up",
+    "the third. A comb rather than a ring.",
+    "",
+    "       +--+  +--+  +--+  +----+",
+    "       |  |  |  |  |  |  |    |   the two long streets - the bottom",
+    "       |  +--+  +--+  |  |    |   and the west - carry a PAIR each and",
+    "       |              |  +----+   the lap changes lanes between them",
+    "       +--------------+--------+"
+  ]
+}
