@@ -265,7 +265,11 @@
       dist: 24,
       min: 8,
       max: 60,
-      step: 2
+      step: 2,
+      /* CHAINING: keep the finger down and swipe again for another turn -
+       * left, then up, then left - without lifting. Off, one finger is one
+       * swipe. On the options screen, and kept. */
+      chain: true
     },
 
     /* ---- Super Sprint -------------------------------------------------
@@ -575,6 +579,16 @@
   try {
     var savedSwipe = global.localStorage && global.localStorage.getItem(SWIPE_KEY);
     if (savedSwipe) CONFIG.swipe.dist = CONFIG.clampSwipe(parseFloat(savedSwipe));
+  } catch (e) { /* unreadable storage: keep the default */ }
+  var CHAIN_KEY = 'blockracer.swipechain.v1';
+  CONFIG.saveSwipeChain = function () {
+    try {
+      if (global.localStorage) global.localStorage.setItem(CHAIN_KEY, CONFIG.swipe.chain ? '1' : '0');
+    } catch (e) { /* storage blocked or full */ }
+  };
+  try {
+    var savedChain = global.localStorage && global.localStorage.getItem(CHAIN_KEY);
+    if (savedChain === '0' || savedChain === '1') CONFIG.swipe.chain = savedChain === '1';
   } catch (e) { /* unreadable storage: keep the default */ }
   var swipeParam = /[?&]swipe=(\d+)/.exec(search);
   if (swipeParam) CONFIG.swipe.dist = CONFIG.clampSwipe(parseFloat(swipeParam[1]));

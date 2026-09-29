@@ -217,14 +217,24 @@
    * default, and set on the options screen; 24 is about 4mm on a
    * phone, where a tap wanders 1 or 2 - before it is a swipe, so a tap never
    * steers. It fires the moment it gets there rather than on lifting, which
-   * is what makes it feel immediate, and then that finger is spent: one
-   * swipe, one turn, however far it carries on. Mid-swipe it also has to be
-   * clearly one way (DOMINANCE times further along one axis than the
-   * other); a diagonal waits to see which way it goes, and one that is
-   * still diagonal when lifted goes whichever way it went further. */
+   * is what makes it feel immediate. Mid-swipe it also has to be clearly one
+   * way (DOMINANCE times further along one axis than the other); a diagonal
+   * waits to see which way it goes, and one that is still diagonal when
+   * lifted goes whichever way it went further.
+   *
+   * CHAINING (CONFIG.swipe.chain, on by default): the finger is not spent.
+   * Keep it down and swipe again - left, then up, then left - and each one
+   * is a turn of its own, measured from where the last one fired. While the
+   * finger carries on the way it last went, that start point comes along
+   * with it, so going back the other way never has to undo the overshoot
+   * first. Chaining off, one finger is one swipe, however far it goes on. */
   function swipeMin() {
     var C = global.CONFIG;
     return C && C.swipe && C.swipe.dist > 0 ? C.swipe.dist : 24;
+  }
+  function chaining() {
+    var C = global.CONFIG;
+    return !C || !C.swipe || C.swipe.chain !== false;
   }
   var DOMINANCE = 1.5;
   var swipes = {};
@@ -243,12 +253,24 @@
     if (!s) return;
     if (lifting) delete swipes[e.pointerId];
     if (s.done) return;
-    var d = swipeDir(s, e.clientX, e.clientY, lifting);
-    if (!d) return;
-    s.done = true;
+    var x = e.clientX, y = e.clientY, last = s.last;
+    if (last) {
+      // Still going the way the last swipe went: bring the start point along.
+      var along = (x - s.x) * last.x + (y - s.y) * last.y;
+      var side = Math.abs((x - s.x) * last.y - (y - s.y) * last.x);
+      if (along > 0 && along >= DOMINANCE * side) { s.x = x; s.y = y; return; }
+      if (lifting) return;           // a link in a chain is never a lift's guess
+    }
+    var d = swipeDir(s, x, y, lifting);
+    if (!d || (last && d.x === last.x && d.y === last.y)) return;
+    if (chaining()) {
+      s.x = x; s.y = y; s.last = d;  // ready for the next one
+    } else {
+      s.done = true;
+    }
     // A swipe is on the screen; the board may be turned a quarter on it.
-    if (global.Renderer && global.Renderer.toTrack) d = global.Renderer.toTrack(d);
-    if (!global.Screens || global.Screens.current === 'race') Input.turns.push(d);
+    var t = global.Renderer && global.Renderer.toTrack ? global.Renderer.toTrack(d) : d;
+    if (!global.Screens || global.Screens.current === 'race') Input.turns.push(t);
   }
   global.addEventListener('pointermove', function (e) { track(e, false); });
   global.addEventListener('pointerup', function (e) { track(e, true); letGo('ptr:' + e.pointerId); });

@@ -1616,9 +1616,19 @@ while SWIPE is chosen, sets it anywhere from 8 to 60 (`CONFIG.swipe`, kept as
 `blockracer.swipe.v1`, `?swipe=16` for a one-off; DEFAULT SWIPE LENGTH puts 24
 back). Shorter fires the turn sooner, so it feels more responsive; too short
 and a tap that wanders starts to count as a swipe. Either way a swipe fires the
-moment it gets there rather than on lifting, and that finger is then spent
-however far it carries on. Mid-swipe it has to be clearly one way; a diagonal
-waits, and one still diagonal when lifted goes the way it went further.
+moment it gets there rather than on lifting. Mid-swipe it has to be clearly
+one way; a diagonal waits, and one still diagonal when lifted goes the way it
+went further.
+
+**CHAINING** (on by default; ON / OFF under SWIPE LENGTH, kept as
+`blockracer.swipechain.v1`): the finger is not spent. Keep it down and swipe
+again - left, then up, then left - and each is a turn of its own, so a lane
+change is one zig-zag instead of two swipes. Each link is measured from where
+the last one fired, and while the finger carries on the way it last went that
+start point comes along with it, so turning back never has to undo the
+overshoot first. Carrying on the same way, or a small wobble, adds nothing,
+and lifting never adds a guessed last turn to a chain. Off, one finger is one
+swipe, however far it goes.
 
 While swiping, nothing on the race screen pans (`touch-action: none`), the
 root does not overscroll (no pull-to-refresh on Android, no rubber-band on

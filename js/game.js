@@ -1154,6 +1154,17 @@
     if (el.swipeRange && parseFloat(el.swipeRange.value) !== v) el.swipeRange.value = v;
   };
 
+  /* Swipe CHAINING, on or off. Read on every move of a finger. */
+  Game.setSwipeChain = function (on, keep) {
+    C.swipe.chain = !!on;
+    if (keep) C.saveSwipeChain();
+    var v = document.getElementById('swipe-chain-v'), row = document.getElementById('swipe-chain');
+    if (v) v.textContent = C.swipe.chain ? 'ON' : 'OFF';
+    if (row) Array.prototype.forEach.call(row.children, function (b) {
+      b.classList.toggle('on', (b.dataset.chain === '1') === C.swipe.chain);
+    });
+  };
+
   /* Super Sprint's turning speed, from the options screen. It is read by
    * the car every step, so it takes effect at once, mid-race included. */
   Game.setSprint = function (deg, keep) {
@@ -1539,6 +1550,14 @@
       Game.setSwipe(C.swipeDefault, true);
     });
     Game.setSwipe(C.swipe.dist);
+    var chainRow = document.getElementById('swipe-chain');
+    if (chainRow) Array.prototype.forEach.call(chainRow.children, function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        Game.setSwipeChain(b.dataset.chain === '1', true);
+      });
+    });
+    Game.setSwipeChain(C.swipe.chain);
     Array.prototype.forEach.call(el.contrastButtons.children, function (b) {
       b.addEventListener('click', function (e) {
         e.stopPropagation();
