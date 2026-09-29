@@ -302,7 +302,20 @@
       spinAfter: 3.0,              // seconds of slide before it spins out
       spinTime: 0.8,               // seconds for the full turn, slowing to a stop
       restartDelay: 0.5,           // seconds stopped before it sets off again
-      rotateRate: 14               // rad/s the body swings round at
+      rotateRate: 14,              // rad/s the body swings round at
+      /* A press let go within `tapTime` is a TAP, not a slide, and it does
+       * not pay for the time the finger was down: the turn is taken on a
+       * curve tightened by however far the car went on meanwhile, so it
+       * comes out on the line a turn at the moment of the press would have
+       * - or as near as a snap turn can get it, when it went further. */
+      tapTime: 0.15,
+      /* EARLY TURN HELP (on by default; on the options screen, and kept).
+       * Let go a little too soon - where turning now would run the car
+       * into the inside of the corner - and it holds the slide until the
+       * corner opens, then turns. `assistMax` seconds at most: waiting
+       * longer than that, it was not "a little" too soon. */
+      assist: true,
+      assistMax: 0.35
     },
     /* The flame, and the sparks, for each level: blue, then violet, then the
      * orange-and-ice of the first boost there was - and level 4 the same as
@@ -599,7 +612,7 @@
   CONFIG.savePro = function () {
     try {
       if (global.localStorage) {
-        global.localStorage.setItem(PRO_KEY, JSON.stringify({ levels: CONFIG.pro.levels }));
+        global.localStorage.setItem(PRO_KEY, JSON.stringify({ levels: CONFIG.pro.levels, assist: CONFIG.pro.assist }));
       }
     } catch (e) { /* storage blocked or full */ }
   };
@@ -613,6 +626,7 @@
         });
       });
     }
+    if (savedPro && typeof savedPro.assist === 'boolean') CONFIG.pro.assist = savedPro.assist;
   } catch (e) { /* unreadable storage: keep the defaults */ }
 
   CONFIG.musicVolume = 60;

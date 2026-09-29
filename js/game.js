@@ -561,21 +561,39 @@
   Game.playerTurn = function (sign, hold) {
     var P = this.player;
     if (P.finished || P.spin) return;          // a spin-out takes no orders
-    if (P.drift) this.playerRelease();          // a new press lets the last slide go
+    if (P.drift) this.playerRelease(true);      // a new press lets the last slide go, now
     var standing = P.crashed;
     P.turn(sign, hold);
     // Pro controls: a held press is a slide, measured from here. From a
     // standstill there is nothing to slide with, so it is just a turn.
-    if (hold && !standing) P.drift = { t: 0 };
+    if (hold && !standing) P.drift = { t: 0, held: 0, dist: 0 };
     if (standing) Sound.play('rev');
     else if (C.slide > 0 || hold) Sound.play('turn');
   };
 
   /* Pro controls: the slide is let go - the car goes the way it faces, with
-   * a boost if it was held long enough. */
-  Game.playerRelease = function () {
+   * a boost if it was held long enough.
+   *
+   * EARLY TURN HELP: let go a little before the point where the turn puts
+   * the car on the racing line - no more than CONFIG.pro.assistMax seconds
+   * before it - and the car slides on and turns there, instead of turning
+   * now into the inside of the corner. Decided once, as the finger lifts,
+   * for the turn the route makes next and nothing else; this is then called
+   * every step until the point is reached. Let go further back than that and
+   * the early turn is taken as meant. `now` skips the wait: a new press
+   * takes its turn at once. */
+  Game.playerRelease = function (now) {
     var P = this.player;
     if (!P || !P.drift) return;
+    P.letGo();
+    var d = P.drift, AT = global.AutoTurn;
+    if (!now && !P.crashed && C.pro.assist && AT && AT.turnPoint) {
+      var togo = AT.turnPoint(P, C.slide);
+      if (d.help === undefined) {
+        d.help = togo !== null && togo > 0.05 && togo <= P.speedNow() * C.pro.assistMax;
+      }
+      if (d.help && togo !== null && togo > 0.05 && d.waited <= C.pro.assistMax) return;
+    }
     var standing = P.crashed;
     var lv = P.releaseDrift();
     if (lv) Sound.play('boost', lv);
@@ -1109,6 +1127,18 @@
     document.getElementById('menu-control').textContent = CONTROL_NAME[C.control];
   };
 
+  /* Pro's EARLY TURN HELP, on or off. Read at the moment a slide is let
+   * go, so it takes effect at once. */
+  Game.setProAssist = function (on, keep) {
+    C.pro.assist = !!on;
+    if (keep) C.savePro();
+    var v = document.getElementById('pro-assist-v'), row = document.getElementById('pro-assist');
+    if (v) v.textContent = C.pro.assist ? 'ON' : 'OFF';
+    if (row) Array.prototype.forEach.call(row.children, function (b) {
+      b.classList.toggle('on', (b.dataset.assist === '1') === C.pro.assist);
+    });
+  };
+
   /* Super Sprint's turning speed, from the options screen. It is read by
    * the car every step, so it takes effect at once, mid-race included. */
   Game.setSprint = function (deg, keep) {
@@ -1456,6 +1486,14 @@
       Game.showProLevel(proLevel);
     });
     Game.showProLevel(0);
+    var assistRow = document.getElementById('pro-assist');
+    if (assistRow) Array.prototype.forEach.call(assistRow.children, function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        Game.setProAssist(b.dataset.assist === '1', true);
+      });
+    });
+    Game.setProAssist(C.pro.assist);
     if (el.sprintRange) {
       el.sprintRange.min = C.sprint.min;
       el.sprintRange.max = C.sprint.max;

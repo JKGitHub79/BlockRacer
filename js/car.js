@@ -43,7 +43,9 @@
     this.crashFlash = 0;
 
     // Pro controls - the player's car only (see CONFIG.pro).
-    this.drift = null;        // a held slide: { t } seconds of it so far
+    this.drift = null;        // a held slide: { t, held, dist }, and once let go
+                              // { letGo, lv, tap, help, waited } - see Car.letGo
+    this.turnR = null;        // this turn's arc, when not CONFIG.slide (a Pro tap)
     this.boostT = 0;          // seconds of boost left
     this.boostMul = 1;        // speed while it lasts
     this.boostLevel = 0;      // which level earned it, 1-4: the flame's colour
@@ -148,6 +150,7 @@
   /* Right turn is clockwise on screen: (x,y) -> (-y,x). */
   Car.prototype.turn = function (sign, hold) {
     var d = this.dir;
+    this.turnR = null;
     var standing = this.crashed;
     this.dir = sign > 0 ? { x: -d.y, y: d.x } : { x: d.y, y: -d.x };
     // A held turn (Pro controls): the car keeps going the way it was and the
@@ -277,8 +280,14 @@
     // A held slide goes on the way the car was going. Only time spent
     // actually sliding counts towards the boost, and too much of it spins
     // the car out.
-    if (this.drift) {
+    // Let go and waiting for the corner to open (EARLY TURN HELP) counts
+    // for nothing: the boost was settled when the finger lifted.
+    if (this.drift && this.drift.letGo) {
+      this.drift.waited += dt;
+    } else if (this.drift) {
       if (Math.abs(this.slip()) > 0.05) this.drift.t += dt;
+      this.drift.held += dt;
+      this.drift.dist += this.speedNow() * dt;
       if (this.drift.t >= C.pro.spinAfter) { this.spinOut(); return null; }
     }
 
@@ -288,13 +297,15 @@
     var speed = this.speedNow();
     var slip = this.slip();
     if (slip !== 0 && !this.drift) {
-      if (C.slide <= 0) {
+      var radius = this.turnR !== null ? this.turnR : C.slide;
+      if (radius <= 0) {
         this.velAngle = this.headingAngle();
       } else {
-        var swing = (speed / C.slide) * dt;
+        var swing = (speed / radius) * dt;
         this.velAngle = wrapPi(this.velAngle +
           (Math.abs(slip) <= swing ? slip : (slip > 0 ? swing : -swing)));
       }
+      if (this.slip() === 0) this.turnR = null;     // this turn is done
     }
 
     var dist = speed * dt;
@@ -406,9 +417,35 @@
    * as any turn does, or, stopped against a wall, straight off that way.
    * The level the slide reached sets the boost; returns that level, 0 for
    * none. */
+  /* The finger lifted. What it earned is settled now - the level the slide
+   * reached, and whether it was only a tap - whenever the turn itself is
+   * taken: straight away, or once the corner opens (EARLY TURN HELP). */
+  Car.prototype.letGo = function () {
+    var d = this.drift;
+    if (!d || d.letGo) return;
+    d.letGo = true;
+    d.lv = C.proLevelFor(d.t);
+    d.tap = d.held < C.pro.tapTime;
+    d.waited = 0;
+  };
+
+  /* The arc a let-go slide turns on. A tap is owed the distance the car ran
+   * on while the finger was down: a turn at the press would have been
+   * that much sooner, so this one is that much tighter, and comes out on
+   * the same line. A slide chose to run on, and turns on the usual arc -
+   * as does a tap the EARLY TURN HELP held for the corner, which is then
+   * exactly where it meant to be. */
+  Car.prototype.releaseArc = function () {
+    var d = this.drift;
+    if (d && d.tap && !d.help) return Math.max(0, C.slide - d.dist);
+    return C.slide;
+  };
+
   Car.prototype.releaseDrift = function () {
     var d = this.drift;
     if (!d) return false;
+    this.letGo();
+    var arc = this.releaseArc();
     this.drift = null;
     if (this.crashed) {
       this.crashed = false;
@@ -417,7 +454,8 @@
       this.unstick();
       return 0;
     }
-    var lv = C.proLevelFor(d.t), L = lv ? C.pro.levels[lv - 1] : null;
+    this.turnR = arc === C.slide ? null : arc;
+    var lv = d.lv, L = lv ? C.pro.levels[lv - 1] : null;
     if (L && L.pct > 0 && L.time > 0) {
       this.boostT = L.time;
       this.boostMul = 1 + L.pct / 100;

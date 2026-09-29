@@ -160,5 +160,32 @@
     return recover(car, recoverLeg(car));
   };
 
+  /* Pro's EARLY TURN HELP: how many cells a sliding car still has to run
+   * before letting go would put it on the racing line - turning on an arc
+   * of `arc` cells onto the next leg - or null when that is not a question
+   * worth answering: not travelling along the route, or pointing some other
+   * way than the turn the route makes next. Zero or less: there, or past.
+   *
+   * A slide travels one way and points another, so the leg it is on is
+   * found from the way it is GOING, and the turn it wants from the way it
+   * points. */
+  AutoTurn.turnPoint = function (car, arc) {
+    if (!car || !T.ROUTE) return null;
+    var c = Math.cos(car.velAngle), s = Math.sin(car.velAngle);
+    if (Math.abs(c) > 1e-6 && Math.abs(s) > 1e-6) return null;   // mid-turn: not along an axis
+    var vd = Math.abs(c) > Math.abs(s) ? { x: c > 0 ? 1 : -1, y: 0 } : { x: 0, y: s > 0 ? 1 : -1 };
+    var j = onLeg({ x: car.x, y: car.y, dir: vd, leg: car.leg });
+    if (j < 0) return null;
+    var n = T.ROUTE.length, k = -1;
+    for (var q = 1; q < n; q++) {
+      if (!same(T.LEG_DIR[mod(j + q, n)], vd)) { k = mod(j + q, n); break; }
+    }
+    if (k < 0 || !same(T.LEG_DIR[k], car.dir)) return null;
+    var sign = vd.x || vd.y;
+    var line = vd.x !== 0 ? T.ROUTE[k].x : T.ROUTE[k].y;
+    var pos = vd.x !== 0 ? car.x : car.y;
+    return (line - arc * sign - pos) * sign;
+  };
+
   global.AutoTurn = AutoTurn;
 })(typeof window !== 'undefined' ? window : globalThis);

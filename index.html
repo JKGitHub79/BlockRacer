@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.68.0', built: '2026-09-29',
+window.BR = { version: '0.69.0', built: '2026-09-29',
   // written by tools/build-tracks.js: which build of js/tracks.data.js this is
   tracks: 'a3fa17b7' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
@@ -335,6 +335,15 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           <input id="pro-time" class="slider" type="range" aria-label="Boost length at this level, seconds">
           <p id="pro-summary" class="hint pro-summary"></p>
           <button id="pro-reset" class="secondary wide-btn">DEFAULT LEVELS</button>
+          <p class="lapline pro-assist-line">EARLY TURN HELP &middot; <b id="pro-assist-v">ON</b></p>
+          <div id="pro-assist" class="laps">
+            <button data-assist="1">ON</button>
+            <button data-assist="0">OFF</button>
+          </div>
+          <p class="hint">Let go a little before a corner and the car keeps
+            sliding until the corner opens, then turns - instead of turning into
+            its inside wall. Either way, a quick tap turns as close to the moment
+            you pressed as the car can manage.</p>
         </div>
       </div>
 

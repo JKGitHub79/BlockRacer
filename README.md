@@ -1574,10 +1574,41 @@ runs straight. There are no 90-degree steps: it goes wherever it points.
 Holding a finger down is kept from the browser the same way as under Pro: the
 race does not pan, and a long press is not a magnifier, menu or selection.
 
-**The cost of holding.** Every Pro turn happens when the finger LIFTS, not
-when it lands - that is what makes holding possible. A quick tap is still a
-turn, but a tap lasting a tenth of a second at SWEAT puts the turn two cells
-later than Auto Turn would. Pro players press earlier.
+**Taps, and the cost of holding.** A Pro turn happens when the finger LIFTS,
+not when it lands - that is what makes holding possible - so until v0.69 a
+0.1 s tap put every turn about a cell late at BEGINNER and two at SWEAT. Now a
+press let go within `CONFIG.pro.tapTime` (0.15 s) is a TAP, and it is not
+charged for the time the finger was down: the turn is taken on an arc tightened
+by however far the car ran on meanwhile, so it comes out on the line a turn at
+the moment of the press would have. The car cannot turn tighter than a snap,
+so that is exact while the run-on is shorter than the slide radius (0.8 cells)
+and only part of it beyond - measured over every corner of every track, a
+0.1 s tap on time lands 0.28 cells off Auto Turn's line at BEGINNER (was 1.03,
+and 7 corners clipped a wall, now none) and 1.34 at SWEAT (was 1.90; walls
+188 corners, now 56). Which is why the next thing exists.
+
+**EARLY TURN HELP** (Pro only; on by default; ON / OFF under the slide levels,
+kept with them). Let go a little early - before the point where turning puts
+the car on the racing line, and no more than `CONFIG.pro.assistMax` (0.35 s)
+before it - and the car slides on and turns exactly there, instead of turning
+into the inside of the corner. It is Pac-Man's early turn: press a moment
+before the junction and the turn is taken at it. So the way to drive Pro is to
+tap slightly early, and the timing is done for you:
+
+| Tap, 0.1 s | Help off: off the line | walls hit | Help on: off the line | walls hit |
+| --- | --- | --- | --- | --- |
+| 0.15 s early, BEGINNER | 1.28 cells | 77 of 366 corners | 0.00 | 0 |
+| 0.3 s early, BEGINNER | 2.84 | 257 of 299 | 0.00 | 0 |
+| 0.15 s early, SWEAT | 1.75 | 167 of 250 | 0.00 | 0 |
+| 0.3 s early, SWEAT | 4.87 | 234 of 237 | 0.00 | 0 |
+
+It only ever holds the turn the route makes next (`AutoTurn.turnPoint`, from
+the leg the car is travelling along and the way it now points); a key or a
+mouse that picks the other way, a car off the route, and a let-go further back
+than the window are all taken as they come - an early turn can be meant. A
+slide it holds keeps its boost, settled when the finger lifted, and turns on
+the usual arc; the wait itself earns nothing. A new press takes a waiting turn
+at once.
 
 A finger has to travel 24 CSS pixels (about 4mm on a phone, where a tap
 wanders one or two) before it counts, so a tap never steers; it fires the

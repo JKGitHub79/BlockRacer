@@ -2617,3 +2617,6 @@ body.mode-sandbox #btn-board, body.mode-sandbox #btn-next { display: none !impor
 .laps.controls { display: grid; grid-template-columns: repeat(6, 1fr); }
 .laps.controls button { grid-column: span 2; white-space: normal; line-height: 1.2; }
 .laps.controls button:nth-child(n+4) { grid-column: span 3; }
+
+/* Pro's EARLY TURN HELP: under the levels, with room to tell it from them. */
+.pro-assist-line { margin-top: 16px !important; padding-top: 10px; border-top: 1px solid var(--line); }
