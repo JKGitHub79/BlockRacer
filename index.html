@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.69.0', built: '2026-09-29',
+window.BR = { version: '0.70.0', built: '2026-09-29',
   // written by tools/build-tracks.js: which build of js/tracks.data.js this is
   tracks: 'a3fa17b7' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
@@ -308,6 +308,16 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           and the car turns steadily that way until you let go. The keys and
           the mouse hold too, under PRO and SUPER SPRINT; otherwise they are
           not affected.</p>
+        <div id="swipe-opts" class="pro-opts" hidden>
+          <p class="lapline">SWIPE LENGTH &middot; <b id="swipe-v">24px</b>
+            <span class="sub" id="swipe-note"></span></p>
+          <input id="swipe-range" class="slider" type="range" aria-label="How far a finger moves before a swipe counts">
+          <p class="hint">How far your finger has to move before a swipe turns
+            the car. Shorter is more responsive - the turn fires sooner - but a
+            tap that wanders a little may start to count as a swipe. Longer is
+            surer, and later.</p>
+          <button id="swipe-reset" class="secondary wide-btn">DEFAULT SWIPE LENGTH</button>
+        </div>
         <div id="sprint-opts" class="pro-opts" hidden>
           <p class="lapline">TURN SPEED &middot; <b id="sprint-v">240&deg;/s</b>
             <span class="sub" id="sprint-note"></span></p>

@@ -256,6 +256,18 @@
       branch: 'claude/block-racer-game-619ke9'
     },
 
+    /* ---- Swipe --------------------------------------------------------
+     * How far a finger has to travel, in CSS pixels, before a swipe counts
+     * (Options, CONTROL STYLE: SWIPE). Shorter fires sooner - more
+     * responsive - but a tap that wanders a little can start to read as a
+     * swipe; longer is surer and later. 24 is about 4mm on a phone. */
+    swipe: {
+      dist: 24,
+      min: 8,
+      max: 60,
+      step: 2
+    },
+
     /* ---- Super Sprint -------------------------------------------------
      * The fifth control style (Options, CONTROL STYLE: SUPER SPRINT): the
      * way an ordinary racing game steers. HOLD left or right and the car
@@ -545,6 +557,27 @@
   } catch (e) { /* unreadable storage: keep the default */ }
   var controlParam = /[?&]control=(tap|swipe|auto|pro|sprint)/.exec(search);
   if (controlParam) CONFIG.control = controlParam[1];
+
+  /* Swipe's distance, as chosen on the options screen; its own key, so
+   * RESET DATA leaves it alone like every other setting. */
+  var SWIPE_KEY = 'blockracer.swipe.v1';
+  CONFIG.swipeDefault = CONFIG.swipe.dist;
+  CONFIG.clampSwipe = function (v) {
+    var W = CONFIG.swipe;
+    v = Math.round((+v || W.dist) / W.step) * W.step;
+    return Math.max(W.min, Math.min(W.max, v));
+  };
+  CONFIG.saveSwipe = function () {
+    try {
+      if (global.localStorage) global.localStorage.setItem(SWIPE_KEY, String(CONFIG.swipe.dist));
+    } catch (e) { /* storage blocked or full */ }
+  };
+  try {
+    var savedSwipe = global.localStorage && global.localStorage.getItem(SWIPE_KEY);
+    if (savedSwipe) CONFIG.swipe.dist = CONFIG.clampSwipe(parseFloat(savedSwipe));
+  } catch (e) { /* unreadable storage: keep the default */ }
+  var swipeParam = /[?&]swipe=(\d+)/.exec(search);
+  if (swipeParam) CONFIG.swipe.dist = CONFIG.clampSwipe(parseFloat(swipeParam[1]));
 
   /* Super Sprint's turning speed, as chosen on the options screen; its own
    * key, so RESET DATA leaves it alone like every other setting. */

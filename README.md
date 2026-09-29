@@ -1611,7 +1611,11 @@ the usual arc; the wait itself earns nothing. A new press takes a waiting turn
 at once.
 
 A finger has to travel 24 CSS pixels (about 4mm on a phone, where a tap
-wanders one or two) before it counts, so a tap never steers; it fires the
+wanders one or two) before it counts - **SWIPE LENGTH** on the options screen,
+while SWIPE is chosen, sets it anywhere from 8 to 60 (`CONFIG.swipe`, kept as
+`blockracer.swipe.v1`, `?swipe=16` for a one-off; DEFAULT SWIPE LENGTH puts 24
+back). Shorter fires the turn sooner, so it feels more responsive; too short
+and a tap that wanders starts to count as a swipe. Either way a swipe fires the
 moment it gets there rather than on lifting, and that finger is then spent
 however far it carries on. Mid-swipe it has to be clearly one way; a diagonal
 waits, and one still diagonal when lifted goes the way it went further.

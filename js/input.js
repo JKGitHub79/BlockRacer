@@ -213,7 +213,8 @@
     Input.turns.push(e.clientX < global.innerWidth / 2 ? -1 : 1);
   });
 
-  /* Swipes. A finger has to travel SWIPE_MIN CSS pixels - about 4mm on a
+  /* Swipes. A finger has to travel CONFIG.swipe.dist CSS pixels - 24 by
+   * default, and set on the options screen; 24 is about 4mm on a
    * phone, where a tap wanders 1 or 2 - before it is a swipe, so a tap never
    * steers. It fires the moment it gets there rather than on lifting, which
    * is what makes it feel immediate, and then that finger is spent: one
@@ -221,7 +222,10 @@
    * clearly one way (DOMINANCE times further along one axis than the
    * other); a diagonal waits to see which way it goes, and one that is
    * still diagonal when lifted goes whichever way it went further. */
-  var SWIPE_MIN = 24;
+  function swipeMin() {
+    var C = global.CONFIG;
+    return C && C.swipe && C.swipe.dist > 0 ? C.swipe.dist : 24;
+  }
   var DOMINANCE = 1.5;
   var swipes = {};
 
@@ -229,7 +233,7 @@
     var dx = x - s.x, dy = y - s.y;
     var ax = Math.abs(dx), ay = Math.abs(dy);
     var major = Math.max(ax, ay), minor = Math.min(ax, ay);
-    if (major < SWIPE_MIN || ax === ay) return null;
+    if (major < swipeMin() || ax === ay) return null;
     if (!lifting && major < DOMINANCE * minor) return null;
     return ax > ay ? { x: dx > 0 ? 1 : -1, y: 0 } : { x: 0, y: dy > 0 ? 1 : -1 };
   }

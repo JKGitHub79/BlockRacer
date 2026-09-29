@@ -763,6 +763,8 @@
     el.controlButtons = document.getElementById('control-buttons');
     el.proOpts = document.getElementById('pro-opts');
     el.sprintOpts = document.getElementById('sprint-opts');
+    el.swipeOpts = document.getElementById('swipe-opts');
+    el.swipeRange = document.getElementById('swipe-range');
     el.sprintRange = document.getElementById('sprint-range');
     el.contrastButtons = document.getElementById('contrast-buttons');
     el.steerRange = document.getElementById('oversteer-range');
@@ -1121,6 +1123,7 @@
     document.documentElement.classList.toggle('pro-control', C.control === 'pro' || C.control === 'sprint');
     if (el.proOpts) el.proOpts.hidden = C.control !== 'pro';
     if (el.sprintOpts) el.sprintOpts.hidden = C.control !== 'sprint';
+    if (el.swipeOpts) el.swipeOpts.hidden = C.control !== 'swipe';
     Array.prototype.forEach.call(el.controlButtons.children, function (b) {
       b.classList.toggle('on', b.dataset.control === C.control);
     });
@@ -1137,6 +1140,18 @@
     if (row) Array.prototype.forEach.call(row.children, function (b) {
       b.classList.toggle('on', (b.dataset.assist === '1') === C.pro.assist);
     });
+  };
+
+  /* How far a swipe has to travel, from the options screen. Input reads it
+   * on every move, so it takes effect at once, mid-race included. */
+  Game.setSwipe = function (px, keep) {
+    C.swipe.dist = C.clampSwipe(px);
+    if (keep) C.saveSwipe();
+    var v = C.swipe.dist, d = C.swipeDefault;
+    var label = document.getElementById('swipe-v'), note = document.getElementById('swipe-note');
+    if (label) label.textContent = v + 'px';
+    if (note) note.textContent = v === d ? '(default)' : v < d ? '(shorter: more responsive)' : '(longer: surer)';
+    if (el.swipeRange && parseFloat(el.swipeRange.value) !== v) el.swipeRange.value = v;
   };
 
   /* Super Sprint's turning speed, from the options screen. It is read by
@@ -1509,6 +1524,21 @@
       Game.setSprint(C.sprintDefault, true);
     });
     Game.setSprint(C.sprint.turn);
+    if (el.swipeRange) {
+      el.swipeRange.min = C.swipe.min;
+      el.swipeRange.max = C.swipe.max;
+      el.swipeRange.step = C.swipe.step;
+      el.swipeRange.addEventListener('input', function (e) {
+        e.stopPropagation();
+        Game.setSwipe(parseFloat(el.swipeRange.value), true);
+      });
+    }
+    var swipeReset = document.getElementById('swipe-reset');
+    if (swipeReset) swipeReset.addEventListener('click', function (e) {
+      e.stopPropagation();
+      Game.setSwipe(C.swipeDefault, true);
+    });
+    Game.setSwipe(C.swipe.dist);
     Array.prototype.forEach.call(el.contrastButtons.children, function (b) {
       b.addEventListener('click', function (e) {
         e.stopPropagation();
