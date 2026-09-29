@@ -1,4 +1,5 @@
-/* Block Racer - input. Two controls: turn left, turn right.
+/* Block Racer - input. Two controls: turn left, turn right - or, under
+ * Super Sprint, steer left and steer right for as long as either is held.
  * Turns are queued on key down so a press between frames is never eaten.
  *
  * A touchscreen can instead be set to swipe (Options, CONTROL STYLE). A
@@ -16,7 +17,7 @@
   var Input = {
     turns: [],          // pending -1 / +1, a swiped direction {x, y}, {auto}, or
                         // a held press {turn | auto, hold: true} (Pro controls)
-    control: 'swipe',   // how a touchscreen steers: 'swipe', 'tap', 'auto' or 'pro'
+    control: 'swipe',   // how a touchscreen steers: 'swipe', 'tap', 'auto', 'pro' or 'sprint'
     onCommand: null,    // (name) => void  for restart / pause / mute / start
     /* The next turn, given where the car points now. A swiped direction is
      * the one 90-degree turn that points it that way: the sign of the cross
@@ -51,7 +52,10 @@
         kind = coarse ? 'touch' : 'keys';
       }
       // Pro is Auto Turn with a hold on top: its prompts are Auto Turn's.
-      return kind === 'touch' ? (this.control === 'pro' ? 'auto' : this.control) : 'keys';
+      // Super Sprint is held on a side of the screen, which is where Tap
+      // taps - and the tutorial, which is all square turns, is taught as Tap.
+      if (kind !== 'touch') return 'keys';
+      return this.control === 'pro' ? 'auto' : this.control === 'sprint' ? 'tap' : this.control;
     },
     /* Pro controls: is a finger, the mouse or a turn key still down from a
      * press that turned the car? The race lets a held slide go the moment
@@ -60,10 +64,18 @@
       for (var k in holds) if (holds[k]) return true;
       return false;
     },
+    /* Super Sprint: which way the wheel is held right now. -1 left, +1
+     * right, 0 for neither - or both, which cancel. */
+    steer: function () {
+      var sum = 0;
+      for (var k in holds) if (typeof holds[k] === 'number') sum += holds[k];
+      return sum > 0 ? 1 : sum < 0 ? -1 : 0;
+    },
     clear: function () { this.turns.length = 0; swipes = {}; holds = {}; }
   };
 
-  var holds = {};       // Pro: presses still down, by pointer id or key code
+  var holds = {};       // presses still down, by pointer id or key code: true
+                        // for Pro, the way it steers (-1 / +1) for Super Sprint
 
   /* A buzz, for a boost earned. Where the browser can vibrate (Android), it
    * does. iOS Safari cannot, but since iOS 18 flicking a switch control
@@ -117,14 +129,16 @@
   global.addEventListener('keydown', function (e) {
     if (e.repeat || typing(e)) return;
     if (matches(LEFT, e) || matches(RIGHT, e)) lastKind = 'keys';
-    var pro = Input.control === 'pro';
+    var pro = Input.control === 'pro', sprint = Input.control === 'sprint';
     if (matches(LEFT, e)) {
       Input.turns.push(pro ? { turn: -1, hold: true } : -1);
       if (pro) holds['key:' + (e.code || e.key)] = true;
+      if (sprint) holds['key:' + (e.code || e.key)] = -1;
       e.preventDefault();
     } else if (matches(RIGHT, e)) {
       Input.turns.push(pro ? { turn: 1, hold: true } : 1);
       if (pro) holds['key:' + (e.code || e.key)] = true;
+      if (sprint) holds['key:' + (e.code || e.key)] = 1;
       e.preventDefault();
     } else if (e.key === 'r' || e.key === 'R') {
       if (Input.onCommand) Input.onCommand('restart');
@@ -171,6 +185,15 @@
     lastKind = e.pointerType === 'mouse' ? 'keys' : 'touch';
     if (swiping(e)) {
       swipes[e.pointerId] = { x: e.clientX, y: e.clientY, done: false };
+      return;
+    }
+    // Super Sprint: a finger or the mouse held on a half of the screen
+    // steers that way until it lifts. It is queued as a tap as well, which
+    // only the tutorial - square turns throughout - ever takes.
+    if (Input.control === 'sprint') {
+      var side = e.clientX < global.innerWidth / 2 ? -1 : 1;
+      holds['ptr:' + e.pointerId] = side;
+      Input.turns.push(side);
       return;
     }
     // Pro: a press that is held. The way it turns is Auto Turn's for a
@@ -229,7 +252,7 @@
   // A long press on a phone is also the browser's own gesture - a menu, a
   // magnifier. On the race, under Pro, it is a slide and nothing else.
   global.addEventListener('contextmenu', function (e) {
-    if (Input.control === 'pro' && onTrack(e)) e.preventDefault();
+    if ((Input.control === 'pro' || Input.control === 'sprint') && onTrack(e)) e.preventDefault();
   });
 
   /* While swiping, a finger moving on the race must never move the page.
@@ -238,7 +261,7 @@
    * whose rubber-band and edge behaviour only a cancelled touchmove stops.
    * Buttons and overlays are left alone - the results still scroll. */
   global.addEventListener('touchmove', function (e) {
-    if ((Input.control !== 'swipe' && Input.control !== 'pro') || !onTrack(e)) return;
+    if ((Input.control !== 'swipe' && Input.control !== 'pro' && Input.control !== 'sprint') || !onTrack(e)) return;
     if (e.cancelable) e.preventDefault();
   }, { passive: false });
 

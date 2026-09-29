@@ -231,7 +231,7 @@
     theme.tracks.forEach(function (entry) {
       var found = trackData(entry.id);
       var medal = trial ? 0 : global.Progress.medal(entry.id);
-      var lap = trial ? global.Progress.lapRecord(entry.id, C.speedLevel) : 0;
+      var lap = trial ? global.Progress.lapRecord(entry.id, C.recordSlot()) : 0;
       var card = document.createElement('button');
       card.className = 'card' + (found ? '' : ' soon') +
                        (medal ? ' medal medal-' + MEDALS[medal] : '') +

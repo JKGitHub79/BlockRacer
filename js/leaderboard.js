@@ -118,8 +118,10 @@
     return p;
   }
 
-  /* Only laps at CONFIG.leaderboardSpeed go (null: any speed). */
+  /* Only laps at CONFIG.leaderboardSpeed go (null: any speed), and only
+   * square turns: Super Sprint cuts the corners and would top every board. */
   Leaderboard.counts = function (speedLevel) {
+    if (global.CONFIG.control === 'sprint') return false;
     var want = global.CONFIG.leaderboardSpeed;
     return want === null || want === undefined || speedLevel === want;
   };

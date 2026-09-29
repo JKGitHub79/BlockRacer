@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.67.0', built: '2026-09-27',
+window.BR = { version: '0.68.0', built: '2026-09-29',
   // written by tools/build-tracks.js: which build of js/tracks.data.js this is
   tracks: 'a3fa17b7' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
@@ -286,11 +286,12 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
     <div class="opt-grid">
       <div class="opt">
         <p class="lapline">CONTROL STYLE &middot; <b id="menu-control">SWIPE</b></p>
-        <div id="control-buttons" class="laps">
+        <div id="control-buttons" class="laps controls">
           <button data-control="swipe">SWIPE</button>
           <button data-control="tap">TAP</button>
           <button data-control="auto">AUTO TURN</button>
           <button data-control="pro">PRO CONTROLS</button>
+          <button data-control="sprint">SUPER SPRINT</button>
         </div>
         <p class="hint">For touchscreens. SWIPE turns the car to face the way
           you swipe - up, down, left or right; a swipe the way you are already
@@ -302,8 +303,22 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
           sliding at full speed; LET GO and it goes that way. The longer the
           slide, the bigger the boost when you let go - four levels, each with a
           flame of its own, and the sparks show which you have reached. Slide
-          too long and you spin out. The keys
-          and the mouse hold too, under PRO; otherwise they are not affected.</p>
+          too long and you spin out. SUPER SPRINT steers like any racing game:
+          HOLD left or right - a key, or a finger on that side of the screen -
+          and the car turns steadily that way until you let go. The keys and
+          the mouse hold too, under PRO and SUPER SPRINT; otherwise they are
+          not affected.</p>
+        <div id="sprint-opts" class="pro-opts" hidden>
+          <p class="lapline">TURN SPEED &middot; <b id="sprint-v">240&deg;/s</b>
+            <span class="sub" id="sprint-note"></span></p>
+          <input id="sprint-range" class="slider" type="range" aria-label="How fast the car turns under Super Sprint">
+          <p class="hint">Slower is steadier and wants every corner started
+            earlier; faster turns tighter and twitchier. The faster game speeds
+            turn faster in step, so a corner is the same size at every speed.
+            Super Sprint cuts corners a square turn goes round, so its lap
+            records are kept apart and are not sent to the leaderboard.</p>
+          <button id="sprint-reset" class="secondary wide-btn">DEFAULT TURN SPEED</button>
+        </div>
         <div id="pro-opts" class="pro-opts" hidden>
           <p class="lapline">SLIDE LEVELS</p>
           <div id="pro-levels" class="laps pro-levels" role="tablist">

@@ -316,7 +316,7 @@
     // trial ignores the number entirely and takes the front slot.
     var trial = this.mode === 'trial';
     var tutorial = this.mode === 'tutorial';   // one car too, and no records
-    this.lapRecord = trial && !this.sandbox ? global.Progress.lapRecord(T.data.id, C.speedLevel) : 0;
+    this.lapRecord = trial && !this.sandbox ? global.Progress.lapRecord(T.data.id, C.recordSlot()) : 0;
     this.newRecord = false;
     var grid = T.gridFor(trial || tutorial ? 1 : C.cars);
     var field = fieldFor(trial || tutorial ? 1 : grid.length);
@@ -343,7 +343,10 @@
                   (tutorial ? C.speedLevels[0].mul : C.speedMul()),
         x: slot.x,
         y: slot.y,
-        dir: { x: T.startDir.x, y: T.startDir.y }
+        dir: { x: T.startDir.x, y: T.startDir.y },
+        // Super Sprint steers your car, and only yours - not in the tutorial,
+        // which teaches the square turns the rest of the field makes
+        free: !!spec.player && C.control === 'sprint' && !tutorial
       });
       T.seedProgress(car);
       this.cars.push(car);
@@ -371,7 +374,7 @@
     this.pbFlash = null;
     this.beaten = 0;
     if (trial && global.Ghost && !this.sandbox) {
-      this.ghost = global.Ghost.load(T.data, C.speedLevel, this.lapRecord);
+      this.ghost = global.Ghost.load(T.data, C.recordSlot(), this.lapRecord);
       this.ghostRec = new global.Ghost.Recorder();
       this.ghostRec.start(this.player);
       if (this.ghost) this.ghostPose = global.Ghost.poseAt(this.ghost, 0);
@@ -480,7 +483,7 @@
       // lap you have ever driven on the track.
       if (game.mode === 'trial' && car.isPlayer && !game.sandbox) {
         var was = game.lapRecord;
-        if (global.Progress.recordLap(T.data.id, C.speedLevel, car.lastLap)) {
+        if (global.Progress.recordLap(T.data.id, C.recordSlot(), car.lastLap)) {
           game.lapRecord = car.lastLap;
           game.newRecord = true;
           // the gain is against the record this lap BEAT - which, two records
@@ -527,7 +530,7 @@
     if (newBest) {
       var stored = rec.finish(car.lastLap, T.data);
       if (stored) {
-        global.Ghost.save(T.data, C.speedLevel, stored);
+        global.Ghost.save(T.data, C.recordSlot(), stored);
         game.ghost = global.Ghost.decode(stored);
       }
     }
@@ -612,7 +615,12 @@
         if (n > 0) Sound.play('count');
         else { Sound.play('go'); Sound.duck(1); }
       }
-      if (this.countdown <= -0.6) { this.state = 'racing'; Input.clear(); }
+      if (this.countdown <= -0.6) {
+        this.state = 'racing';
+        // Presses made on the grid are dropped. A wheel held through the
+        // lights is not: under Super Sprint it steers from GO.
+        if (this.player && this.player.free) Input.turns.length = 0; else Input.clear();
+      }
       return;
     }
     if (this.state !== 'racing') return;
@@ -627,6 +635,12 @@
     // Every press waiting, in order. Under Pro controls a press is held, and
     // the slide it starts lasts exactly as long as something is still down.
     var P0 = this.player, pro = C.control === 'pro';
+    // Super Sprint: no turns to take, only the wheel as it is held now. A car
+    // stopped on a wall pulls away the moment it is steered off it.
+    if (P0.free) {
+      Input.turns.length = 0;
+      P0.steer = P0.finished ? 0 : Input.steer();
+    }
     while (Input.turns.length) {
       var entry = Input.turns.shift();
       var turn = Input.resolve(entry, P0.dir, P0);
@@ -643,7 +657,9 @@
       var car = this.cars[j];
       if (!car.finished) car.lapTime += dt;
       var wasSpinning = !!car.spin;
+      var stopped = car.crashed;
       var hit = car.step(dt);
+      if (car.isPlayer && car.free && stopped && !car.crashed) Sound.play('rev');
       if (car.isPlayer && car.spin && !wasSpinning) Sound.play('spin');
       if (car.isPlayer && car.boostT > 0) exhaust(this, car);
       if (car.isPlayer) slideSparks(this, car);
@@ -728,6 +744,8 @@
     el.glowButtons = document.getElementById('glow-buttons');
     el.controlButtons = document.getElementById('control-buttons');
     el.proOpts = document.getElementById('pro-opts');
+    el.sprintOpts = document.getElementById('sprint-opts');
+    el.sprintRange = document.getElementById('sprint-range');
     el.contrastButtons = document.getElementById('contrast-buttons');
     el.steerRange = document.getElementById('oversteer-range');
     el.steerRange.min = C.minOversteer;   // one place decides how far it goes
@@ -761,7 +779,10 @@
       // In the words of whatever you steer with. The long form does not fit
       // across a phone-sized board.
       var how = Input.how();
-      el.msg.textContent = how === 'swipe' ? 'CRASHED - SWIPE TO TURN AND GO'
+      el.msg.textContent = p.free
+        ? (how === 'keys' && el.board.clientWidth >= 430 ? 'CRASHED - hold LEFT or RIGHT to steer away'
+          : 'CRASHED - STEER AWAY')
+        : how === 'swipe' ? 'CRASHED - SWIPE TO TURN AND GO'
         : how === 'auto' ? 'CRASHED - TAP TO TURN AND GO'
         : how === 'tap' || el.board.clientWidth < 430 ? 'CRASHED - TAP LEFT OR RIGHT'
         : 'CRASHED - press LEFT or RIGHT to turn and go';
@@ -942,8 +963,9 @@
     var LB = this.sandbox ? null : global.Leaderboard;
     if (el.lbStatus) el.lbStatus.textContent = '';
     if (LB) {
-      el.lbStatus.textContent = p.bestLap && !LB.counts(C.speedLevel)
-        ? 'The leaderboard is ' + C.speedLevels[C.leaderboardSpeed].name + ' laps only' : '';
+      el.lbStatus.textContent = !p.bestLap ? ''
+        : C.control === 'sprint' ? 'Super Sprint laps stay on this device - the leaderboard is square turns only'
+        : !LB.counts(C.speedLevel) ? 'The leaderboard is ' + C.speedLevels[C.leaderboardSpeed].name + ' laps only' : '';
       // A new best also hears where it has put you, and says so under the
       // time - as long as these are still the results it belongs to.
       var token = this._rankFor = {};
@@ -1068,7 +1090,7 @@
   /* Tap or swipe, for touchscreens. Input does the reading; the page needs
    * to know too, because swiping takes the race's touch gestures away from
    * the browser (css: html.swipe-control). */
-  var CONTROL_NAME = { swipe: 'SWIPE', tap: 'TAP', auto: 'AUTO TURN', pro: 'PRO CONTROLS' };
+  var CONTROL_NAME = { swipe: 'SWIPE', tap: 'TAP', auto: 'AUTO TURN', pro: 'PRO CONTROLS', sprint: 'SUPER SPRINT' };
   Game.setControl = function (mode, keep) {
     C.control = CONTROL_NAME[mode] ? mode : 'swipe';
     if (keep) C.saveControl();   // a choice, not boot applying the default
@@ -1077,12 +1099,26 @@
     document.documentElement.classList.toggle('swipe-control', C.control === 'swipe');
     // Pro holds a finger down: the race keeps the page still under it, and
     // a long press is not the browser's (no magnifier, menu or selection).
-    document.documentElement.classList.toggle('pro-control', C.control === 'pro');
+    // Super Sprint holds a finger down just the same.
+    document.documentElement.classList.toggle('pro-control', C.control === 'pro' || C.control === 'sprint');
     if (el.proOpts) el.proOpts.hidden = C.control !== 'pro';
+    if (el.sprintOpts) el.sprintOpts.hidden = C.control !== 'sprint';
     Array.prototype.forEach.call(el.controlButtons.children, function (b) {
       b.classList.toggle('on', b.dataset.control === C.control);
     });
     document.getElementById('menu-control').textContent = CONTROL_NAME[C.control];
+  };
+
+  /* Super Sprint's turning speed, from the options screen. It is read by
+   * the car every step, so it takes effect at once, mid-race included. */
+  Game.setSprint = function (deg, keep) {
+    C.sprint.turn = C.clampSprint(deg);
+    if (keep) C.saveSprint();
+    var v = C.sprint.turn, d = C.sprintDefault;
+    var label = document.getElementById('sprint-v'), note = document.getElementById('sprint-note');
+    if (label) label.textContent = v + '\u00b0/s';
+    if (note) note.textContent = v === d ? '(default)' : v < d ? '(slower than default)' : '(faster than default)';
+    if (el.sprintRange && parseFloat(el.sprintRange.value) !== v) el.sprintRange.value = v;
   };
 
   /* The Pro levels on the options screen: a tab per level, in its flame's
@@ -1420,6 +1456,21 @@
       Game.showProLevel(proLevel);
     });
     Game.showProLevel(0);
+    if (el.sprintRange) {
+      el.sprintRange.min = C.sprint.min;
+      el.sprintRange.max = C.sprint.max;
+      el.sprintRange.step = C.sprint.step;
+      el.sprintRange.addEventListener('input', function (e) {
+        e.stopPropagation();
+        Game.setSprint(parseFloat(el.sprintRange.value), true);
+      });
+    }
+    var sprintReset = document.getElementById('sprint-reset');
+    if (sprintReset) sprintReset.addEventListener('click', function (e) {
+      e.stopPropagation();
+      Game.setSprint(C.sprintDefault, true);
+    });
+    Game.setSprint(C.sprint.turn);
     Array.prototype.forEach.call(el.contrastButtons.children, function (b) {
       b.addEventListener('click', function (e) {
         e.stopPropagation();

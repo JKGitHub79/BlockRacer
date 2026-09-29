@@ -1537,6 +1537,43 @@ touch that asked for it - which a boost always is, since it is earned by
 letting go. So an iPhone on iOS 18 or later gets a tick; older iPhones get
 nothing. **iPads have no vibration motor**, so nothing can buzz there.
 
+**Super Sprint** (`SUPER SPRINT`, the fifth in the row; not the default)
+steers the way an ordinary racing game does. **Hold** left or right - the
+arrow keys or A / D, or a finger (or the mouse) on that half of the screen -
+and the car turns steadily that way for as long as it is held; let go and it
+runs straight. There are no 90-degree steps: it goes wherever it points.
+
+- **Turn speed** is `CONFIG.sprint.turn`, in degrees a second at BEGINNER
+  speed, and a slider on the options screen while SUPER SPRINT is chosen
+  (120-420, DEFAULT TURN SPEED puts it back; kept as `blockracer.sprint.v1`).
+  Each faster game speed turns faster in proportion, so a corner is the same
+  size at every speed - otherwise SWEAT would double every turning circle and
+  no track would fit it.
+- **The default, 240°/s, was measured, not guessed.** A bot that steers only
+  by holding left or right, as a player does, drove all 37 tracks for three
+  laps at each turn speed. At 150°/s (a turning radius of 4 cells) it
+  crashed 120 times; at 180, 48; at 210 it stuck on Staircase. At 240 it
+  lapped every track without touching a wall, at BEGINNER and at SWEAT alike
+  (faster still is not safer: at 300 and SWEAT it overcooked Staircase once).
+  240 is the gentlest speed with no track it cannot get round, which leaves a
+  human room to be late; faster is tighter and twitchier. A
+  quarter turn takes 0.375 s at BEGINNER, and a tap on a key is a nudge of a
+  few degrees.
+- **Walls.** A wall met at a shallow angle is a scrape along it, as for every
+  car. Square on, the car stops dead - and pulls away again as soon as it is
+  steered off the wall; there is no turn to press.
+- **Only your car steers like this.** The opponents keep their square turns,
+  and the tutorial - which teaches square turns - is taught as TAP.
+- **Lap records are kept apart.** Steering round a corner instead of turning
+  square at it is about 6% quicker per lap (the same bot, against the exact
+  racing line, on every track). So a Super Sprint lap is its own record and
+  ghost on each track and speed, a square-turn record is never a target for
+  it, and **Super Sprint laps are not sent to the online leaderboard** - the
+  same reason only SWEAT laps are. Races and medals are unchanged.
+
+Holding a finger down is kept from the browser the same way as under Pro: the
+race does not pan, and a long press is not a magnifier, menu or selection.
+
 **The cost of holding.** Every Pro turn happens when the finger LIFTS, not
 when it lands - that is what makes holding possible. A quick tap is still a
 turn, but a tap lasting a tenth of a second at SWEAT puts the turn two cells

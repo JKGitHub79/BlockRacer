@@ -2611,3 +2611,9 @@ body.mode-sandbox #btn-board, body.mode-sandbox #btn-next { display: none !impor
   .ed-side { width: 280px; max-height: max(240px, calc(var(--app-h) - 170px)); }
   .ed-panes { overflow-y: auto; }
 }
+
+/* Five control styles: three across, then the two held ones - the names
+   wrap rather than running out of the card. */
+.laps.controls { display: grid; grid-template-columns: repeat(6, 1fr); }
+.laps.controls button { grid-column: span 2; white-space: normal; line-height: 1.2; }
+.laps.controls button:nth-child(n+4) { grid-column: span 3; }

@@ -12,6 +12,12 @@
  * There is still no acceleration: a car is either doing full speed or it is
  * stopped against something. Hitting a wall stops it dead; turning sets it off
  * again - from a standstill there is no momentum, so no slide.
+ *
+ * Super Sprint (CONFIG.sprint) is the exception, and only for the player: a
+ * `free` car steers - `steer` is -1, 0 or +1, held - and goes wherever it
+ * points, at any angle. Its box is still axis aligned, lying along whichever
+ * axis it is nearer, so the walls, the shoving and the lap rule all work on
+ * it unchanged. See stepFree.
  */
 (function (global) {
   'use strict';
@@ -44,6 +50,11 @@
     this.spin = null;         // a spin-out: { t, v0 }
     this.spinAngle = 0;       // the body's extra turn while spinning
 
+    // Super Sprint - the player's car only (see CONFIG.sprint).
+    this.free = !!opts.free;  // steers at any angle, instead of 90-degree turns
+    this.steer = 0;           // -1 left, +1 right, 0 straight: what is held now
+    this.steerT = 0;          // seconds the same way, for the tyre marks
+
     this.lap = 0;
     this.nextCp = 0;          // index into TRACK.CHECKPOINTS
     this.finished = false;
@@ -70,8 +81,10 @@
     return this.boostT > 0 ? this.speed * this.boostMul : this.speed;
   };
 
+  /* Where the car points. A free car points where it goes; anything else
+   * points along its axis, and slides round to it. */
   Car.prototype.headingAngle = function () {
-    return Math.atan2(this.dir.y, this.dir.x);
+    return this.free ? this.velAngle : Math.atan2(this.dir.y, this.dir.x);
   };
 
   /* Angle between where the car points and where it is going. Zero unless it
@@ -81,6 +94,8 @@
   };
 
   Car.prototype.sliding = function () {
+    // a free car never slips; it leaves marks in a corner held a while
+    if (this.free) return this.steerT > 0.3 && !this.crashed;
     return Math.abs(this.slip()) > 0.02 || Math.abs(this.lean) > 0.02;
   };
 
@@ -255,6 +270,7 @@
     this.crashFlash = Math.max(0, this.crashFlash - dt * 4);
     if (this.boostT > 0) this.boostT = Math.max(0, this.boostT - dt);
     if (this.spin) return this.stepSpin(dt);
+    if (this.free) return this.stepFree(dt);
     this.updatePose(dt);
     if (this.crashed || this.finished) return null;
 
@@ -312,6 +328,74 @@
     this.crashFlash = 1;
     this.velAngle = this.headingAngle();
     this.lean = 0;
+    this.boostT = 0;
+    return { x: at.x, y: at.y, crashed: true };
+  };
+
+  /* ---- Super Sprint: steering --------------------------------------------- */
+
+  // The axis nearest an angle, as a unit direction.
+  function nearestAxis(a) {
+    var c = Math.cos(a), s = Math.sin(a);
+    return Math.abs(c) >= Math.abs(s) ? { x: c > 0 ? 1 : -1, y: 0 } : { x: 0, y: s > 0 ? 1 : -1 };
+  }
+
+  /* Point the car at `a`. Its box turns with it once it is nearer the other
+   * axis, and a box turned beside a wall is shoved back onto the road, the
+   * same as a 90-degree turn is. */
+  Car.prototype.aim = function (a) {
+    this.velAngle = wrapPi(a);
+    var d = nearestAxis(this.velAngle);
+    if (d.x !== this.dir.x || d.y !== this.dir.y) {
+      this.dir = d;
+      this.unstick();
+    }
+  };
+
+  /* A step at the wheel. Held left or right turns the car at a steady rate
+   * - quicker at a quicker game speed, so every corner is the same size at
+   * all of them - and it goes where it points. Running into a wall at a
+   * shallow angle is a scrape along it, as for every car; square on, it
+   * stops. A stopped car turns on the spot and sets off again as soon as
+   * it points anywhere it can go: no turn to press, just steer away. */
+  Car.prototype.stepFree = function (dt) {
+    var S = C.sprint;
+    if (this.finished) return null;
+    if (this.steer) {
+      this.aim(this.velAngle + this.steer * C.sprintRate(this.speed) * dt);
+      this.steerT += dt;
+    } else {
+      this.steerT = 0;
+    }
+    // the body leans a little into a held turn, and straightens after it
+    var lean = this.crashed ? 0 : this.steer * S.lean, gap = lean - this.lean, give = 1.2 * dt;
+    this.lean += Math.abs(gap) <= give ? gap : (gap > 0 ? give : -give);
+
+    var x = this.x, y = this.y;
+    var dist = this.speedNow() * dt;
+    var dx = Math.cos(this.velAngle) * dist, dy = Math.sin(this.velAngle) * dist;
+    if (Math.abs(dx) < 1e-9) dx = 0;
+    if (Math.abs(dy) < 1e-9) dy = 0;
+    var hitX = sweepAxis(this, true, dx);
+    var hitY = sweepAxis(this, false, dy);
+    if (!hitX && !hitY) {
+      if (this.crashed) this.crashed = false;       // steered clear: away again
+      return null;
+    }
+    var at = hitX || hitY;
+    var along = (hitX && hitY) ? 0 : (hitX ? Math.abs(dy) : Math.abs(dx)) / dist;
+    if (along >= C.graze) {
+      if (this.crashed) { this.crashed = false; return null; }
+      return { x: at.x, y: at.y, crashed: false };
+    }
+    // Square on to a wall: stopped, flush against it - the little it crept
+    // along the wall this step is taken back. Stopped already, it stays
+    // stopped quietly until it is steered off the wall.
+    if (hitX && !hitY) this.y = y;
+    if (hitY && !hitX) this.x = x;
+    if (this.crashed) return null;
+    this.crashed = true;
+    this.crashFlash = 1;
     this.boostT = 0;
     return { x: at.x, y: at.y, crashed: true };
   };

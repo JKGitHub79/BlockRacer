@@ -256,6 +256,25 @@
       branch: 'claude/block-racer-game-619ke9'
     },
 
+    /* ---- Super Sprint -------------------------------------------------
+     * The fifth control style (Options, CONTROL STYLE: SUPER SPRINT): the
+     * way an ordinary racing game steers. HOLD left or right and the car
+     * turns steadily that way for as long as it is held - no 90-degree
+     * steps. A key, or a finger on that half of the screen.
+     *
+     * `turn` is how fast, in degrees a second at BEGINNER speed. Every
+     * faster game speed turns faster in proportion, so a corner is the same
+     * size at any speed and no track gets tighter than it was drawn. The
+     * options screen offers `min` to `max`. Only the player's car steers
+     * like this; the opponents keep their square turns. */
+    sprint: {
+      turn: 240,
+      min: 120,
+      max: 420,
+      step: 10,
+      lean: 0.14                   // radians the body leans into a held turn
+    },
+
     /* ---- Pro controls ---------------------------------------------------
      * The fourth control style (Options, CONTROL STYLE: PRO CONTROLS). A tap
      * is an Auto Turn tap. HOLD, and the car swings round to face the way
@@ -507,12 +526,44 @@
   };
   try {
     var savedControl = global.localStorage && global.localStorage.getItem(CONTROL_KEY);
-    if (savedControl === 'tap' || savedControl === 'swipe' || savedControl === 'auto' || savedControl === 'pro') {
+    if (/^(tap|swipe|auto|pro|sprint)$/.test(savedControl || '')) {
       CONFIG.control = savedControl;
     }
   } catch (e) { /* unreadable storage: keep the default */ }
-  var controlParam = /[?&]control=(tap|swipe|auto|pro)/.exec(search);
+  var controlParam = /[?&]control=(tap|swipe|auto|pro|sprint)/.exec(search);
   if (controlParam) CONFIG.control = controlParam[1];
+
+  /* Super Sprint's turning speed, as chosen on the options screen; its own
+   * key, so RESET DATA leaves it alone like every other setting. */
+  var SPRINT_KEY = 'blockracer.sprint.v1';
+  CONFIG.sprintDefault = CONFIG.sprint.turn;
+  CONFIG.clampSprint = function (v) {
+    var S = CONFIG.sprint;
+    v = Math.round((+v || S.turn) / S.step) * S.step;
+    return Math.max(S.min, Math.min(S.max, v));
+  };
+  CONFIG.saveSprint = function () {
+    try {
+      if (global.localStorage) global.localStorage.setItem(SPRINT_KEY, String(CONFIG.sprint.turn));
+    } catch (e) { /* storage blocked or full */ }
+  };
+  try {
+    var savedSprint = global.localStorage && global.localStorage.getItem(SPRINT_KEY);
+    if (savedSprint) CONFIG.sprint.turn = CONFIG.clampSprint(parseFloat(savedSprint));
+  } catch (e) { /* unreadable storage: keep the default */ }
+  var sprintParam = /[?&]turn=(\d+)/.exec(search);
+  if (sprintParam) CONFIG.sprint.turn = CONFIG.clampSprint(parseFloat(sprintParam[1]));
+  /* Where this driving's lap records and ghosts are kept: by game speed,
+   * and apart for Super Sprint, which cuts every corner a square turn has
+   * to go round and laps about 6% quicker for it. A record set one way is
+   * not a target for the other. */
+  CONFIG.recordSlot = function () {
+    return CONFIG.control === 'sprint' ? CONFIG.speedLevel + 's' : CONFIG.speedLevel;
+  };
+  /* Radians a second for a car going `speed` cells a second. */
+  CONFIG.sprintRate = function (speed) {
+    return CONFIG.sprint.turn * Math.PI / 180 * (speed / CONFIG.speed);
+  };
 
   /* The Pro levels: which one a slide of `t` seconds has reached (0 for
    * none yet, 1 to 4), and the settings the options screen offers, kept

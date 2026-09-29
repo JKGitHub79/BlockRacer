@@ -71,7 +71,8 @@
       return false;
     }
     // Squarely north, not sliding, not stopped: otherwise the run starts over.
-    if (P.crashed || P.finished || P.dir.x !== 0 || P.dir.y !== -1 || Math.abs(P.slip()) > 1e-6) {
+    if (P.crashed || P.finished || P.dir.x !== 0 || P.dir.y !== -1 || Math.abs(P.slip()) > 1e-6 ||
+        (P.free && Math.abs(Math.atan2(Math.cos(P.velAngle), -Math.sin(P.velAngle))) > 0.1)) {
       runFrom = null;
       return false;
     }
