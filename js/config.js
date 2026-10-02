@@ -256,6 +256,32 @@
       branch: 'claude/block-racer-game-619ke9'
     },
 
+    /* ---- Wall Hit Slide ------------------------------------------------
+     * Game play, not a control: it is the same whatever you steer with.
+     * Your car meeting a wall square on stops dead - unless only the corner
+     * of its nose caught it: `hit` percent of its front face or less. Then
+     * the body swings `angle` degrees further round, the way you were
+     * turning (or towards the side that caught, when you were not), as if
+     * the back had slid out; the car eases sideways clear of the wall and
+     * goes on at `speed` percent, and once it has gone `dist` track pixels
+     * (CONFIG.cell to a cell) it straightens up and is back to full speed.
+     * The opponents keep the old rule. On the options screen, and kept. */
+    wallSlide: {
+      on: true,
+      hit: 40,                     // percent of the nose, at most
+      angle: 45,                   // degrees of extra turn
+      dist: 30,                    // track pixels of slide
+      speed: 50,                   // percent of speed while it slides
+      recent: 0.5,                 // seconds a turn counts as "turning"
+      swing: 9                     // rad/s the body swings out and back
+    },
+    wallSlideLimits: {
+      hit:   { min: 5,  max: 80,  step: 5 },
+      angle: { min: 0,  max: 90,  step: 5 },
+      dist:  { min: 6,  max: 120, step: 2 },
+      speed: { min: 10, max: 100, step: 5 }
+    },
+
     /* ---- Swipe --------------------------------------------------------
      * How far a finger has to travel, in CSS pixels, before a swipe counts
      * (Options, CONTROL STYLE: SWIPE). Shorter fires sooner - more
@@ -561,6 +587,34 @@
   } catch (e) { /* unreadable storage: keep the default */ }
   var controlParam = /[?&]control=(tap|swipe|auto|pro|sprint)/.exec(search);
   if (controlParam) CONFIG.control = controlParam[1];
+
+  /* Wall Hit Slide, as set on the options screen; its own key, so RESET
+   * DATA leaves it alone like every other setting. */
+  var WALLSLIDE_KEY = 'blockracer.wallslide.v1';
+  CONFIG.wallSlideDefaults = JSON.parse(JSON.stringify(CONFIG.wallSlide));
+  CONFIG.clampWallSlide = function (name, v) {
+    var L = CONFIG.wallSlideLimits[name];
+    if (!L) return v;
+    v = Math.round((+v) / L.step) * L.step;
+    if (!isFinite(v)) v = CONFIG.wallSlideDefaults[name];
+    return Math.max(L.min, Math.min(L.max, v));
+  };
+  CONFIG.saveWallSlide = function () {
+    var W = CONFIG.wallSlide;
+    try {
+      if (global.localStorage) global.localStorage.setItem(WALLSLIDE_KEY, JSON.stringify(
+        { on: W.on, hit: W.hit, angle: W.angle, dist: W.dist, speed: W.speed }));
+    } catch (e) { /* storage blocked or full */ }
+  };
+  try {
+    var savedWs = global.localStorage && JSON.parse(global.localStorage.getItem(WALLSLIDE_KEY) || 'null');
+    if (savedWs && typeof savedWs === 'object') {
+      if (typeof savedWs.on === 'boolean') CONFIG.wallSlide.on = savedWs.on;
+      ['hit', 'angle', 'dist', 'speed'].forEach(function (k) {
+        if (typeof savedWs[k] === 'number') CONFIG.wallSlide[k] = CONFIG.clampWallSlide(k, savedWs[k]);
+      });
+    }
+  } catch (e) { /* unreadable storage: keep the defaults */ }
 
   /* Swipe's distance, as chosen on the options screen; its own key, so
    * RESET DATA leaves it alone like every other setting. */

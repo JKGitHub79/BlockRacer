@@ -46,6 +46,11 @@
     this.drift = null;        // a held slide: { t, held, dist }, and once let go
                               // { letGo, lv, tap, help, waited } - see Car.letGo
     this.turnR = null;        // this turn's arc, when not CONFIG.slide (a Pro tap)
+
+    // Wall Hit Slide - the player's car only (see CONFIG.wallSlide).
+    this.wallSlide = null;    // { sign, ang, shift, axis, gone, back }
+    this.turnSign = 0;        // the way the last turn went
+    this.turnAge = Infinity;  // and how long ago
     this.boostT = 0;          // seconds of boost left
     this.boostMul = 1;        // speed while it lasts
     this.boostLevel = 0;      // which level earned it, 1-4: the flame's colour
@@ -80,7 +85,8 @@
 
   /* How fast the car is going now: its speed, plus a boost while one lasts. */
   Car.prototype.speedNow = function () {
-    return this.boostT > 0 ? this.speed * this.boostMul : this.speed;
+    var v = this.boostT > 0 ? this.speed * this.boostMul : this.speed;
+    return this.wallSlide ? v * C.wallSlide.speed / 100 : v;
   };
 
   /* Where the car points. A free car points where it goes; anything else
@@ -96,6 +102,7 @@
   };
 
   Car.prototype.sliding = function () {
+    if (this.wallSlide && !this.crashed) return true;
     // a free car never slips; it leaves marks in a corner held a while
     if (this.free) return this.steerT > 0.3 && !this.crashed;
     return Math.abs(this.slip()) > 0.02 || Math.abs(this.lean) > 0.02;
@@ -131,7 +138,7 @@
   };
 
   Car.prototype.bodyAngle = function () {
-    return this.velAngle + this.lean + this.spinAngle;
+    return this.velAngle + this.lean + this.spinAngle + (this.wallSlide ? this.wallSlide.ang : 0);
   };
 
   Car.prototype.halfX = function () {
@@ -151,6 +158,10 @@
   Car.prototype.turn = function (sign, hold) {
     var d = this.dir;
     this.turnR = null;
+    this.turnSign = sign > 0 ? 1 : -1;
+    this.turnAge = 0;
+    // a turn mid-slide keeps the slide, but not the sideways ease clear
+    if (this.wallSlide) this.wallSlide.shift = 0;
     var standing = this.crashed;
     this.dir = sign > 0 ? { x: -d.y, y: d.x } : { x: d.y, y: -d.x };
     // A held turn (Pro controls): the car keeps going the way it was and the
@@ -262,9 +273,92 @@
 
     return {
       x: car.x + (horizontal ? sign * halfAlong : 0),
-      y: car.y + (horizontal ? 0 : sign * halfAlong)
+      y: car.y + (horizontal ? 0 : sign * halfAlong),
+      cell: hitCell, sign: sign
     };
   }
+
+  /* ---- Wall Hit Slide ------------------------------------------------------ */
+
+  /* The car has just met a wall square on along one axis and stopped flush
+   * against it. How much of its front face is against wall? At most
+   * CONFIG.wallSlide.hit percent of it, all to one side: the sideways move
+   * that clears it, in cells. Otherwise - a proper hit, or a post square on
+   * the middle of the nose - null. */
+  function clipShift(car, horizontal, hit) {
+    var b = car.box();
+    var lo = horizontal ? b.y0 : b.x0, hi = horizontal ? b.y1 : b.x1, w = hi - lo;
+    var covered = 0, covLo = Infinity, covHi = -Infinity;
+    for (var p = Math.floor(lo); p < hi; p++) {
+      if (!(horizontal ? T.isWall(hit.cell, p) : T.isWall(p, hit.cell))) continue;
+      var a = Math.max(lo, p), z = Math.min(hi, p + 1);
+      if (z <= a) continue;
+      covered += z - a;
+      covLo = Math.min(covLo, a);
+      covHi = Math.max(covHi, z);
+    }
+    if (covered <= 1e-6 || covered / w > C.wallSlide.hit / 100 + 1e-9) return null;
+    if (covLo <= lo + 1e-6 && covHi < hi - 1e-6) return covHi - lo + EPS;      // caught low side
+    if (covHi >= hi - 1e-6 && covLo > lo + 1e-6) return -(hi - covLo + EPS);  // caught high side
+    return null;
+  }
+
+  /* Start a slide off a clipped wall, if the hit was a clip and the car has
+   * room to ease clear. True when it has. */
+  Car.prototype.startWallSlide = function (hitX, hitY, dx, dy) {
+    var W = C.wallSlide;
+    if (!this.isPlayer || !W.on) return false;
+    if (this.wallSlide && this.wallSlide.shift) return false;     // still easing clear of the last
+    // the axis the car was driving into
+    var horizontal = hitX && (!hitY || Math.abs(dx) >= Math.abs(dy));
+    var hit = horizontal ? hitX : hitY;
+    var shift = clipShift(this, horizontal, hit);
+    if (shift === null) return false;
+    // ...and room beside it to get there
+    var b = this.box();
+    var sx = horizontal ? 0 : shift, sy = horizontal ? shift : 0;
+    if (T.boxHitsWall(Math.min(b.x0, b.x0 + sx), Math.min(b.y0, b.y0 + sy),
+                      Math.max(b.x1, b.x1 + sx), Math.max(b.y1, b.y1 + sy))) return false;
+    // Which way the body swings: the way the car was turning; not turning,
+    // towards the side that caught the wall.
+    var h = horizontal ? { x: hit.sign, y: 0 } : { x: 0, y: hit.sign };
+    var pushedRight = (horizontal ? 0 : shift) * -h.y + (horizontal ? shift : 0) * h.x > 0;
+    var sign = this.free ? (this.steer || 0) : (this.turnAge < W.recent ? this.turnSign : 0);
+    if (!sign) sign = pushedRight ? -1 : 1;
+    this.wallSlide = {
+      sign: sign,
+      ang: this.wallSlide ? this.wallSlide.ang : 0,
+      shift: shift,
+      axis: horizontal ? 'y' : 'x',
+      gone: 0,
+      back: false
+    };
+    return true;
+  };
+
+  /* Easing sideways clear of the wall, in place of this step's move. */
+  Car.prototype.wallSlideShift = function (dt) {
+    var ws = this.wallSlide, step = Math.min(Math.abs(ws.shift), this.speedNow() * dt);
+    var d = ws.shift > 0 ? step : -step;
+    var blocked = sweepAxis(this, ws.axis === 'x', d);
+    ws.shift = blocked ? 0 : ws.shift - d;
+    if (Math.abs(ws.shift) < 1e-6) ws.shift = 0;
+    this.wallSlideTick(dt, step);
+  };
+
+  /* The body swings out to the extra angle, holds it while the car slides
+   * CONFIG.wallSlide.dist, then swings back; square again, the slide is
+   * over and the speed is back. */
+  Car.prototype.wallSlideTick = function (dt, moved) {
+    var ws = this.wallSlide, W = C.wallSlide;
+    if (!ws) return;
+    ws.gone += moved;
+    if (!ws.back && ws.gone >= W.dist / C.cell) ws.back = true;
+    var want = ws.back ? 0 : ws.sign * W.angle * Math.PI / 180;
+    var gap = want - ws.ang, rate = W.swing * dt;
+    ws.ang += Math.abs(gap) <= rate ? gap : (gap > 0 ? rate : -rate);
+    if (ws.back && ws.ang === 0) this.wallSlide = null;
+  };
 
   /* One physics step. Returns a crash point when it hits a wall this step.
    * Only walls stop a car - other cars are dealt with by the separation pass
@@ -272,10 +366,12 @@
   Car.prototype.step = function (dt) {
     this.crashFlash = Math.max(0, this.crashFlash - dt * 4);
     if (this.boostT > 0) this.boostT = Math.max(0, this.boostT - dt);
+    this.turnAge += dt;
     if (this.spin) return this.stepSpin(dt);
     if (this.free) return this.stepFree(dt);
     this.updatePose(dt);
     if (this.crashed || this.finished) return null;
+    if (this.wallSlide && this.wallSlide.shift) { this.wallSlideShift(dt); return null; }
 
     // A held slide goes on the way the car was going. Only time spent
     // actually sliding counts towards the boost, and too much of it spins
@@ -319,6 +415,7 @@
     // stopped altogether.
     var hitX = sweepAxis(this, true, dx);
     var hitY = sweepAxis(this, false, dy);
+    this.wallSlideTick(dt, dist);
     if (!hitX && !hitY) return null;
     var at = hitX || hitY;
 
@@ -335,11 +432,15 @@
       return { x: at.x, y: at.y, crashed: false };
     }
 
+    // Only the corner of the nose caught it: a slide, not a stop.
+    if (this.startWallSlide(hitX, hitY, dx, dy)) return { x: at.x, y: at.y, crashed: false, clip: true };
+
     this.crashed = true;
     this.crashFlash = 1;
     this.velAngle = this.headingAngle();
     this.lean = 0;
     this.boostT = 0;
+    this.wallSlide = null;
     return { x: at.x, y: at.y, crashed: true };
   };
 
@@ -382,6 +483,7 @@
     var lean = this.crashed ? 0 : this.steer * S.lean, gap = lean - this.lean, give = 1.2 * dt;
     this.lean += Math.abs(gap) <= give ? gap : (gap > 0 ? give : -give);
 
+    if (this.wallSlide && this.wallSlide.shift && !this.crashed) { this.wallSlideShift(dt); return null; }
     var x = this.x, y = this.y;
     var dist = this.speedNow() * dt;
     var dx = Math.cos(this.velAngle) * dist, dy = Math.sin(this.velAngle) * dist;
@@ -389,6 +491,7 @@
     if (Math.abs(dy) < 1e-9) dy = 0;
     var hitX = sweepAxis(this, true, dx);
     var hitY = sweepAxis(this, false, dy);
+    if (!this.crashed) this.wallSlideTick(dt, dist);
     if (!hitX && !hitY) {
       if (this.crashed) this.crashed = false;       // steered clear: away again
       return null;
@@ -402,12 +505,16 @@
     // Square on to a wall: stopped, flush against it - the little it crept
     // along the wall this step is taken back. Stopped already, it stays
     // stopped quietly until it is steered off the wall.
+    if (!this.crashed && this.startWallSlide(hitX, hitY, dx, dy)) {
+      return { x: at.x, y: at.y, crashed: false, clip: true };
+    }
     if (hitX && !hitY) this.y = y;
     if (hitY && !hitX) this.x = x;
     if (this.crashed) return null;
     this.crashed = true;
     this.crashFlash = 1;
     this.boostT = 0;
+    this.wallSlide = null;
     return { x: at.x, y: at.y, crashed: true };
   };
 
@@ -467,6 +574,7 @@
 
   // Held too long: a full turn, slowing to a stop.
   Car.prototype.spinOut = function () {
+    this.wallSlide = null;
     this.spin = { t: 0, v0: this.speedNow() };
     this.drift = null;
     this.boostT = 0;

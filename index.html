@@ -16,7 +16,7 @@
  * URL below, so a new deploy can never be served as a cached copy of the old
  * one - which is the whole reason the number is on screen. Bump it whenever
  * you push something you want to be able to see has landed. */
-window.BR = { version: '0.71.0', built: '2026-09-29',
+window.BR = { version: '0.72.0', built: '2026-10-02',
   // written by tools/build-tracks.js: which build of js/tracks.data.js this is
   tracks: 'a3fa17b7' };
 document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '">');
@@ -362,6 +362,31 @@ document.write('<link rel="stylesheet" href="css/style.css?v=' + BR.version + '"
             sliding until the corner opens, then turns - instead of turning into
             its inside wall. Either way, a quick tap turns as close to the moment
             you pressed as the car can manage.</p>
+        </div>
+      </div>
+
+      <div class="opt">
+        <p class="lapline">WALL HIT SLIDE &middot; <b id="ws-on-v">ON</b></p>
+        <div id="ws-on" class="laps">
+          <button data-ws="1">ON</button>
+          <button data-ws="0">OFF</button>
+        </div>
+        <p class="hint">Hit a wall square on and the car stops dead - but if
+          only the corner of the nose catches it, it slides off instead: the
+          back swings out, the car eases clear, runs on at reduced speed, then
+          straightens up and picks up speed again. Off, every square hit stops
+          the car. Whatever you steer with.</p>
+        <div id="ws-opts" class="pro-opts">
+          <p class="lapline">SLIDES IF THE WALL CATCHES &middot; <b id="ws-hit-v">40%</b> <span class="sub">of the nose or less</span></p>
+          <input id="ws-hit" class="slider" type="range" aria-label="Most of the nose a wall can catch and still slide">
+          <p class="lapline">EXTRA TURN &middot; <b id="ws-angle-v">45&deg;</b></p>
+          <input id="ws-angle" class="slider" type="range" aria-label="How far the body swings out">
+          <p class="lapline">SLIDE FOR &middot; <b id="ws-dist-v">30px</b></p>
+          <input id="ws-dist" class="slider" type="range" aria-label="How far the car slides before it straightens">
+          <p class="lapline">SLIDE SPEED &middot; <b id="ws-speed-v">50%</b></p>
+          <input id="ws-speed" class="slider" type="range" aria-label="Speed while sliding, percent of full">
+          <p class="hint">A * marks a number moved from its default.</p>
+          <button id="ws-reset" class="secondary wide-btn">DEFAULT WALL HIT SLIDE</button>
         </div>
       </div>
 

@@ -684,6 +684,10 @@
       if (hit && hit.crashed) {
         spawnSparks(this, hit, car.color);
         if (car.isPlayer) Sound.play('crash');
+      } else if (hit && hit.clip) {
+        // Wall Hit Slide: a clipped corner, once - a burst, and away
+        if (car.isPlayer) Sound.play('scrape');
+        spawnSparks(this, hit, car.color, 8);
       } else if (hit) {
         if (car.isPlayer) Sound.play('scrape');
         // A scrape throws a few sparks every so often rather than a shower,
@@ -1154,6 +1158,33 @@
     if (el.swipeRange && parseFloat(el.swipeRange.value) !== v) el.swipeRange.value = v;
   };
 
+  /* Wall Hit Slide: on or off, and its four numbers. Read by the car at the
+   * moment it meets a wall, so every change takes effect at once. */
+  var WS_FIELDS = {
+    hit:   { show: function (v) { return v + '%'; } },
+    angle: { show: function (v) { return v + '\u00b0'; } },
+    dist:  { show: function (v) { return v + 'px'; } },
+    speed: { show: function (v) { return v + '%'; } }
+  };
+  Game.setWallSlide = function (name, value, keep) {
+    var W = C.wallSlide;
+    if (name === 'on') W.on = !!value;
+    else if (WS_FIELDS[name]) W[name] = C.clampWallSlide(name, value);
+    if (keep) C.saveWallSlide();
+    var v = document.getElementById('ws-on-v'), row = document.getElementById('ws-on'),
+        opts = document.getElementById('ws-opts');
+    if (v) v.textContent = W.on ? 'ON' : 'OFF';
+    if (row) Array.prototype.forEach.call(row.children, function (b) {
+      b.classList.toggle('on', (b.dataset.ws === '1') === W.on);
+    });
+    if (opts) opts.hidden = !W.on;
+    Object.keys(WS_FIELDS).forEach(function (k) {
+      var r = document.getElementById('ws-' + k), l = document.getElementById('ws-' + k + '-v');
+      if (l) l.textContent = WS_FIELDS[k].show(W[k]) + (W[k] === C.wallSlideDefaults[k] ? '' : ' *');
+      if (r && parseFloat(r.value) !== W[k]) r.value = W[k];
+    });
+  };
+
   /* Swipe CHAINING, on or off. Read on every move of a finger. */
   Game.setSwipeChain = function (on, keep) {
     C.swipe.chain = !!on;
@@ -1558,6 +1589,29 @@
       });
     });
     Game.setSwipeChain(C.swipe.chain);
+    var wsRow = document.getElementById('ws-on');
+    if (wsRow) Array.prototype.forEach.call(wsRow.children, function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        Game.setWallSlide('on', b.dataset.ws === '1', true);
+      });
+    });
+    Object.keys(WS_FIELDS).forEach(function (k) {
+      var r = document.getElementById('ws-' + k), L = C.wallSlideLimits[k];
+      if (!r) return;
+      r.min = L.min; r.max = L.max; r.step = L.step;
+      r.addEventListener('input', function (e) {
+        e.stopPropagation();
+        Game.setWallSlide(k, parseFloat(r.value), true);
+      });
+    });
+    var wsReset = document.getElementById('ws-reset');
+    if (wsReset) wsReset.addEventListener('click', function (e) {
+      e.stopPropagation();
+      Object.keys(WS_FIELDS).forEach(function (k) { C.wallSlide[k] = C.wallSlideDefaults[k]; });
+      Game.setWallSlide('on', C.wallSlide.on, true);
+    });
+    Game.setWallSlide('on', C.wallSlide.on);
     Array.prototype.forEach.call(el.contrastButtons.children, function (b) {
       b.addEventListener('click', function (e) {
         e.stopPropagation();

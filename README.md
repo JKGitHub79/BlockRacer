@@ -1840,6 +1840,38 @@ own driver, like the fourth car in a real four-car race, and the moderates in
 particular moved by about a fifth. Nothing about the tracks changed. Do not
 compare these numbers with any quoted in an earlier commit.
 
+## Wall Hit Slide
+
+Driving square into a wall stops the car dead. Clipping one with the corner of
+the nose used to as well, which is the jarring part. **Wall Hit Slide** (on by
+default; Options, its own card, kept as `blockracer.wallslide.v1`) turns that
+clip into a slide. It is game play, not a control style: the same whatever you
+steer with, Super Sprint included.
+
+When your car meets a wall square on and the wall covers **40%** of the front
+face or less, all on one side:
+
+1. the body swings a further **45°** - the way you were turning (a turn in the
+   last half second), or towards the side that caught when you were not - as
+   if the back had slid out;
+2. the car eases sideways clear of the wall, a few hundredths of a second at
+   most, and goes on the way it was pointed, still at that angle;
+3. it runs at **50%** speed until it has gone **30px** (track pixels,
+   `CONFIG.cell` = 24 to a cell, so 1.25 cells), then straightens and is back
+   at full speed.
+
+Each of the four numbers has a slider under the ON / OFF (5-80%, 0-90°,
+6-120px, 10-100%), marked `*` when moved, with DEFAULT WALL HIT SLIDE to put
+them back. More than the limit, a post square on the middle of the nose, or no
+room beside the wall to ease into, and it is the old stop. A clip throws a
+burst of sparks and a scrape.
+
+Only your car slides like this; the opponents keep the old rule, so the AI and
+`tools/simulate.js` are unchanged. Measured over every corner of every track,
+turning in early (the usual way to clip an inside corner): 0.8 cells early, 75
+dead stops became 54 and 21 slides; 1.2 cells, 137 became 68 and 69; 1.6 cells,
+288 became 128 and 163. A car never ends a step inside a wall.
+
 ## Slide
 
 Turning swings the car's heading round instantly, but its *velocity* only
